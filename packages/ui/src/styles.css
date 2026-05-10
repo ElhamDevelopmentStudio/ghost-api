@@ -1,3 +1,0 @@
-/* Reserved for future UI-package-owned global styles. The web app currently
- * imports nothing from here, but consumers can `@import "@ghostapi/ui/styles.css"`
- * once we ship anything that needs global resets. */

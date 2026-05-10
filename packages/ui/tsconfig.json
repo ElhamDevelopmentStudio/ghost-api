@@ -1,10 +1,23 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "rootDir": "src",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "jsx": "preserve",
-    "noEmit": true
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@ghostapi/ui/*": ["./*"]
+    }
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx"]
+  "include": [
+    "index.ts",
+    "components/**/*.ts",
+    "components/**/*.tsx",
+    "layouts/**/*.ts",
+    "layouts/**/*.tsx",
+    "blocks/**/*.ts",
+    "blocks/**/*.tsx",
+    "lib/**/*.ts",
+    "hooks/**/*.ts"
+  ]
 }

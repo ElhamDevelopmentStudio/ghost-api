@@ -31,7 +31,7 @@ Planned monorepo layout (Turborepo + pnpm workspaces):
 - `packages/runtime` — Dynamic mock runtime: route mounting, latency/auth/error simulation. Kept isolated from data generation.
 - `packages/mock-engine` — Schema-aware fake data generation (Faker.js-based). Isolated from runtime logic.
 - `packages/types` — Shared DTOs, enums, normalized endpoint types. Avoid duplicating types across apps.
-- `packages/ui` — Shared UI primitives (panels, tables, request/response components).
+- `packages/ui` — Shared design system. shadcn/ui is initialized here (`components.json` lives in this package). Layout: `components/` for shadcn primitives, `layouts/` for shells, `blocks/` for GhostAPI-specific composed UI (endpoint sidebar, request builder, log viewer, etc.), `lib/utils.ts` for `cn`, `styles/globals.css` for theme tokens. **Theme tokens, colors, spacing, and typography live ONLY here** — apps/web's `globals.css` just `@import`s this file. Add primitives via `cd packages/ui && pnpm dlx shadcn@latest add <name>`.
 - `packages/config` — Zod env validation, tsconfig, runtime configs. Startup must fail loudly on invalid env.
 
 ## Product Surface — Unified API Workspace

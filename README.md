@@ -7,6 +7,7 @@ Turn OpenAPI schemas into interactive mock API workspaces in seconds.
 GhostAPI is a developer-first platform for generating realistic mock REST APIs from OpenAPI schemas. Create a project, import your schema, and instantly get a fully interactive API workspace with request testing, response simulation, request logs, environments, mock behavior controls, and realistic fake data generation.
 
 Built for:
+
 - frontend developers
 - UI engineers
 - indie hackers
@@ -19,6 +20,7 @@ Built for:
 # Why GhostAPI?
 
 Frontend development constantly gets blocked by:
+
 - unfinished backends
 - unstable APIs
 - changing contracts
@@ -27,6 +29,7 @@ Frontend development constantly gets blocked by:
 - unrealistic mocks
 
 Most existing solutions either:
+
 - feel bloated
 - require too much setup
 - look outdated
@@ -36,6 +39,7 @@ Most existing solutions either:
 GhostAPI fixes this by turning your OpenAPI schema into a complete API simulation workspace instantly.
 
 You can:
+
 - explore endpoints
 - send requests
 - inspect responses
@@ -68,6 +72,7 @@ Test APIs Instantly
 # Unified API Workspace
 
 GhostAPI combines:
+
 - endpoint browsing
 - request building
 - response inspection
@@ -90,12 +95,14 @@ Request → Response
 # OpenAPI Import
 
 Supports:
+
 - `.json`
 - `.yaml`
 
 OpenAPI 3.x schemas.
 
 GhostAPI automatically:
+
 - validates schemas
 - extracts endpoints
 - groups routes
@@ -131,6 +138,7 @@ Orders
 Test requests directly inside the API Workspace.
 
 Supports:
+
 - headers
 - query params
 - auth
@@ -139,6 +147,7 @@ Supports:
 - JSON editing
 
 Inspired by tools like:
+
 - Scalar
 - Postman
 - Insomnia
@@ -152,6 +161,7 @@ but intentionally more focused and minimal.
 GhostAPI generates believable responses automatically.
 
 Examples:
+
 - real names
 - emails
 - avatars
@@ -177,6 +187,7 @@ Example:
 Configure API behavior globally or per endpoint.
 
 Supports:
+
 - latency simulation
 - error rates
 - auth simulation
@@ -197,6 +208,7 @@ Auth: Required
 # Environment Management
 
 Manage multiple environments:
+
 - development
 - staging
 - production
@@ -204,6 +216,7 @@ Manage multiple environments:
 - QA
 
 Each environment supports:
+
 - base URLs
 - variables
 - headers
@@ -217,6 +230,7 @@ Each environment supports:
 Inspect incoming requests in real time.
 
 Supports:
+
 - request history
 - response inspection
 - headers
@@ -225,6 +239,7 @@ Supports:
 - request metadata
 
 The logs experience is designed to feel:
+
 - operational
 - technical
 - low-noise
@@ -238,6 +253,7 @@ instead of analytics-heavy.
 Manage schemas directly inside projects.
 
 Supports:
+
 - schema replacement
 - version history
 - validation
@@ -249,6 +265,7 @@ Supports:
 # Project Management
 
 Projects contain:
+
 - schemas
 - environments
 - logs
@@ -408,12 +425,14 @@ pnpm dev
 # Design Philosophy
 
 GhostAPI is intentionally designed to feel:
+
 - technical
 - focused
 - operational
 - infrastructure-grade
 
 The product avoids:
+
 - bloated SaaS dashboards
 - analytics spam
 - excessive cards
@@ -421,6 +440,7 @@ The product avoids:
 - over-designed marketing UI
 
 The UI language is inspired by:
+
 - terminal environments
 - developer tools
 - infrastructure software
@@ -431,6 +451,7 @@ The UI language is inspired by:
 # Development Philosophy
 
 GhostAPI prioritizes:
+
 - clean architecture
 - strict typing
 - isolated packages
@@ -438,11 +459,13 @@ GhostAPI prioritizes:
 - long-term maintainability
 
 This is not meant to become:
+
 - a generic API management platform
 - a corporate monitoring suite
 - an enterprise analytics dashboard
 
 The focus remains:
+
 > fast API simulation for frontend developers.
 
 ---
@@ -485,6 +508,7 @@ The focus remains:
 GhostAPI never executes uploaded schemas as code.
 
 Uploaded files are:
+
 - validated
 - sanitized
 - parsed safely
@@ -498,6 +522,7 @@ before processing.
 Contributions are welcome.
 
 Before opening a PR:
+
 - run tests
 - follow lint rules
 - keep types strict
@@ -509,6 +534,7 @@ Before opening a PR:
 # Vision
 
 GhostAPI aims to become:
+
 > the fastest way to simulate APIs during frontend development.
 
 No fake JSON files.

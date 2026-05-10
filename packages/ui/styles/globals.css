@@ -1,0 +1,125 @@
+/* GhostAPI design system — single source of truth for theme tokens.
+ *
+ * Imported by apps/web/app/globals.css. Tokens follow the shadcn convention
+ * (CSS variables under `:root`, exposed to Tailwind via `@theme inline`)
+ * but the palette is dark-first and intentionally low-saturation per the
+ * "terminal-inspired, low-noise" rule in docs/SETUP.md.
+ *
+ * Light mode is not currently supported; if/when added, mirror these vars
+ * under a `:root.light` (or similar) selector and wrap with a class toggle.
+ */
+
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+/* Make Tailwind v4 scan workspace UI sources for class usage. */
+@source "../components/**/*.{ts,tsx}";
+@source "../layouts/**/*.{ts,tsx}";
+@source "../blocks/**/*.{ts,tsx}";
+
+:root {
+  color-scheme: dark;
+
+  /* Base surfaces — kept very close together; hierarchy is conveyed by
+   * borders/typography, not by stacking many fill levels. */
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+
+  --card: oklch(0.18 0 0);
+  --card-foreground: oklch(0.985 0 0);
+
+  --popover: oklch(0.18 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+
+  --primary: oklch(0.985 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+
+  --secondary: oklch(0.235 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+
+  --muted: oklch(0.235 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+
+  --accent: oklch(0.27 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
+
+  /* Translucent border / input so they blend with whatever surface they sit on. */
+  --border: oklch(1 0 0 / 8%);
+  --input: oklch(1 0 0 / 12%);
+  --ring: oklch(0.439 0 0);
+
+  /* HTTP method accents — used by blocks/method-pill et al. Keep these low-saturation. */
+  --method-get: oklch(0.78 0.13 160);
+  --method-post: oklch(0.75 0.14 235);
+  --method-put: oklch(0.82 0.12 80);
+  --method-patch: oklch(0.74 0.16 320);
+  --method-delete: oklch(0.7 0.18 25);
+
+  /* Sharp radii — terminal-inspired UI doesn't need rounded corners shouting for attention. */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --radius-xl: 8px;
+  --radius: var(--radius-md);
+
+  /* Spacing rhythm — relies on Tailwind's default 4px scale; we just expose the unit
+   * so blocks can reference it from CSS without hardcoding. */
+  --spacing-unit: 0.25rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-method-get: var(--method-get);
+  --color-method-post: var(--method-post);
+  --color-method-put: var(--method-put);
+  --color-method-patch: var(--method-patch);
+  --color-method-delete: var(--method-delete);
+
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  html,
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+  }
+
+  ::selection {
+    background: oklch(1 0 0 / 12%);
+  }
+}
