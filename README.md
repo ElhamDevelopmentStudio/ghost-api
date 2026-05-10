@@ -2,391 +2,530 @@
 
 ![GhostAPI banner](assets/banner.png)
 
-Turn OpenAPI schemas into working mock backends in seconds.
+Turn OpenAPI schemas into interactive mock API workspaces in seconds.
 
-GhostAPI helps frontend developers keep building even when the backend is not ready yet. Upload an OpenAPI schema and instantly get a working mock REST API with realistic data, configurable responses, latency simulation, auth handling, and a built in API playground.
+GhostAPI is a developer-first platform for generating realistic mock REST APIs from OpenAPI schemas. Create a project, import your schema, and instantly get a fully interactive API workspace with request testing, response simulation, request logs, environments, mock behavior controls, and realistic fake data generation.
 
 Built for:
+- frontend developers
+- UI engineers
+- indie hackers
+- integration testing
+- product demos
+- backend-independent development
 
--   frontend developers
--   UI engineers
--   indie hackers
--   product demos
--   integration testing
--   backend independent development
-
-----------
+---
 
 # Why GhostAPI?
 
-Most frontend work gets blocked because:
+Frontend development constantly gets blocked by:
+- unfinished backends
+- unstable APIs
+- changing contracts
+- missing environments
+- fake JSON files
+- unrealistic mocks
 
--   the backend is incomplete
--   endpoints keep changing
--   the API is unstable
--   there is no mock environment
--   fake JSON files become impossible to maintain
+Most existing solutions either:
+- feel bloated
+- require too much setup
+- look outdated
+- separate testing from configuration
+- become difficult to maintain
 
-GhostAPI fixes that.
+GhostAPI fixes this by turning your OpenAPI schema into a complete API simulation workspace instantly.
 
-Instead of manually writing mock endpoints or maintaining huge fake datasets, you upload your OpenAPI file and GhostAPI creates a working backend for you instantly.
+You can:
+- explore endpoints
+- send requests
+- inspect responses
+- simulate failures
+- configure auth
+- test loading states
+- inspect logs
+- manage environments
 
-You can then:
+without writing backend code.
 
--   test your frontend
--   simulate failures
--   test loading states
--   share mock APIs with teammates
--   demo products before the real backend exists
+---
 
-----------
+# Core Workflow
+
+```txt
+Create Project
+↓
+Upload OpenAPI Schema
+↓
+Generate API Workspace
+↓
+Test APIs Instantly
+```
+
+---
 
 # Features
 
-## OpenAPI Import
+# Unified API Workspace
+
+GhostAPI combines:
+- endpoint browsing
+- request building
+- response inspection
+- mock configuration
+
+into a single workspace.
+
+No separate endpoint editor.
+No disconnected playground.
+No unnecessary dashboard hopping.
+
+Everything happens in one flow:
+
+```txt
+Request → Response
+```
+
+---
+
+# OpenAPI Import
 
 Supports:
+- `.json`
+- `.yaml`
 
--   `.json`
--   `.yaml`
+OpenAPI 3.x schemas.
 
-OpenAPI 3.x specifications.
+GhostAPI automatically:
+- validates schemas
+- extracts endpoints
+- groups routes
+- generates mock behavior
+- creates realistic responses
 
-----------
+---
 
-## Instant Mock API Generation
+# Endpoint Explorer
 
-Generate working REST endpoints immediately.
+Endpoints are automatically grouped by tags and categories.
 
 Example:
 
-```
-GET /usersPOST /auth/loginGET /products/:id
+```txt
+Authentication
+  POST /users/login
+  POST /users/signup
+
+Products
+  GET /products
+  POST /products
+
+Orders
+  GET /orders
+  POST /orders
 ```
 
-----------
+---
 
-## Realistic Mock Data
+# Request Playground
+
+Test requests directly inside the API Workspace.
+
+Supports:
+- headers
+- query params
+- auth
+- request body
+- environments
+- JSON editing
+
+Inspired by tools like:
+- Scalar
+- Postman
+- Insomnia
+
+but intentionally more focused and minimal.
+
+---
+
+# Realistic Mock Data
 
 GhostAPI generates believable responses automatically.
 
 Examples:
+- real names
+- emails
+- avatars
+- UUIDs
+- prices
+- nested objects
+- arrays
 
--   real looking names
--   valid emails
--   avatars
--   UUIDs
--   prices
--   nested objects
--   arrays
+Example:
 
-----------
-
-## Editable Responses
-
-Every generated response can be edited directly from the dashboard.
-
-You are not locked into generated data.
-
-----------
-
-## Latency Simulation
-
-Test slow API behavior easily.
-
-Examples:
-
-```
-200ms1200ms5000ms
+```json
+{
+  "id": "usr_91b2",
+  "name": "Sarah Johnson",
+  "email": "sarah@example.com"
+}
 ```
 
-Useful for:
+---
 
--   loading states
--   skeleton UIs
--   optimistic updates
+# Mock Behavior Controls
 
-----------
+Configure API behavior globally or per endpoint.
 
-## Auth Simulation
+Supports:
+- latency simulation
+- error rates
+- auth simulation
+- response modes
+- pagination behavior
+- cache behavior
 
-Protect endpoints with simple bearer token auth.
+Example:
 
-Useful for:
-
--   protected pages
--   auth flows
--   permission handling
-
-----------
-
-## Error Simulation
-
-Force endpoints to randomly return:
-
--   400
--   401
--   403
--   429
--   500
-
-Useful for testing frontend edge cases properly.
-
-----------
-
-## Built in Playground
-
-Test endpoints directly inside the app without opening another tool.
-
-----------
-
-## Request Logs
-
-Inspect incoming requests and responses in realtime.
-
-----------
-
-# Example Workflow
-
-## 1. Upload OpenAPI Schema
-
-```
-paths:  /users:    get:      responses:        "200":          description: User list
+```txt
+Latency: 1200ms
+Error Chance: 15%
+Auth: Required
 ```
 
-----------
+---
 
-## 2. GhostAPI Generates
+# Environment Management
 
-```
-GET /users
-```
+Manage multiple environments:
+- development
+- staging
+- production
+- local
+- QA
 
-----------
+Each environment supports:
+- base URLs
+- variables
+- headers
+- auth settings
+- CORS configuration
 
-## 3. Call Mock Endpoint
+---
 
-```
-curl https://ghostapi.dev/mock/demo/users
-```
+# Request Logs
 
-----------
+Inspect incoming requests in real time.
 
-## 4. Receive Realistic Response
+Supports:
+- request history
+- response inspection
+- headers
+- timing
+- status codes
+- request metadata
 
-```
-[  {    "id": "usr_1",    "name": "Sarah Johnson",    "email": "sarah@example.com"  }]
-```
+The logs experience is designed to feel:
+- operational
+- technical
+- low-noise
 
-----------
+instead of analytics-heavy.
+
+---
+
+# Schema Management
+
+Manage schemas directly inside projects.
+
+Supports:
+- schema replacement
+- version history
+- validation
+- schema metadata
+- server definitions
+
+---
+
+# Project Management
+
+Projects contain:
+- schemas
+- environments
+- logs
+- mock behavior
+- members
+- API workspaces
+
+Projects exist independently from schemas.
+
+Schemas are attached to projects.
+
+---
 
 # Tech Stack
 
-## Frontend
+# Frontend
 
--   Next.js
--   TypeScript
--   Tailwind
--   shadcn/ui
--   Zustand
--   TanStack Query
--   Monaco Editor
+- Next.js App Router
+- TypeScript
+- Tailwind CSS
+- shadcn/ui
+- Zustand
+- TanStack Query
+- Monaco Editor
 
-----------
+---
 
-## Backend
+# Backend
 
--   Hono
--   TypeScript
--   Zod
--   Prisma
+- Hono
+- TypeScript
+- Zod
+- Prisma
 
-----------
+---
 
-## Infrastructure
+# Infrastructure
 
--   PostgreSQL
--   Redis
--   Docker
--   Turborepo
+- PostgreSQL
+- Redis
+- Docker
+- Turborepo
 
-----------
+---
 
 # Architecture
 
-```
-OpenAPI Upload       ↓Parser Engine       ↓Normalized Endpoint Model       ↓Mock Generator       ↓Dynamic Runtime Server       ↓Dashboard + Playground
+```txt
+OpenAPI Upload
+↓
+Parser Engine
+↓
+Normalized Endpoint Model
+↓
+Mock Generator
+↓
+Runtime Server
+↓
+API Workspace
 ```
 
-----------
+---
 
 # Repository Structure
 
-```
-apps/  web/        → Next.js frontend  server/     → Hono backendpackages/  parser/     → OpenAPI parser  runtime/    → dynamic endpoint runtime  mock-engine/→ fake response generation  types/      → shared types  ui/         → shared UI components
+```txt
+apps/
+  web/        → Next.js frontend
+  server/     → Hono backend
+
+packages/
+  parser/     → OpenAPI parser
+  runtime/    → dynamic runtime engine
+  mock-engine/→ fake data generation
+  types/      → shared types
+  ui/         → shared UI components
+  config/     → shared config
 ```
 
-----------
+---
 
 # Getting Started
 
 # Requirements
 
--   Node.js 20+
--   pnpm
--   Docker
+- Node.js 20+
+- pnpm
+- Docker
 
-----------
+---
 
-# Installation
+# Clone Repository
 
-## Clone Repository
+```bash
+git clone https://github.com/yourname/ghostapi.git
 
+cd ghostapi
 ```
-git clone https://github.com/yourname/ghostapi.gitcd ghostapi
-```
 
-----------
+---
 
-## Install Dependencies
+# Install Dependencies
 
-```
+```bash
 pnpm install
 ```
 
-----------
+---
 
-## Setup Environment
+# Setup Environment
 
 Create:
 
-```
+```txt
 .env
 ```
 
 Example:
 
-```
-DATABASE_URL=postgresql://ghostapi:ghostapi@localhost:5432/ghostapiREDIS_URL=redis://localhost:6379NEXT_PUBLIC_API_URL=http://localhost:3001JWT_SECRET=super-secret
+```env
+DATABASE_URL=postgresql://ghostapi:ghostapi@localhost:5432/ghostapi
+REDIS_URL=redis://localhost:6379
+
+NEXT_PUBLIC_API_URL=http://localhost:3000
+
+JWT_SECRET=super-secret
 ```
 
-----------
+---
 
-## Start Infrastructure
+# Start Infrastructure
 
-```
+```bash
 docker compose up -d
 ```
 
-----------
+---
 
-## Run Database Migrations
+# Run Database Migrations
 
+```bash
+cd apps/server
+
+pnpm prisma migrate dev
 ```
-cd apps/serverpnpm prisma migrate dev
-```
 
-----------
+---
 
-## Start Development
+# Start Development
 
-```
+```bash
 pnpm dev
 ```
 
-----------
+---
+
+# Design Philosophy
+
+GhostAPI is intentionally designed to feel:
+- technical
+- focused
+- operational
+- infrastructure-grade
+
+The product avoids:
+- bloated SaaS dashboards
+- analytics spam
+- excessive cards
+- cluttered layouts
+- over-designed marketing UI
+
+The UI language is inspired by:
+- terminal environments
+- developer tools
+- infrastructure software
+- API explorers
+
+---
 
 # Development Philosophy
 
-GhostAPI is meant to feel like a real developer tool from the start.
+GhostAPI prioritizes:
+- clean architecture
+- strict typing
+- isolated packages
+- contributor friendliness
+- long-term maintainability
 
-The project focuses on:
+This is not meant to become:
+- a generic API management platform
+- a corporate monitoring suite
+- an enterprise analytics dashboard
 
--   clean architecture
--   strict typing
--   isolated packages
--   long term maintainability
--   contributor friendliness
+The focus remains:
+> fast API simulation for frontend developers.
 
-This is not meant to become another bloated API platform.
-
-The goal is simple:
-
-> upload schema → get working backend
-
-----------
+---
 
 # Roadmap
 
-## Phase 1
+# Phase 1
 
--   OpenAPI support
--   REST mock generation
--   editable responses
--   latency simulation
--   auth simulation
--   playground
+- OpenAPI support
+- REST mock APIs
+- unified API workspace
+- environments
+- request logs
+- mock behavior controls
+- schema management
 
-----------
+---
 
-## Phase 2
+# Phase 2
 
--   GraphQL support
--   persistent mock states
--   advanced schema handling
--   realtime request streams
+- GraphQL support
+- persistent mock states
+- advanced schema handling
+- realtime request streaming
 
-----------
+---
 
-## Phase 3
+# Phase 3
 
--   tRPC support
--   AI generated edge cases
--   contract testing
--   snapshot testing
--   collaboration
+- tRPC support
+- AI-assisted edge cases
+- snapshot testing
+- contract testing
+- collaboration
 
-----------
+---
 
 # Security
 
 GhostAPI never executes uploaded schemas as code.
 
 Uploaded files are:
-
--   validated
--   sanitized
--   parsed safely
+- validated
+- sanitized
+- parsed safely
 
 before processing.
 
-----------
+---
 
 # Contributing
 
 Contributions are welcome.
 
 Before opening a PR:
+- run tests
+- follow lint rules
+- keep types strict
+- avoid unnecessary abstractions
+- avoid introducing `any`
 
--   run tests
--   follow lint rules
--   keep types strict
--   avoid unnecessary abstractions
--   avoid introducing `any`
-
-----------
+---
 
 # Vision
 
-GhostAPI aims to become the easiest way to simulate APIs for frontend development.
+GhostAPI aims to become:
+> the fastest way to simulate APIs during frontend development.
 
-No fake JSON files.  
-No waiting on backend teams.  
+No fake JSON files.
+No waiting on backend teams.
 No boilerplate mock servers.
 
-Just upload your schema and start building.
+Just:
 
-----------
+```txt
+Create project
+↓
+Import schema
+↓
+Start building
+```
+
+---
 
 # License
 
