@@ -18,6 +18,8 @@
     "blocks/**/*.ts",
     "blocks/**/*.tsx",
     "lib/**/*.ts",
-    "hooks/**/*.ts"
+    "hooks/**/*.ts",
+    ".storybook/**/*.ts",
+    ".storybook/**/*.tsx"
   ]
 }

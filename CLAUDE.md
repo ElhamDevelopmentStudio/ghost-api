@@ -31,7 +31,7 @@ Planned monorepo layout (Turborepo + pnpm workspaces):
 - `packages/runtime` — Dynamic mock runtime: route mounting, latency/auth/error simulation. Kept isolated from data generation.
 - `packages/mock-engine` — Schema-aware fake data generation (Faker.js-based). Isolated from runtime logic.
 - `packages/types` — Shared DTOs, enums, normalized endpoint types. Avoid duplicating types across apps.
-- `packages/ui` — Shared design system. shadcn/ui is initialized here (`components.json` lives in this package). Layout: `components/` for shadcn primitives, `layouts/` for shells, `blocks/` for GhostAPI-specific composed UI (endpoint sidebar, request builder, log viewer, etc.), `lib/utils.ts` for `cn`, `styles/globals.css` for theme tokens. **Theme tokens, colors, spacing, and typography live ONLY here** — apps/web's `globals.css` just `@import`s this file. Add primitives via `cd packages/ui && pnpm dlx shadcn@latest add <name>`.
+- `packages/ui` — Shared design system. shadcn/ui is initialized here (`components.json` lives in this package). Layout: `components/` for shadcn primitives, `layouts/` for shells, `blocks/` for GhostAPI-specific composed UI (endpoint sidebar, request builder, log viewer, etc.), `lib/utils.ts` for `cn`, `styles/globals.css` for theme tokens. **Theme tokens, colors, spacing, and typography live ONLY here** — apps/web's `globals.css` just `@import`s this file. Add primitives via `cd packages/ui && pnpm dlx shadcn@latest add <name>` — but expect to customize the generated file to match the GhostAPI variants (e.g. Button uses `primary | secondary | tertiary | destructive`, not the shadcn defaults). Storybook lives in `.storybook/` here; stories colocate with components as `<name>.stories.tsx`. Run with `pnpm --filter @ghostapi/ui storybook`.
 - `packages/config` — Zod env validation, tsconfig, runtime configs. Startup must fail loudly on invalid env.
 
 ## Product Surface — Unified API Workspace
@@ -57,7 +57,7 @@ cd apps/server && pnpm prisma migrate dev     # run migrations
 pnpm dev                                      # turbo dev across apps
 ```
 
-`turbo.json` defines `build`, `dev` (uncached), `lint`, `test`. Pre-commit (Husky + lint-staged) and CI must run lint, typecheck, tests, and build.
+`turbo.json` defines `build`, `dev` (uncached), `lint`, `test`, `build-storybook`, and `storybook` (uncached, persistent). Pre-commit (Husky + lint-staged) and CI must run lint, typecheck, tests, and build. Storybook is run on demand: `pnpm --filter @ghostapi/ui storybook` for local review, `pnpm --filter @ghostapi/ui build-storybook` to produce a static bundle.
 
 ## Conventions
 

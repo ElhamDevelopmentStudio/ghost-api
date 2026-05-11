@@ -1,125 +1,345 @@
 /* GhostAPI design system — single source of truth for theme tokens.
  *
  * Imported by apps/web/app/globals.css. Tokens follow the shadcn convention
- * (CSS variables under `:root`, exposed to Tailwind via `@theme inline`)
- * but the palette is dark-first and intentionally low-saturation per the
- * "terminal-inspired, low-noise" rule in docs/SETUP.md.
- *
- * Light mode is not currently supported; if/when added, mirror these vars
- * under a `:root.light` (or similar) selector and wrap with a class toggle.
+ * (CSS variables under `:root`, exposed to Tailwind via `@theme inline`).
+ * The palette is dark-first; light mode is intentionally not supported in
+ * Phase 1. If/when added, mirror these vars under a `.light` selector.
  */
 
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
-/* Make Tailwind v4 scan workspace UI sources for class usage. */
+/* Tailwind v4 doesn't scan workspace packages by default — without these,
+ * classes used inside packages/ui get tree-shaken when consumed by apps/web. */
 @source "../components/**/*.{ts,tsx}";
 @source "../layouts/**/*.{ts,tsx}";
 @source "../blocks/**/*.{ts,tsx}";
 
+/* shadcn primitives ship `dark:` variants. We always apply `.dark` on <html>
+ * so they activate regardless of the user's OS color-scheme preference. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   color-scheme: dark;
 
-  /* Base surfaces — kept very close together; hierarchy is conveyed by
-   * borders/typography, not by stacking many fill levels. */
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
+  /* ---- Surfaces -------------------------------------------------------- */
+  --background: #0a0a0e;
+  --foreground: #f5f5f7;
 
-  --card: oklch(0.18 0 0);
-  --card-foreground: oklch(0.985 0 0);
+  --surface: #0f1115;
+  --surface-elevated: #161a21;
+  --surface-hover: #1f2430;
 
-  --popover: oklch(0.18 0 0);
-  --popover-foreground: oklch(0.985 0 0);
+  --border: #28313d;
+  --border-subtle: #1f2430;
+  --border-strong: #3b4451;
 
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --muted: #687280;
+  --muted-foreground: #a6adba;
 
-  --secondary: oklch(0.235 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
+  --card: #0f1115;
+  --card-foreground: #f5f5f7;
 
-  --muted: oklch(0.235 0 0);
-  --muted-foreground: oklch(0.708 0 0);
+  --popover: #0f1115;
+  --popover-foreground: #f5f5f7;
 
-  --accent: oklch(0.27 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  /* ---- Primary --------------------------------------------------------- */
+  --primary: #7c4dff;
+  --primary-hover: #8d6bff;
+  --primary-active: #6c3bff;
+  --primary-foreground: #f5f5ff;
 
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0 0);
+  --primary-subtle: rgba(124, 77, 255, 0.12);
+  --primary-muted: rgba(124, 77, 255, 0.06);
 
-  /* Translucent border / input so they blend with whatever surface they sit on. */
-  --border: oklch(1 0 0 / 8%);
-  --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.439 0 0);
+  /* ---- Secondary / Accent (required by shadcn primitives) -------------- */
+  --secondary: #1f2430;
+  --secondary-foreground: #f5f5f7;
 
-  /* HTTP method accents — used by blocks/method-pill et al. Keep these low-saturation. */
-  --method-get: oklch(0.78 0.13 160);
-  --method-post: oklch(0.75 0.14 235);
-  --method-put: oklch(0.82 0.12 80);
-  --method-patch: oklch(0.74 0.16 320);
-  --method-delete: oklch(0.7 0.18 25);
+  --accent: #1f2430;
+  --accent-foreground: #f5f5f7;
 
-  /* Sharp radii — terminal-inspired UI doesn't need rounded corners shouting for attention. */
-  --radius-sm: 2px;
-  --radius-md: 4px;
-  --radius-lg: 6px;
-  --radius-xl: 8px;
+  /* ---- Semantic -------------------------------------------------------- */
+  --success: #22c55e;
+  --success-foreground: #dcfce7;
+  --success-subtle: rgba(34, 197, 94, 0.12);
+
+  --warning: #f59e0b;
+  --warning-foreground: #fef3c7;
+  --warning-subtle: rgba(245, 158, 11, 0.12);
+
+  --destructive: #ef4444;
+  --destructive-foreground: #fee2e2;
+  --destructive-subtle: rgba(239, 68, 68, 0.12);
+
+  --info: #3b82f6;
+  --info-foreground: #dbeafe;
+  --info-subtle: rgba(59, 130, 246, 0.12);
+
+  /* ---- Inputs / focus -------------------------------------------------- */
+  --input: #161a21;
+  --input-hover: #1f2430;
+  --input-border: #28313d;
+  --input-focus: #7c4dff;
+
+  --ring: #7c4dff;
+
+  /* ---- Sidebar --------------------------------------------------------- */
+  --sidebar-background: #0b0d11;
+  --sidebar-foreground: #c9d1d9;
+  --sidebar-hover: #161a21;
+  --sidebar-active: #7c4dff;
+  --sidebar-border: #161a21;
+
+  /* ---- HTTP method accents (load-bearing for endpoint pills, log rows) - */
+  --method-get: #22c55e;
+  --method-post: #3b82f6;
+  --method-put: #f59e0b;
+  --method-patch: #a855f7;
+  --method-delete: #ef4444;
+  --method-head: #06b6d4;
+  --method-options: #687280;
+
+  /* ---- Charts ---------------------------------------------------------- */
+  --chart-1: #7c4dff;
+  --chart-2: #06b6d4;
+  --chart-3: #10b981;
+  --chart-4: #f59e0b;
+  --chart-5: #ef4444;
+  --chart-6: #ec4899;
+
+  /* ---- Shadows --------------------------------------------------------- */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.55);
+
+  /* ---- Radii (4 / 8 / 12 / 16 px scale) -------------------------------- */
+  --radius-none: 0px;
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
   --radius: var(--radius-md);
 
-  /* Spacing rhythm — relies on Tailwind's default 4px scale; we just expose the unit
-   * so blocks can reference it from CSS without hardcoding. */
-  --spacing-unit: 0.25rem;
+  /* ---- Spacing (raw vars for CSS use; Tailwind utilities use its own scale) */
+  --space-0: 0px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+
+  /* ---- Typography ------------------------------------------------------
+   * `--font-inter` and `--font-jetbrains` are injected by next/font in
+   * apps/web/app/layout.tsx — see the className on <html>. The fallbacks
+   * cover the brief window before the web font is ready. */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  --text-display-xl: 48px;
+  --text-display-lg: 36px;
+
+  --text-h1: 28px;
+  --text-h2: 22px;
+  --text-h3: 18px;
+  --text-h4: 16px;
+
+  --text-body-lg: 15px;
+  --text-body: 14px;
+  --text-body-sm: 13px;
+
+  --text-caption: 12px;
+  --text-label: 11px;
+
+  --leading-display-xl: 56px;
+  --leading-display-lg: 44px;
+
+  --leading-h1: 36px;
+  --leading-h2: 32px;
+  --leading-h3: 28px;
+  --leading-h4: 24px;
+
+  --leading-body-lg: 24px;
+  --leading-body: 20px;
+  --leading-body-sm: 18px;
+
+  --leading-caption: 16px;
+  --leading-label: 16px;
+
+  /* ---- Layout ---------------------------------------------------------- */
+  --sidebar-width: 280px;
+  --topbar-height: 72px;
+
+  --container-sm: 768px;
+  --container-md: 1024px;
+  --container-lg: 1280px;
+  --container-xl: 1440px;
+
+  /* ---- Transitions ----------------------------------------------------- */
+  --transition-fast: 120ms ease;
+  --transition-base: 180ms ease;
+  --transition-slow: 280ms ease;
+
+  /* ---- Z-index --------------------------------------------------------- */
+  --z-sidebar: 40;
+  --z-dropdown: 50;
+  --z-modal: 60;
+  --z-toast: 70;
+  --z-tooltip: 80;
 }
 
 @theme inline {
+  /* Surfaces */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-surface-hover: var(--surface-hover);
+
+  --color-border: var(--border);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
+
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  /* Brand */
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-active: var(--primary-active);
+  --color-primary-foreground: var(--primary-foreground);
+
+  /* Required by shadcn primitives (Button "secondary", Badge hover, etc.) */
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+
+  /* Semantic */
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+
+  /* Inputs */
   --color-input: var(--input);
   --color-ring: var(--ring);
 
+  /* Sidebar */
+  --color-sidebar: var(--sidebar-background);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+
+  /* HTTP method accents */
   --color-method-get: var(--method-get);
   --color-method-post: var(--method-post);
   --color-method-put: var(--method-put);
   --color-method-patch: var(--method-patch);
   --color-method-delete: var(--method-delete);
+  --color-method-head: var(--method-head);
+  --color-method-options: var(--method-options);
 
-  --font-sans:
-    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  /* Charts */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-chart-6: var(--chart-6);
 
+  /* Fonts */
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+
+  /* Radii */
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);
   --radius-lg: var(--radius-lg);
   --radius-xl: var(--radius-xl);
 }
 
+/* Component keyframes (used by Progress's indeterminate state, etc.). Register
+ * the animation token in @theme so `animate-progress-indeterminate` becomes
+ * a Tailwind utility, then declare the matching @keyframes globally. */
+@theme {
+  --animate-progress-indeterminate: progress-indeterminate 1.4s ease-in-out infinite;
+}
+
+@keyframes progress-indeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(400%);
+  }
+}
+
 @layer base {
-  * {
+  *,
+  *::before,
+  *::after {
     border-color: var(--border);
   }
 
-  html,
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     background: var(--background);
     color: var(--foreground);
     font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: var(--leading-body);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
   }
 
   ::selection {
-    background: oklch(1 0 0 / 12%);
+    background: rgba(124, 77, 255, 0.3);
+    color: #ffffff;
+  }
+
+  code,
+  pre,
+  kbd {
+    font-family: var(--font-mono);
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--surface);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--surface-hover);
+    border-radius: 999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--border);
   }
 }

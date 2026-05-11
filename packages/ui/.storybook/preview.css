@@ -1,0 +1,15 @@
+/* Storybook preview stylesheet.
+ *
+ * The design system's `--font-sans` / `--font-mono` reference `--font-inter`
+ * and `--font-jetbrains` — those are normally injected by next/font in
+ * apps/web. Storybook is standalone so we self-host via Fontsource and
+ * declare the same CSS vars before importing the design system. */
+
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/jetbrains-mono';
+@import '../styles/globals.css';
+
+:root {
+  --font-inter: 'Inter Variable', sans-serif;
+  --font-jetbrains: 'JetBrains Mono Variable', monospace;
+}

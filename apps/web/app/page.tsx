@@ -16,7 +16,7 @@ export default function HomePage(): React.JSX.Element {
         </p>
         <div className="flex gap-2 pt-2">
           <Button>Upload schema</Button>
-          <Button variant="outline">View docs</Button>
+          <Button variant="tertiary">View docs</Button>
         </div>
       </header>
 
