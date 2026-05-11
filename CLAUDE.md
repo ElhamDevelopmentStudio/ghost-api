@@ -20,13 +20,15 @@ Pipeline:
 OpenAPI Upload → packages/parser → NormalizedEndpoint
                                  → packages/mock-engine (fake data)
                                  → packages/runtime (dynamic route mounting, latency/auth/error sim)
-                                 → apps/server (Hono) ←→ apps/web (Next.js workspace)
+                                 → apps/server (Hono) ←→ apps/app (React SPA workspace)
+                                                     ←→ apps/web (Next.js public site)
 ```
 
 Planned monorepo layout (Turborepo + pnpm workspaces):
 
-- `apps/web` — Next.js App Router frontend. Thin, state-driven, API-first. **No parser, runtime, or OpenAPI transformation logic here.**
-- `apps/server` — Hono backend. API routes, auth, DB, runtime orchestration, schema ingestion. **No frontend rendering.**
+- `apps/web` — **Public** Next.js App Router site (port 3000). Landing, docs, blog, marketing, SEO-sensitive pages. **Does NOT contain auth, login/register, dashboard logic, the API workspace, or any protected flow.** Lives here purely for SSR/SEO.
+- `apps/app` — **Protected** React + Vite SPA (port 3002). Login, register, projects, the unified API workspace, logs, settings — every authenticated flow. Built as an SPA so it can be packaged into Electron later. Stack: React 19, Vite 6, React Router v7 (data router), TanStack Query (server state), Zustand (UI/editor state — do not mix the two), React Hook Form, Tailwind v4 via `@tailwindcss/vite`, consumes `@ghostapi/ui`. Env validated via `loadVitePublicEnv` from `@ghostapi/config` against `import.meta.env` (must be `VITE_*`-prefixed).
+- `apps/server` — Hono backend (port 3001). API routes, auth, DB, runtime orchestration, schema ingestion. **No frontend rendering.** Serves both web and app over the same API surface.
 - `packages/parser` — OpenAPI validation, extraction, normalization. Future protocol parsers must produce the same `NormalizedEndpoint` shape.
 - `packages/runtime` — Dynamic mock runtime: route mounting, latency/auth/error simulation. Kept isolated from data generation.
 - `packages/mock-engine` — Schema-aware fake data generation (Faker.js-based). Isolated from runtime logic.
@@ -40,7 +42,9 @@ The API Workspace is the heart of the product. It deliberately merges endpoint b
 
 ## Stack (planned)
 
-Frontend: Next.js App Router, TypeScript, Tailwind, shadcn/ui, Zustand (UI/editor/builder state), TanStack Query (server state — do not mix the two), React Hook Form, Monaco Editor.
+Public frontend (`apps/web`): Next.js App Router, TypeScript, Tailwind, shadcn/ui (consumed from `@ghostapi/ui`).
+
+Protected frontend (`apps/app`): React 19, Vite 6, TypeScript, Tailwind v4, shadcn/ui (consumed from `@ghostapi/ui`), React Router v7 data router, TanStack Query (server state), Zustand (UI/editor/builder state — do not mix the two), React Hook Form, Monaco Editor (when the request body editor lands). The SPA exists in addition to the Next site so it can be packaged into Electron later.
 
 Backend: Hono, TypeScript, Zod, Prisma, Pino (structured logs only — no `console.log`).
 
@@ -54,7 +58,12 @@ Per `README.md` and `docs/SETUP.md`. None of these work yet — they're the cont
 pnpm install                                  # install workspace deps
 docker compose up -d                          # start postgres + redis
 cd apps/server && pnpm prisma migrate dev     # run migrations
-pnpm dev                                      # turbo dev across apps
+pnpm dev                                      # turbo dev across apps (web :3000, app :3002, server :3001)
+
+# Single-app dev:
+pnpm --filter @ghostapi/app dev               # Vite dev server for the protected SPA
+pnpm --filter @ghostapi/web dev               # Next.js dev server for the public site
+pnpm --filter @ghostapi/server dev            # Hono backend
 ```
 
 `turbo.json` defines `build`, `dev` (uncached), `lint`, `test`, `build-storybook`, and `storybook` (uncached, persistent). Pre-commit (Husky + lint-staged) and CI must run lint, typecheck, tests, and build. Storybook is run on demand: `pnpm --filter @ghostapi/ui storybook` for local review, `pnpm --filter @ghostapi/ui build-storybook` to produce a static bundle.
@@ -63,7 +72,7 @@ pnpm dev                                      # turbo dev across apps
 
 - TypeScript `"strict": true` everywhere. Avoid `any`. Prefer Zod-validated DTOs at boundaries.
 - Prisma is **persistence only** — no business logic in models. Columns are `snake_case`. Every table has `created_at` / `updated_at`. **UUIDs only**, never incrementing IDs.
-- Env vars validated via Zod in `packages/config/env.ts`. Never read `process.env` directly elsewhere.
+- Env vars validated via Zod in `packages/config/env.ts`. Never read `process.env` directly elsewhere. The package exposes three loaders: `loadServerEnv` (Hono backend), `loadPublicEnv` (Next public site, `NEXT_PUBLIC_*`), `loadVitePublicEnv` (React SPA, `VITE_*`).
 - Uploaded OpenAPI schemas must be validated, sanitized, and parsed safely. **Never `eval` uploaded schemas or execute uploaded JavaScript.**
 - Design language: dark-first, terminal-inspired, sharp spacing, monospace where it earns its place. Avoid SaaS-style cards, gradients, marketing-dashboard layouts.
 - Test priorities: parser engine, mock generation determinism, runtime endpoint serving (Vitest).

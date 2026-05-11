@@ -35,6 +35,14 @@ export default [
   },
   prettier,
   {
-    ignores: ['dist/**', '.next/**', '.turbo/**', 'node_modules/**', 'coverage/**'],
+    ignores: [
+      'dist/**',
+      '.next/**',
+      '.turbo/**',
+      '.vite/**',
+      'node_modules/**',
+      'coverage/**',
+      'storybook-static/**',
+    ],
   },
 ];

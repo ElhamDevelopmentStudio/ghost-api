@@ -5,7 +5,8 @@
 This document defines:
 
 - repository structure
-- application architecture
+- frontend architecture
+- backend architecture
 - tooling
 - infrastructure
 - setup commands
@@ -74,7 +75,7 @@ DO NOT split these into:
 
 The product workflow should remain:
 
-```
+```txt id="jlwmp1"
 Request → Response
 ```
 
@@ -88,7 +89,7 @@ This is the most important architectural decision in the entire system.
 
 OpenAPI schemas must first become:
 
-```
+```txt id="jlwmp2"
 NormalizedEndpoint
 ```
 
@@ -118,9 +119,9 @@ without rewriting the application.
 
 The repository itself should impress developers.
 
-A contributor should be able to:
+A contributor should be able to run:
 
-```
+```bash id="jlwmp3"
 docker compose up
 ```
 
@@ -149,11 +150,96 @@ without major rewrites.
 
 ---
 
+# Frontend Architecture
+
+GhostAPI intentionally uses:
+
+## two separate frontend applications.
+
+This is a deliberate architectural decision.
+
+---
+
+# Public Frontend — Next.js
+
+The Next.js frontend handles:
+
+- landing page
+- docs
+- about
+- blog
+- changelog
+- marketing pages
+- SEO-sensitive public routes
+
+Purpose:
+
+- SEO
+- discoverability
+- server-side rendering
+- metadata optimization
+- public indexing
+
+The Next.js application is NOT responsible for:
+
+- protected dashboard pages
+- API workspace
+- application runtime flows
+
+---
+
+# Protected Frontend — React SPA
+
+The React frontend handles:
+
+- login
+- register
+- projects
+- API workspace
+- logs
+- settings
+- environments
+- all authenticated flows
+
+Purpose:
+
+- fast application runtime
+- Electron compatibility
+- long-running application state
+- desktop packaging
+
+This separation exists because:
+
+> GhostAPI is planned to ship as an Electron desktop application later.
+
+Trying to package the entire authenticated experience inside a full Next.js dashboard would create unnecessary complexity for Electron packaging and runtime behavior.
+
+The React SPA keeps:
+
+- desktop runtime
+- Electron integration
+- application state
+- local runtime coordination
+
+significantly cleaner.
+
+---
+
 # Recommended Stack
 
-# Frontend
+# Public Frontend
 
 - Next.js App Router
+- TypeScript
+- Tailwind CSS
+- shadcn/ui
+
+---
+
+# Protected Frontend
+
+- React
+- Vite
 - TypeScript
 - Tailwind CSS
 - shadcn/ui
@@ -206,6 +292,7 @@ We want:
 - isolated packages
 - reusable runtime modules
 - shared parser engine
+- shared UI package
 - future CLI package
 - future SDK support
 
@@ -219,11 +306,12 @@ This structure prevents:
 
 # Repository Structure
 
-```
+```txt id="jlwmp4"
 ghostapi/
 ├ apps/
-│  ├ web/
-│  └ server/
+│  ├ web/          → Next.js public frontend
+│  ├ app/          → React protected frontend
+│  └ server/       → Hono backend
 │
 ├ packages/
 │  ├ parser/
@@ -250,11 +338,40 @@ ghostapi/
 
 # apps/web
 
-Next.js frontend application.
+Next.js public-facing frontend.
 
 Contains:
 
-- authentication pages
+- landing page
+- docs
+- about
+- marketing pages
+- public documentation
+
+The purpose of this application is:
+
+- SEO
+- indexing
+- discoverability
+- public branding
+
+DO NOT place:
+
+- API workspace logic
+- authenticated dashboard logic
+- runtime state management
+
+inside this application.
+
+---
+
+# apps/app
+
+Protected React SPA application.
+
+Contains:
+
+- authentication
 - projects
 - API workspace
 - logs
@@ -262,11 +379,18 @@ Contains:
 - environments
 - schema management
 
-The frontend must remain:
+This application is optimized for:
+
+- speed
+- interactivity
+- Electron compatibility
+- desktop runtime behavior
+
+The protected app should remain:
 
 - thin
-- state-driven
 - API-first
+- state-driven
 
 DO NOT place:
 
@@ -327,7 +451,7 @@ Responsible for:
 - auth simulation
 - error simulation
 
-This becomes one of the most important packages in the entire project.
+This becomes one of the most important packages in the project.
 
 ---
 
@@ -362,21 +486,31 @@ Avoid duplicated types across applications.
 
 # packages/ui
 
-Reusable UI system.
+Shared design system package.
 
 Contains:
 
+- shadcn/ui primitives
 - layouts
 - panels
 - tables
 - sidebar components
 - request/response UI primitives
+- GhostAPI-specific components
 
-The UI package should establish:
+This package establishes:
 
 - spacing rhythm
 - typography
 - visual consistency
+- theme tokens
+- design language
+
+The UI package should be shared across:
+
+- Next.js frontend
+- React application
+- future Electron client
 
 ---
 
@@ -395,9 +529,11 @@ Shared configuration:
 
 # 1. Create Repository
 
-```
+```bash id="jlwmp5"
 mkdir ghostapi
+
 cd ghostapi
+
 git init
 ```
 
@@ -405,7 +541,7 @@ git init
 
 # 2. Initialize pnpm
 
-```
+```bash id="jlwmp6"
 pnpm init
 ```
 
@@ -413,7 +549,7 @@ pnpm init
 
 # 3. Install Turborepo
 
-```
+```bash id="jlwmp7"
 pnpm add -D turbo
 ```
 
@@ -423,13 +559,13 @@ pnpm add -D turbo
 
 Create:
 
-```
+```txt id="jlwmp8"
 pnpm-workspace.yaml
 ```
 
 Content:
 
-```
+```yaml id="jlwmp9"
 packages:
   - apps/*
   - packages/*
@@ -441,13 +577,13 @@ packages:
 
 Create:
 
-```
+```txt id="jlwmp10"
 turbo.json
 ```
 
 Content:
 
-```
+```json id="jlwmp11"
 {
   "$schema": "https://turbo.build/schema.json",
   "tasks": {
@@ -468,16 +604,20 @@ Content:
 
 # 6. Create Applications
 
-```
-mkdir -p apps/webmkdir -p apps/server
+```bash id="jlwmp12"
+mkdir -p apps/web
+mkdir -p apps/app
+mkdir -p apps/server
 ```
 
 ---
 
-# 7. Setup Next.js
+# 7. Setup Next.js Public Frontend
 
-```
-cd apps/webpnpm create next-app . --ts --tailwind --app
+```bash id="jlwmp13"
+cd apps/web
+
+pnpm create next-app . --ts --tailwind --app
 ```
 
 IMPORTANT:
@@ -488,9 +628,25 @@ IMPORTANT:
 
 ---
 
-# 8. Setup Hono Backend
+# 8. Setup React Protected Frontend
 
+```bash id="jlwmp14"
+cd ../app
+
+pnpm create vite . --template react-ts
 ```
+
+Install dependencies:
+
+```bash id="jlwmp15"
+pnpm add react-router-dom zustand @tanstack/react-query react-hook-form
+```
+
+---
+
+# 9. Setup Hono Backend
+
+```bash id="jlwmp16"
 cd ../server
 
 pnpm init
@@ -501,9 +657,9 @@ pnpm add -D typescript tsx @types/node
 
 ---
 
-# 9. Create Shared Packages
+# 10. Create Shared Packages
 
-```
+```bash id="jlwmp17"
 mkdir -p packages/parser
 mkdir -p packages/runtime
 mkdir -p packages/mock-engine
@@ -530,15 +686,15 @@ DO NOT:
 
 # docker-compose.yml
 
-```
-version: "3.9"
+```yaml id="jlwmp18"
+version: '3.9'
 
 services:
   postgres:
     image: postgres:16
     restart: unless-stopped
     ports:
-      - "5432:5432"
+      - '5432:5432'
     environment:
       POSTGRES_USER: ghostapi
       POSTGRES_PASSWORD: ghostapi
@@ -550,7 +706,7 @@ services:
     image: redis:7
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - '6379:6379'
 
 volumes:
   postgres_data:
@@ -577,13 +733,13 @@ Adding it now avoids future infrastructure migration pain.
 
 Inside:
 
-```
+```txt id="jlwmp19"
 apps/server
 ```
 
 Run:
 
-```
+```bash id="jlwmp20"
 pnpm prisma init
 ```
 
@@ -605,7 +761,7 @@ Prisma is:
 
 Use:
 
-```
+```txt id="jlwmp21"
 snake_case
 ```
 
@@ -615,7 +771,7 @@ for database columns.
 
 # ALWAYS INCLUDE
 
-```
+```txt id="jlwmp22"
 created_at
 updated_at
 ```
@@ -636,13 +792,13 @@ Never incremental IDs.
 
 Create:
 
-```
+```txt id="jlwmp23"
 .env.example
 ```
 
 Must contain:
 
-```
+```env id="jlwmp24"
 DATABASE_URL=
 REDIS_URL=
 
@@ -661,7 +817,7 @@ Use:
 
 Create:
 
-```
+```txt id="jlwmp25"
 packages/config/env.ts
 ```
 
@@ -675,7 +831,7 @@ Never trust env blindly.
 
 # MUST ENABLE
 
-```
+```json id="jlwmp26"
 "strict": true
 ```
 
@@ -685,7 +841,7 @@ No exceptions.
 
 # NEVER USE
 
-```
+```txt id="jlwmp27"
 any
 ```
 
@@ -785,7 +941,7 @@ DO NOT mix responsibilities.
 
 Install:
 
-```
+```bash id="jlwmp28"
 pnpm add -D vitest
 ```
 
@@ -831,7 +987,7 @@ Clear one-line value proposition.
 
 Example:
 
-```
+```txt id="jlwmp29"
 Turn OpenAPI into a working mock backend in seconds.
 ```
 
@@ -850,7 +1006,7 @@ GitHub stars depend heavily on:
 
 ## One-command Setup
 
-```
+```bash id="jlwmp30"
 docker compose up
 ```
 
@@ -866,7 +1022,7 @@ Developers love infrastructure clarity.
 
 Install:
 
-```
+```bash id="jlwmp31"
 pnpm add -D husky lint-staged
 ```
 
@@ -888,7 +1044,7 @@ before commit.
 
 Use:
 
-```
+```txt id="jlwmp32"
 .github/workflows
 ```
 

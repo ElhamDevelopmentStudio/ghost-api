@@ -42,3 +42,32 @@ export function loadPublicEnv(source: Record<string, string | undefined>): Publi
 
   return parsed.data;
 }
+
+/* ---- Vite (apps/app protected SPA) public env ----------------------- */
+
+const vitePublicEnvSchema = z.object({
+  VITE_API_URL: z.string().url(),
+  VITE_APP_NAME: z.string().default('GhostAPI'),
+});
+
+export type VitePublicEnv = z.infer<typeof vitePublicEnvSchema>;
+
+/**
+ * Validate Vite's `import.meta.env` for the protected React SPA.
+ *
+ * Call once at boot (main.tsx) so a missing/invalid `VITE_API_URL` fails
+ * loudly during startup instead of producing confusing runtime errors when
+ * the app tries to reach the backend.
+ */
+export function loadVitePublicEnv(source: Record<string, unknown>): VitePublicEnv {
+  const parsed = vitePublicEnvSchema.safeParse(source);
+
+  if (!parsed.success) {
+    const issues = parsed.error.issues
+      .map((i) => `  - ${i.path.join('.') || '(root)'}: ${i.message}`)
+      .join('\n');
+    throw new Error(`Invalid Vite public environment:\n${issues}`);
+  }
+
+  return parsed.data;
+}

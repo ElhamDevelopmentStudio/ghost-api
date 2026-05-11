@@ -1,0 +1,13 @@
+/* Self-host Inter and JetBrains Mono via Fontsource (apps/web does this via
+ * next/font; the SPA needs its own injection). Declared BEFORE the design
+ * system import so the @theme inline `--font-sans / --font-mono` declarations
+ * pick them up. */
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/jetbrains-mono';
+
+@import '@ghostapi/ui/styles/globals.css';
+
+:root {
+  --font-inter: 'Inter Variable', sans-serif;
+  --font-jetbrains: 'JetBrains Mono Variable', monospace;
+}

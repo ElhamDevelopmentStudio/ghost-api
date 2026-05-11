@@ -16,7 +16,7 @@ GhostAPI is not intended to become:
 Instead, GhostAPI focuses on one core workflow:
 
 ```
-Import OpenAPI↓Generate API Workspace↓Test & simulate APIs instantly
+Create Project↓Upload OpenAPI↓Generate API Workspace↓Test APIs Instantly
 ```
 
 The entire product is optimized around:
@@ -65,22 +65,110 @@ The product should prioritize:
 
 ---
 
+# Frontend Architecture
+
+GhostAPI uses:
+
+## two separate frontend applications.
+
+This is intentional.
+
+---
+
+# 1. Next.js Frontend
+
+The Next.js application is responsible for:
+
+- landing page
+- marketing pages
+- docs
+- public routes
+- blog
+- about
+- SEO-sensitive pages
+
+This exists primarily to leverage:
+
+- SEO
+- server-side rendering
+- metadata optimization
+- public discoverability
+
+The Next.js frontend is NOT responsible for:
+
+- authenticated dashboard logic
+- API workspace
+- protected application flows
+
+---
+
+# 2. React Frontend
+
+The React frontend handles:
+
+- authentication
+- projects
+- API workspace
+- request playground
+- logs
+- settings
+- all protected application pages
+
+This separation exists because:
+
+> GhostAPI is planned to ship as a desktop application through Electron later.
+
+Using a dedicated React SPA for the protected application layer makes:
+
+- Electron integration
+- packaging
+- desktop state management
+- local runtime handling
+
+significantly cleaner than trying to package a fully Next.js-based dashboard application.
+
+---
+
+# Frontend Responsibilities
+
+# Next.js App
+
+Public-facing:
+
+```
+//docs/about/blog/pricing
+```
+
+Optimized for:
+
+- SEO
+- indexing
+- discoverability
+- marketing
+
+---
+
+# React App
+
+Protected application:
+
+```
+/login/register/projects/workspace/logs/settings
+```
+
+Optimized for:
+
+- speed
+- interactivity
+- Electron compatibility
+- long-running application state
+
+---
+
 # Core Product Flow
 
 ```
-Authentication
-↓
-Projects
-↓
-Create Project
-↓
-Project Overview
-↓
-API Workspace
-↓
-Logs
-↓
-Settings
+Authentication↓Projects↓Create Project↓Project Overview↓API Workspace↓Logs↓Settings
 ```
 
 ---
@@ -183,18 +271,17 @@ into a single unified experience.
 
 ## API Workspace Responsibilities
 
-### Endpoint Navigation
+# Endpoint Navigation
 
 Grouped endpoint explorer:
 
 ```
-Authentication  POST /users/login  POST /users/signup
-Products  GET /products  POST /products
+Authentication  POST /users/login  POST /users/signupProducts  GET /products  POST /products
 ```
 
 ---
 
-### Request Builder
+# Request Builder
 
 Supports:
 
@@ -207,7 +294,7 @@ Supports:
 
 ---
 
-### Response Viewer
+# Response Viewer
 
 Supports:
 
@@ -220,7 +307,7 @@ Supports:
 
 ---
 
-### Inline Mock Controls
+# Inline Mock Controls
 
 Mock behavior is configurable directly inside the workspace:
 
@@ -406,12 +493,7 @@ GhostAPI generates realistic mock data automatically.
 Examples:
 
 ```
-email → realistic email
-name → human name
-avatar → image URL
-price → decimal
-uuid → valid uuid
-phone → formatted phone
+email → realistic emailname → human nameavatar → image URLprice → decimaluuid → valid uuidphone → formatted phone
 ```
 
 ---
@@ -451,9 +533,7 @@ GET /users/:id
 Config:
 
 ```
-Latency: 1200ms
-Auth: Enabled
-Error Chance: 15%
+Latency: 1200msAuth: EnabledError Chance: 15%
 ```
 
 ---
@@ -476,9 +556,19 @@ GET /mock/project-id/users
 
 # Recommended Stack
 
-# Frontend
+# Public Frontend
 
 - Next.js App Router
+- TypeScript
+- Tailwind CSS
+- shadcn/ui
+
+---
+
+# Protected Frontend
+
+- React
+- Vite
 - TypeScript
 - Tailwind CSS
 - shadcn/ui
@@ -524,17 +614,7 @@ GET /mock/project-id/users
 # Architecture
 
 ```
-OpenAPI Upload
-↓
-Parser Engine
-↓
-Normalized Endpoint Model
-↓
-Mock Generator
-↓
-Runtime Server
-↓
-API Workspace
+OpenAPI Upload↓Parser Engine↓Normalized Endpoint Model↓Mock Generator↓Runtime Server↓API Workspace
 ```
 
 ---
@@ -546,12 +626,7 @@ API Workspace
 ## Project
 
 ```
-id
-name
-slug
-description
-icon
-createdAt
+idnameslugdescriptioniconcreatedAt
 ```
 
 ---
@@ -559,14 +634,7 @@ createdAt
 ## Environment
 
 ```
-id
-project
-Id
-name
-baseUrl
-variables
-headers
-authConfig
+idprojectIdnamebaseUrlvariablesheadersauthConfig
 ```
 
 ---
@@ -574,12 +642,7 @@ authConfig
 ## Schema
 
 ```
-id
-projectId
-version
-content
-metadata
-uploadedAt
+idprojectIdversioncontentmetadatauploadedAt
 ```
 
 ---
@@ -587,13 +650,7 @@ uploadedAt
 ## Endpoint
 
 ```
-id
-projectId
-method
-path
-group
-requestSchema
-responseSchema
+idprojectIdmethodpathgrouprequestSchemaresponseSchema
 ```
 
 ---
@@ -601,11 +658,7 @@ responseSchema
 ## EndpointConfig
 
 ```
-endpointId
-latency
-statusCode
-authRequired
-errorChance
+endpointIdlatencystatusCodeauthRequirederrorChance
 ```
 
 ---
@@ -613,8 +666,7 @@ errorChance
 ## EndpointResponse
 
 ```
-endpointId
-body
+endpointIdbody
 ```
 
 ---
@@ -622,13 +674,7 @@ body
 ## RequestLog
 
 ```
-endpointId
-method
-status
-duration
-headers
-body
-createdAt
+endpointIdmethodstatusdurationheadersbodycreatedAt
 ```
 
 ---
@@ -669,7 +715,7 @@ Not:
 
 # Most Important Product Decision
 
-## Unified API Workspace
+# Unified API Workspace
 
 The biggest architectural and UX decision is:
 
@@ -694,7 +740,8 @@ and creates a much cleaner developer workflow.
 - Docker
 - Prisma
 - Hono backend
-- Next.js frontend
+- Next.js public frontend
+- React protected frontend
 
 ---
 
