@@ -16,6 +16,9 @@ export { Badge, badgeVariants } from './components/badge.js';
 export { Chip, chipVariants } from './components/chip.js';
 export type { ChipProps, ChipSize, ChipVariant } from './components/chip.js';
 
+export { MethodBadge, methodBadgeVariants } from './components/method-badge.js';
+export type { HttpMethod, MethodBadgeProps } from './components/method-badge.js';
+
 export { Separator } from './components/separator.js';
 
 export {
@@ -122,3 +125,17 @@ export {
   DrawerTitle,
   DrawerDescription,
 } from './components/drawer.js';
+
+/* ---- Blocks ----------------------------------------------------------
+ * GhostAPI-specific composed UI. These build on top of primitives + tokens
+ * and ship animations; consumers should treat them as "the canonical way"
+ * to render the live activity feed, the glowing orb, etc. */
+
+export { GlowOrb } from './blocks/glow-orb.js';
+export { AmbientParticles } from './blocks/ambient-particles.js';
+export { DataFlowCanvas } from './blocks/data-flow-canvas.js';
+export type { SourceBeam, SinkBeam, DataFlowCanvasProps } from './blocks/data-flow-canvas.js';
+export { TerminalWindow } from './blocks/terminal-window.js';
+export type { TerminalLine } from './blocks/terminal-window.js';
+export { ApiLogRow } from './blocks/api-log-row.js';
+export type { ApiLogEntry } from './blocks/api-log-row.js';
