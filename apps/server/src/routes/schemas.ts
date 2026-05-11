@@ -5,8 +5,12 @@ import { z } from 'zod';
 import { parseSchema, SchemaParseError, SchemaValidationError } from '@ghostapi/parser';
 import { prisma } from '../db.js';
 import { logger } from '../logger.js';
+import { authContext, requireAuth } from '../features/auth/index.js';
+import type { AppEnv } from '../server/types.js';
 
-export const schemasRouter = new Hono();
+export const schemasRouter = new Hono<AppEnv>();
+
+schemasRouter.use('*', requireAuth);
 
 const uploadSchema = z.object({
   /** OpenAPI document as a string — JSON or YAML, no eval, no execution. */
@@ -16,6 +20,7 @@ const uploadSchema = z.object({
 schemasRouter.post('/:projectId/schemas', zValidator('json', uploadSchema), async (c) => {
   const projectId = c.req.param('projectId');
   const { content } = c.req.valid('json');
+  const { userId } = authContext(c);
 
   let normalized;
   try {
@@ -31,7 +36,15 @@ schemasRouter.post('/:projectId/schemas', zValidator('json', uploadSchema), asyn
     return c.json({ error: 'Unexpected error parsing schema' }, 500);
   }
 
-  const project = await prisma.project.findUnique({ where: { id: projectId } });
+  const project = await prisma.project.findFirst({
+    where: {
+      id: projectId,
+      OR: [
+        { ownerId: userId },
+        { members: { some: { userId, role: { in: ['OWNER', 'ADMIN', 'EDITOR'] } } } },
+      ],
+    },
+  });
   if (!project) return c.json({ error: 'Project not found' }, 404);
 
   // Replace endpoints atomically. Phase 1: full replace on each upload.

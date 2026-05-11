@@ -7,6 +7,7 @@ const serverEnvSchema = z.object({
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
   PORT: z.coerce.number().int().positive().default(3001),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
+  CORS_ORIGINS: z.string().default('http://localhost:3000,http://localhost:3002'),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;
