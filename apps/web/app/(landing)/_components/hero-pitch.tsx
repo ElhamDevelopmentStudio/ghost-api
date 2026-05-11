@@ -5,7 +5,7 @@ import { Check, Play } from 'lucide-react';
 
 import { Button } from '@ghostapi/ui';
 
-const TRUST_BULLETS = ['No credit card', 'Open source', 'Works in seconds'] as const;
+import { HERO_TRUST_BULLETS } from './constants';
 
 /**
  * Left-column copy for the hero: eyebrow, headline (with blinking cursor),
@@ -91,7 +91,7 @@ export function HeroPitch(): React.JSX.Element {
         transition={{ duration: 0.6, delay: 0.6 }}
         className="text-muted-foreground flex flex-wrap items-center gap-x-6 gap-y-2 text-[11px]"
       >
-        {TRUST_BULLETS.map((label) => (
+        {HERO_TRUST_BULLETS.map((label) => (
           <li key={label} className="flex items-center gap-2">
             <span className="bg-success/15 ring-success/30 flex size-4 items-center justify-center rounded-full ring-1">
               <Check className="text-success size-2.5" strokeWidth={3} />

@@ -2,16 +2,9 @@
 
 import { motion } from 'framer-motion';
 
-import { TerminalWindow, type TerminalLine } from '@ghostapi/ui';
+import { TerminalWindow } from '@ghostapi/ui';
 
-const LINES: TerminalLine[] = [
-  { type: 'command', text: '$ ghostapi start' },
-  { type: 'success', text: 'Parsing openapi.yaml' },
-  { type: 'success', text: 'Generating endpoints' },
-  { type: 'success', text: 'Starting mock server' },
-  { type: 'link', label: 'Live at', href: 'http://localhost:4321' },
-  { type: 'status', text: 'Ready to receive requests' },
-];
+import { HERO_TERMINAL_LINES } from './constants';
 
 /** Hero-side wrapper around `TerminalWindow` that just owns mount-in motion. */
 export function HeroTerminal(): React.JSX.Element {
@@ -22,7 +15,7 @@ export function HeroTerminal(): React.JSX.Element {
       transition={{ duration: 0.6, delay: 0.7 }}
       className="mt-8 w-full max-w-md"
     >
-      <TerminalWindow lines={LINES} />
+      <TerminalWindow lines={HERO_TERMINAL_LINES} />
     </motion.div>
   );
 }

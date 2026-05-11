@@ -10,7 +10,8 @@ import {
   type SinkBeam,
   type SourceBeam,
 } from '@ghostapi/ui';
-import { LANDING_API_LOG } from './live-api-activity';
+
+import { LANDING_API_LOG } from './constants';
 
 type Anchor = { x: number; y: number };
 

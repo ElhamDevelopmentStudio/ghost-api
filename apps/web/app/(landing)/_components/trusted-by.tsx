@@ -1,16 +1,8 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Code2, Globe, Layers, Rocket, Settings2, Zap } from 'lucide-react';
 
-const COMPANIES = [
-  { name: 'ShipFast', icon: Layers },
-  { name: 'ByteCraft', icon: Code2 },
-  { name: 'DevStack', icon: Settings2 },
-  { name: 'LaunchKit', icon: Rocket },
-  { name: 'Codewave', icon: Zap },
-  { name: 'Acme Corp', icon: Globe },
-] as const;
+import { TRUSTED_COMPANIES } from './constants';
 
 /** Bottom social-proof row — placeholder logos until design ships real ones. */
 export function TrustedBy(): React.JSX.Element {
@@ -27,7 +19,7 @@ export function TrustedBy(): React.JSX.Element {
         </span>
       </div>
       <div className="flex flex-wrap items-center justify-center gap-12 px-6">
-        {COMPANIES.map((company, index) => {
+        {TRUSTED_COMPANIES.map((company, index) => {
           const Icon = company.icon;
           return (
             <motion.div

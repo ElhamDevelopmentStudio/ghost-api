@@ -3,91 +3,9 @@
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 
-import { ApiLogRow, type ApiLogEntry } from '@ghostapi/ui';
+import { ApiLogRow } from '@ghostapi/ui';
 
-/** Static script of requests that "happen" on the landing page. */
-export const LANDING_API_LOG: ApiLogEntry[] = [
-  {
-    id: '1',
-    method: 'GET',
-    endpoint: '/users',
-    status: 'OK',
-    statusCode: 200,
-    responseTime: '482ms',
-    size: '1.2 KB',
-    timestamp: '10:24:31:250',
-  },
-  {
-    id: '2',
-    method: 'POST',
-    endpoint: '/users/login',
-    status: 'OK',
-    statusCode: 200,
-    responseTime: '321ms',
-    size: '1.1 KB',
-    timestamp: '10:24:31:987',
-  },
-  {
-    id: '3',
-    method: 'GET',
-    endpoint: '/products?limit=10',
-    status: 'OK',
-    statusCode: 200,
-    responseTime: '196ms',
-    size: '2.4 KB',
-    timestamp: '10:24:32:521',
-  },
-  {
-    id: '4',
-    method: 'PUT',
-    endpoint: '/users/123',
-    status: 'OK',
-    statusCode: 200,
-    responseTime: '612ms',
-    size: '1.3 KB',
-    timestamp: '10:24:33:102',
-  },
-  {
-    id: '5',
-    method: 'POST',
-    endpoint: '/orders',
-    status: 'Created',
-    statusCode: 201,
-    responseTime: '842ms',
-    size: '1.8 KB',
-    timestamp: '10:24:33:659',
-  },
-  {
-    id: '6',
-    method: 'GET',
-    endpoint: '/orders/987',
-    status: 'OK',
-    statusCode: 200,
-    responseTime: '278ms',
-    size: '2.1 KB',
-    timestamp: '10:24:34:221',
-  },
-  {
-    id: '7',
-    method: 'DELETE',
-    endpoint: '/users/456',
-    status: 'Not Found',
-    statusCode: 404,
-    responseTime: '128ms',
-    size: '240 B',
-    timestamp: '10:24:34:820',
-  },
-  {
-    id: '8',
-    method: 'POST',
-    endpoint: '/uploads',
-    status: 'Unauthorized',
-    statusCode: 401,
-    responseTime: '315ms',
-    size: '512 B',
-    timestamp: '10:24:35:443',
-  },
-];
+import { LANDING_API_LOG } from './constants';
 
 /**
  * Left-side animated panel that streams `LANDING_API_LOG` requests. Each
