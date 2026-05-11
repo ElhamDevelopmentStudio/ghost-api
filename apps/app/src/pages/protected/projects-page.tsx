@@ -2,7 +2,7 @@ import { Plus } from 'lucide-react';
 
 import { Button } from '@ghostapi/ui';
 
-import { PageHeader } from '@/pages/_page-header';
+import { PageHeader } from '@/components/page-header';
 
 export function ProjectsPage() {
   return (

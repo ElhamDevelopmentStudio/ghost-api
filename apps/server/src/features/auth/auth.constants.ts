@@ -6,3 +6,4 @@ export const CSRF_HEADER = 'x-csrf-token';
 export const ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
 export const REFRESH_TOKEN_TTL_SECONDS = 30 * 24 * 60 * 60;
 export const PASSWORD_RESET_TTL_SECONDS = 60 * 60;
+export const EMAIL_VERIFICATION_TTL_SECONDS = 24 * 60 * 60;

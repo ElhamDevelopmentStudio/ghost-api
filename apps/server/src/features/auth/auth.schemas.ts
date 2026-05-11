@@ -7,6 +7,7 @@ export const userSchema = z
     id: z.string().uuid().openapi({ example: '4c21fd53-4e38-4a0e-856b-82aa8361825f' }),
     email: z.string().email().openapi({ example: 'dev@example.com' }),
     name: z.string().nullable().openapi({ example: 'Ada Developer' }),
+    emailVerifiedAt: z.string().datetime().nullable(),
     createdAt: z.string().datetime().openapi({ example: '2026-05-11T10:00:00.000Z' }),
   })
   .openapi('AuthUser');
@@ -27,6 +28,13 @@ export const authResponseSchema = z
     session: sessionSchema,
   })
   .openapi('AuthResponse');
+
+export const registerResponseSchema = z
+  .object({
+    success: z.literal(true),
+    user: userSchema,
+  })
+  .openapi('RegisterResponse');
 
 export const csrfResponseSchema = z
   .object({
@@ -76,6 +84,24 @@ export const resetPasswordBodySchema = z
   })
   .openapi('ResetPasswordRequest');
 
+export const verifyEmailBodySchema = z
+  .object({
+    token: z.string().min(32),
+  })
+  .openapi('VerifyEmailRequest');
+
+export const resendVerificationBodySchema = z
+  .object({
+    email: z.string().email().openapi({ example: 'dev@example.com' }),
+  })
+  .openapi('ResendVerificationRequest');
+
+export const resendVerificationResponseSchema = z
+  .object({
+    success: z.literal(true),
+  })
+  .openapi('ResendVerificationResponse');
+
 export const successSchema = z.object({ success: z.literal(true) }).openapi('SuccessResponse');
 
 export const logoutAllResponseSchema = successSchema
@@ -87,10 +113,6 @@ export const logoutAllResponseSchema = successSchema
 export const forgotPasswordResponseSchema = z
   .object({
     success: z.literal(true),
-    resetToken: z.string().optional().openapi({
-      description:
-        'Only returned outside production until an email delivery provider is connected.',
-    }),
   })
   .openapi('ForgotPasswordResponse');
 

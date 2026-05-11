@@ -18,6 +18,9 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: 'GhostAPI',
   description: 'Turn OpenAPI schemas into working mock backends in seconds.',
+  icons: {
+    icon: '/logo/logo-sm.png',
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }): React.JSX.Element {

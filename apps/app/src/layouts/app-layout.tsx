@@ -3,7 +3,7 @@ import { FolderKanban, LogOut, ScrollText, Settings, Workflow } from 'lucide-rea
 
 import { Button, cn } from '@ghostapi/ui';
 
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/features/auth';
 
 const NAV = [
   { to: '/projects', label: 'Projects', icon: FolderKanban },

@@ -8,6 +8,10 @@ const serverEnvSchema = z.object({
   PORT: z.coerce.number().int().positive().default(3001),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
   CORS_ORIGINS: z.string().default('http://localhost:3000,http://localhost:3002'),
+  APP_URL: z.string().url().default('http://localhost:3002'),
+  MAIL_USERNAME: z.string().default('resend'),
+  MAIL_PASSWORD: z.string().optional(),
+  MAIL_FROM: z.string().email().default('noreply@elhamullah.dev'),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;

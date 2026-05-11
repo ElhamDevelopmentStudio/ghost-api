@@ -1,4 +1,4 @@
-import { PageHeader } from '@/pages/_page-header';
+import { PageHeader } from '@/components/page-header';
 
 export function SettingsPage() {
   return (

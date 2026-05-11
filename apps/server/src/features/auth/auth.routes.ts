@@ -20,11 +20,17 @@ import {
   loginBodySchema,
   logoutAllResponseSchema,
   registerBodySchema,
+  registerResponseSchema,
+  resendVerificationBodySchema,
+  resendVerificationResponseSchema,
   resetPasswordBodySchema,
   successSchema,
+  verifyEmailBodySchema,
 } from './auth.schemas.js';
+import { sendPasswordResetEmail, sendVerificationEmail } from './auth.email.js';
 import {
   AuthError,
+  createEmailVerification,
   createPasswordReset,
   currentSession,
   login,
@@ -33,6 +39,7 @@ import {
   resetPassword,
   revokeAllSessions,
   revokeSession,
+  verifyEmail,
 } from './auth.service.js';
 
 export const authRouter = new OpenAPIHono<AppEnv>();
@@ -60,7 +67,7 @@ authRouter.openapi(
     method: 'post',
     path: '/register',
     tags: ['Authentication'],
-    summary: 'Register a user and create the initial session',
+    summary: 'Register a user and send an email verification link',
     middleware: [rateLimit('auth:register'), requireCsrf] as const,
     request: {
       headers: csrfHeaderSchema,
@@ -71,8 +78,8 @@ authRouter.openapi(
     },
     responses: {
       201: {
-        description: 'User, session, access cookie, and refresh cookie created.',
-        content: { 'application/json': { schema: authResponseSchema } },
+        description: 'User created and verification email sent.',
+        content: { 'application/json': { schema: registerResponseSchema } },
       },
       409: {
         description: 'Email already registered.',
@@ -87,15 +94,55 @@ authRouter.openapi(
         userAgent: c.req.header('user-agent'),
         ipAddress: clientIp(c.req.raw.headers),
       });
-      setAuthCookies(c, result);
       ensureCsrfCookie(c);
-      return c.json({ success: true as const, user: result.user, session: result.session }, 201);
+      await sendVerificationEmail({
+        to: result.user.email,
+        name: result.user.name,
+        verificationUrl: verificationUrl(result.verificationToken),
+      });
+      return c.json({ success: true as const, user: result.user }, 201);
     } catch (err) {
       if (err instanceof AuthError) {
         return c.json({ success: false as const, error: { message: err.message } }, 409);
       }
       throw err;
     }
+  },
+);
+
+authRouter.openapi(
+  createRoute({
+    method: 'post',
+    path: '/resend-verification',
+    tags: ['Authentication'],
+    summary: 'Send a fresh email verification link',
+    middleware: [rateLimit('auth:resend-verification'), requireCsrf] as const,
+    request: {
+      headers: csrfHeaderSchema,
+      body: {
+        required: true,
+        content: { 'application/json': { schema: resendVerificationBodySchema } },
+      },
+    },
+    responses: {
+      200: {
+        description:
+          'Returns success regardless of whether the account exists or is already verified.',
+        content: { 'application/json': { schema: resendVerificationResponseSchema } },
+      },
+    },
+  }),
+  async (c) => {
+    const result = await createEmailVerification(c.req.valid('json').email);
+    if (result.verificationToken) {
+      await sendVerificationEmail({
+        to: result.email,
+        name: result.name,
+        verificationUrl: verificationUrl(result.verificationToken),
+      });
+    }
+
+    return c.json({ success: true as const }, 200);
   },
 );
 
@@ -122,6 +169,10 @@ authRouter.openapi(
         description: 'Invalid credentials.',
         content: { 'application/json': { schema: errorResponseSchema } },
       },
+      403: {
+        description: 'Email is not verified.',
+        content: { 'application/json': { schema: errorResponseSchema } },
+      },
     },
   }),
   async (c) => {
@@ -136,7 +187,46 @@ authRouter.openapi(
       return c.json({ success: true as const, user: result.user, session: result.session }, 200);
     } catch (err) {
       if (err instanceof AuthError) {
-        return c.json({ success: false as const, error: { message: err.message } }, 401);
+        const status = err.status === 403 ? 403 : 401;
+        return c.json({ success: false as const, error: { message: err.message } }, status);
+      }
+      throw err;
+    }
+  },
+);
+
+authRouter.openapi(
+  createRoute({
+    method: 'post',
+    path: '/verify-email',
+    tags: ['Authentication'],
+    summary: 'Verify an email address with a valid verification token',
+    middleware: [requireCsrf] as const,
+    request: {
+      headers: csrfHeaderSchema,
+      body: {
+        required: true,
+        content: { 'application/json': { schema: verifyEmailBodySchema } },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Email address verified.',
+        content: { 'application/json': { schema: successSchema } },
+      },
+      400: {
+        description: 'Invalid or expired verification token.',
+        content: { 'application/json': { schema: errorResponseSchema } },
+      },
+    },
+  }),
+  async (c) => {
+    try {
+      await verifyEmail(c.req.valid('json').token);
+      return c.json({ success: true as const }, 200);
+    } catch (err) {
+      if (err instanceof AuthError) {
+        return c.json({ success: false as const, error: { message: err.message } }, 400);
       }
       throw err;
     }
@@ -179,6 +269,16 @@ authRouter.openapi(
     }
   },
 );
+
+function verificationUrl(token: string): string {
+  const url = new URL(`/verify-email/${token}`, env().APP_URL);
+  return url.toString();
+}
+
+function resetPasswordUrl(token: string): string {
+  const url = new URL(`/reset-password/${token}`, env().APP_URL);
+  return url.toString();
+}
 
 authRouter.openapi(
   createRoute({
@@ -265,7 +365,7 @@ authRouter.openapi(
     method: 'post',
     path: '/forgot-password',
     tags: ['Authentication'],
-    summary: 'Create a password reset token',
+    summary: 'Send password reset instructions',
     middleware: [rateLimit('auth:forgot-password'), requireCsrf] as const,
     request: {
       headers: csrfHeaderSchema,
@@ -277,20 +377,21 @@ authRouter.openapi(
     responses: {
       200: {
         description:
-          'Returns success regardless of whether the email exists. Development and test responses include the reset token.',
+          'Returns success regardless of whether the email exists. Sends reset instructions when the account exists.',
         content: { 'application/json': { schema: forgotPasswordResponseSchema } },
       },
     },
   }),
   async (c) => {
-    const { resetToken } = await createPasswordReset(c.req.valid('json').email);
-    return c.json(
-      {
-        success: true as const,
-        ...(env().NODE_ENV === 'production' ? {} : { resetToken }),
-      },
-      200,
-    );
+    const result = await createPasswordReset(c.req.valid('json').email);
+    if (result.resetToken) {
+      await sendPasswordResetEmail({
+        to: result.email,
+        name: result.name,
+        resetUrl: resetPasswordUrl(result.resetToken),
+      });
+    }
+    return c.json({ success: true as const }, 200);
   },
 );
 

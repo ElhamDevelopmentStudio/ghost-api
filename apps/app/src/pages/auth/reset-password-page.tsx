@@ -5,19 +5,14 @@ import { ArrowRight } from 'lucide-react';
 import { Button } from '@ghostapi/ui';
 
 import { ApiError } from '@/lib/api-client';
-
-import { AuthCard } from '../components/auth-card';
-import { AuthField } from '../components/auth-field';
-import { PasswordField } from '../components/password-field';
-import { PasswordStrength } from '../components/password-strength';
-import { useResetPassword } from '../hooks/use-auth';
+import { AuthCard, PasswordField, PasswordStrength, useResetPassword } from '@/features/auth';
 
 export function ResetPasswordPage() {
   const navigate = useNavigate();
   const params = useParams();
   const [searchParams] = useSearchParams();
   const resetPassword = useResetPassword();
-  const [token, setToken] = useState(params.token ?? searchParams.get('token') ?? '');
+  const token = params.token ?? searchParams.get('token') ?? '';
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +37,7 @@ export function ResetPasswordPage() {
   return (
     <AuthCard
       title="Create a new password"
-      subtitle="Use the reset token from your email."
+      subtitle="Choose a new password for your GhostAPI account."
       githubLabel="Continue with GitHub"
       className="max-w-[570px]"
       footer={
@@ -55,15 +50,11 @@ export function ResetPasswordPage() {
       }
     >
       <form onSubmit={handleSubmit} className="space-y-5">
-        <AuthField
-          id="reset-token"
-          label="Reset token"
-          autoComplete="one-time-code"
-          placeholder="Paste your reset token"
-          value={token}
-          onChange={(event) => setToken(event.target.value)}
-          required
-        />
+        {!token ? (
+          <p className="border-destructive/40 bg-destructive/10 text-destructive-foreground rounded-md border px-4 py-3 text-sm">
+            This reset link is missing or invalid. Request a new password reset email.
+          </p>
+        ) : null}
 
         <div>
           <PasswordField
@@ -98,6 +89,7 @@ export function ResetPasswordPage() {
 
         <Button
           type="submit"
+          disabled={!token}
           loading={resetPassword.isPending}
           className="h-[58px] w-full bg-[linear-gradient(90deg,#6d33ff,#7b2cff,#681eff)] text-base shadow-[0_16px_40px_rgba(124,77,255,0.25)] hover:brightness-110"
         >

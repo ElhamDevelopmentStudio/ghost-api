@@ -1,3 +1,5 @@
+import axios, { type AxiosError, type AxiosRequestConfig, type AxiosResponseHeaders } from 'axios';
+
 import { env } from './env';
 
 /** Thrown for any non-2xx response. Carries the parsed body when available. */
@@ -13,50 +15,89 @@ export class ApiError extends Error {
   }
 }
 
-type RequestOptions = Omit<RequestInit, 'body'> & {
+type RequestOptions = Omit<AxiosRequestConfig, 'baseURL' | 'data' | 'url'> & {
   body?: unknown;
   /** Path relative to `VITE_API_URL`, leading slash required. */
   path: string;
 };
 
 /**
- * Thin typed `fetch` wrapper that:
- *   - prepends `VITE_API_URL`
- *   - JSON-encodes the body and sets the right Content-Type
- *   - parses JSON responses (or returns null for 204)
+ * Shared Axios client for TanStack Query request functions.
+ *
+ * Authentication is cookie-based, so credentials are always included.
+ */
+export const apiClient = axios.create({
+  baseURL: env.VITE_API_URL,
+  withCredentials: true,
+  headers: {
+    Accept: 'application/json',
+  },
+});
+
+/**
+ * Thin typed Axios wrapper that:
+ *   - uses the configured `VITE_API_URL` base URL
+ *   - JSON-encodes object bodies and sets the right Content-Type
+ *   - returns response data (or null for 204)
  *   - throws `ApiError` for non-2xx responses
  *
- * Use this from TanStack Query `queryFn` / `mutationFn`. Authentication is
- * cookie-based, so the wrapper always includes credentials.
+ * Use this from TanStack Query `queryFn` / `mutationFn`.
  */
 export async function apiRequest<T = unknown>({
   path,
   body,
   headers,
-  ...init
+  ...config
 }: RequestOptions): Promise<T> {
-  const response = await fetch(`${env.VITE_API_URL}${path}`, {
-    ...init,
-    headers: {
-      Accept: 'application/json',
-      ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
-      ...headers,
-    },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-    credentials: 'include',
-  });
+  try {
+    const response = await apiClient.request<T>({
+      ...config,
+      url: path,
+      data: body,
+      headers: {
+        ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+        ...headers,
+      },
+    });
 
-  if (response.status === 204) return null as T;
+    if (response.status === 204) return null as T;
 
-  const text = await response.text();
-  const parsed = text.length > 0 ? safeJson(text) : null;
+    return response.data;
+  } catch (error) {
+    if (!axios.isAxiosError(error)) throw error;
 
-  if (!response.ok) {
-    const message = extractErrorMessage(parsed) ?? response.statusText;
-    throw new ApiError(response.status, message, parsed);
+    const response = error.response;
+    if (!response) {
+      throw new ApiError(0, error.message, null);
+    }
+
+    throw new ApiError(response.status, errorMessageFromAxios(error, response), response.data);
+  }
+}
+
+function errorMessageFromAxios(
+  error: AxiosError,
+  response: {
+    data: unknown;
+    headers:
+      | {
+          [key: string]: unknown;
+        }
+      | AxiosResponseHeaders;
+    statusText: string;
+  },
+): string {
+  const parsed = maybeParseJson(response.data);
+  const contentType = response.headers['content-type'];
+  if (
+    typeof parsed === 'string' &&
+    typeof contentType === 'string' &&
+    contentType.includes('text/html')
+  ) {
+    return response.statusText || error.message;
   }
 
-  return parsed as T;
+  return extractErrorMessage(parsed) ?? response.statusText ?? error.message;
 }
 
 function extractErrorMessage(body: unknown): string | null {
@@ -77,10 +118,12 @@ function extractErrorMessage(body: unknown): string | null {
   return null;
 }
 
-function safeJson(text: string): unknown {
+function maybeParseJson(data: unknown): unknown {
+  if (typeof data !== 'string') return data;
+
   try {
-    return JSON.parse(text);
+    return JSON.parse(data);
   } catch {
-    return text;
+    return data;
   }
 }

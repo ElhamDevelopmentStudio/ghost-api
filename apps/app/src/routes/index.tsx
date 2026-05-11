@@ -1,13 +1,17 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 
-import { ForgotPasswordPage, LoginPage, RegisterPage, ResetPasswordPage } from '@/features/auth';
 import { AppLayout } from '@/layouts/app-layout';
 import { AuthLayout } from '@/layouts/auth-layout';
-import { LogsPage } from '@/pages/logs-page';
+import { ForgotPasswordPage } from '@/pages/auth/forgot-password-page';
+import { LoginPage } from '@/pages/auth/login-page';
+import { RegisterPage } from '@/pages/auth/register-page';
+import { ResetPasswordPage } from '@/pages/auth/reset-password-page';
+import { VerifyEmailPage } from '@/pages/auth/verify-email-page';
 import { NotFoundPage } from '@/pages/not-found-page';
-import { ProjectsPage } from '@/pages/projects-page';
-import { SettingsPage } from '@/pages/settings-page';
-import { WorkspacePage } from '@/pages/workspace-page';
+import { LogsPage } from '@/pages/protected/activity-log-page';
+import { ProjectsPage } from '@/pages/protected/projects-page';
+import { SettingsPage } from '@/pages/protected/settings-page';
+import { WorkspacePage } from '@/pages/protected/workspace-page';
 import { ProtectedRoute } from '@/routes/protected-route';
 
 /**
@@ -27,6 +31,8 @@ export const router = createBrowserRouter([
       { path: 'forgot-password', element: <ForgotPasswordPage /> },
       { path: 'reset-password', element: <ResetPasswordPage /> },
       { path: 'reset-password/:token', element: <ResetPasswordPage /> },
+      { path: 'verify-email', element: <VerifyEmailPage /> },
+      { path: 'verify-email/:token', element: <VerifyEmailPage /> },
     ],
   },
   {

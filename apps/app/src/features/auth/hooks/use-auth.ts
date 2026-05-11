@@ -7,11 +7,15 @@ import {
   login,
   logout,
   register,
+  resendVerification,
   resetPassword,
+  verifyEmail,
   type ForgotPasswordInput,
   type LoginInput,
   type RegisterInput,
+  type ResendVerificationInput,
   type ResetPasswordInput,
+  type VerifyEmailInput,
 } from '../api/auth-api';
 import { useAuthStore } from '../model/auth-store';
 
@@ -34,10 +38,6 @@ export function useAuth() {
 
   const registerMutation = useMutation({
     mutationFn: (input: RegisterInput) => register(input),
-    onSuccess: (auth) => {
-      setAuthenticated(auth);
-      queryClient.setQueryData(authSessionQueryKey, auth);
-    },
   });
 
   const logoutMutation = useMutation({
@@ -72,5 +72,17 @@ export function useForgotPassword() {
 export function useResetPassword() {
   return useMutation({
     mutationFn: (input: ResetPasswordInput) => resetPassword(input),
+  });
+}
+
+export function useVerifyEmail() {
+  return useMutation({
+    mutationFn: (input: VerifyEmailInput) => verifyEmail(input),
+  });
+}
+
+export function useResendVerification() {
+  return useMutation({
+    mutationFn: (input: ResendVerificationInput) => resendVerification(input),
   });
 }

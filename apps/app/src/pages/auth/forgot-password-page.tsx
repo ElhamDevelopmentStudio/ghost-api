@@ -5,27 +5,21 @@ import { ArrowRight, Mail } from 'lucide-react';
 import { Button } from '@ghostapi/ui';
 
 import { ApiError } from '@/lib/api-client';
-
-import { AuthCard } from '../components/auth-card';
-import { AuthField } from '../components/auth-field';
-import { useForgotPassword } from '../hooks/use-auth';
+import { AuthCard, AuthField, useForgotPassword } from '@/features/auth';
 
 export function ForgotPasswordPage() {
   const forgotPassword = useForgotPassword();
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [resetToken, setResetToken] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
-    setResetToken(null);
 
     try {
-      const response = await forgotPassword.mutateAsync({ email });
+      await forgotPassword.mutateAsync({ email });
       setSubmitted(true);
-      setResetToken(response.resetToken ?? null);
     } catch (err) {
       setError(errorMessage(err, 'Unable to send reset instructions.'));
     }
@@ -62,14 +56,6 @@ export function ForgotPasswordPage() {
         {submitted ? (
           <div className="border-success/35 bg-success/10 text-success-foreground rounded-md border px-4 py-3 text-sm">
             Check your inbox for password reset instructions.
-            {resetToken ? (
-              <div className="mt-3 break-all font-mono text-xs text-zinc-300">
-                Dev reset link:{' '}
-                <Link to={`/reset-password/${resetToken}`} className="text-primary">
-                  /reset-password/{resetToken}
-                </Link>
-              </div>
-            ) : null}
           </div>
         ) : null}
 

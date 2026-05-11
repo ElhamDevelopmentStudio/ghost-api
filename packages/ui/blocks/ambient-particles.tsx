@@ -8,7 +8,21 @@ type AmbientParticlesProps = {
   count?: number;
   /** Inset region (percent) where particles are placed. */
   region?: { top: number; bottom: number; left: number; right: number };
+  /** Stable seed used to keep SSR and client hydration output identical. */
+  seed?: number;
 };
+
+function createSeededRandom(seed: number): () => number {
+  let state = seed >>> 0;
+
+  return () => {
+    state += 0x6d2b79f5;
+    let t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
 
 /**
  * Drifting glow specks scattered across the parent. Pure decoration: lives
@@ -16,28 +30,29 @@ type AmbientParticlesProps = {
  * around the orb / theater. The parent must be `position: relative` (or
  * `position: absolute` itself); this block fills it with `inset-0`.
  *
- * Positions/durations are randomized once (`useMemo`) so the layout is
- * stable across re-renders within a session.
+ * Positions/durations use a seeded generator so the server-rendered markup
+ * matches the first client render during hydration.
  */
 export function AmbientParticles({
   count = 40,
   region = { top: 5, bottom: 95, left: 10, right: 90 },
+  seed = 13_371,
 }: AmbientParticlesProps): React.JSX.Element {
-  const particles = useMemo(
-    () =>
-      Array.from({ length: count }, (_, i) => ({
-        id: i,
-        size: Math.random() * 4 + 1,
-        left: region.left + Math.random() * (region.right - region.left),
-        top: region.top + Math.random() * (region.bottom - region.top),
-        alpha: 0.3 + Math.random() * 0.5,
-        drift: Math.random() * 20 + 20,
-        jitter: Math.random() * 12 - 6,
-        duration: 3 + Math.random() * 3,
-        delay: Math.random() * 4,
-      })),
-    [count, region.top, region.bottom, region.left, region.right],
-  );
+  const particles = useMemo(() => {
+    const random = createSeededRandom(seed);
+
+    return Array.from({ length: count }, (_, i) => ({
+      id: i,
+      size: random() * 4 + 1,
+      left: region.left + random() * (region.right - region.left),
+      top: region.top + random() * (region.bottom - region.top),
+      alpha: 0.3 + random() * 0.5,
+      drift: random() * 20 + 20,
+      jitter: random() * 12 - 6,
+      duration: 3 + random() * 3,
+      delay: random() * 4,
+    }));
+  }, [count, region.top, region.bottom, region.left, region.right, seed]);
 
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0">

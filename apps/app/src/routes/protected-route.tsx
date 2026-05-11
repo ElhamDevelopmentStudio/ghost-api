@@ -1,6 +1,6 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/features/auth';
 
 /**
  * Wraps protected routes. Unauthenticated users are sent to /login with the

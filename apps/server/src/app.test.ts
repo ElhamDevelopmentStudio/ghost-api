@@ -75,4 +75,31 @@ describe('auth backend surface', () => {
     expect(body.components?.securitySchemes?.accessCookie).toBeTruthy();
     expect(body.components?.securitySchemes?.csrfHeader).toBeTruthy();
   });
+
+  it('does not document confidential auth tokens in frontend-facing responses', async () => {
+    const { createApp } = await import('./server/app.js');
+    const app = createApp();
+    const response = await app.request('/openapi.json');
+    const body = (await response.json()) as {
+      components?: {
+        schemas?: Record<
+          string,
+          {
+            properties?: Record<string, unknown>;
+          }
+        >;
+      };
+    };
+
+    expect(response.status).toBe(200);
+    expect(body.components?.schemas?.RegisterResponse?.properties).not.toHaveProperty(
+      'verificationToken',
+    );
+    expect(body.components?.schemas?.ResendVerificationResponse?.properties).not.toHaveProperty(
+      'verificationToken',
+    );
+    expect(body.components?.schemas?.ForgotPasswordResponse?.properties).not.toHaveProperty(
+      'resetToken',
+    );
+  });
 });

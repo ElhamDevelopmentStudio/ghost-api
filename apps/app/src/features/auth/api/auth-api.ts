@@ -1,6 +1,12 @@
 import { ApiError, apiRequest } from '@/lib/api-client';
 
-import type { AuthResponse, ForgotPasswordResponse, SuccessResponse } from '../model/auth-types';
+import type {
+  AuthResponse,
+  ForgotPasswordResponse,
+  RegisterResponse,
+  ResendVerificationResponse,
+  SuccessResponse,
+} from '../model/auth-types';
 
 type CsrfResponse = {
   csrfToken: string;
@@ -26,6 +32,14 @@ type ResetPasswordInput = {
   password: string;
 };
 
+type VerifyEmailInput = {
+  token: string;
+};
+
+type ResendVerificationInput = {
+  email: string;
+};
+
 const CSRF_HEADER = 'x-csrf-token';
 let csrfTokenPromise: Promise<string> | null = null;
 
@@ -39,8 +53,8 @@ export async function getCsrfToken(): Promise<string> {
   return csrfTokenPromise;
 }
 
-export async function register(input: RegisterInput): Promise<AuthResponse> {
-  return mutatingAuthRequest<AuthResponse>('/auth/register', input, 'POST');
+export async function register(input: RegisterInput): Promise<RegisterResponse> {
+  return mutatingAuthRequest<RegisterResponse>('/auth/register', input, 'POST');
 }
 
 export async function login(input: LoginInput): Promise<AuthResponse> {
@@ -83,6 +97,20 @@ export async function resetPassword(input: ResetPasswordInput): Promise<SuccessR
   return mutatingAuthRequest<SuccessResponse>('/auth/reset-password', input, 'POST');
 }
 
+export async function verifyEmail(input: VerifyEmailInput): Promise<SuccessResponse> {
+  return mutatingAuthRequest<SuccessResponse>('/auth/verify-email', input, 'POST');
+}
+
+export async function resendVerification(
+  input: ResendVerificationInput,
+): Promise<ResendVerificationResponse> {
+  return mutatingAuthRequest<ResendVerificationResponse>(
+    '/auth/resend-verification',
+    input,
+    'POST',
+  );
+}
+
 async function mutatingAuthRequest<T>(path: string, body: unknown, method: 'POST'): Promise<T> {
   const csrfToken = await getCsrfToken();
   return apiRequest<T>({
@@ -95,4 +123,11 @@ async function mutatingAuthRequest<T>(path: string, body: unknown, method: 'POST
   });
 }
 
-export type { ForgotPasswordInput, LoginInput, RegisterInput, ResetPasswordInput };
+export type {
+  ForgotPasswordInput,
+  LoginInput,
+  RegisterInput,
+  ResendVerificationInput,
+  ResetPasswordInput,
+  VerifyEmailInput,
+};

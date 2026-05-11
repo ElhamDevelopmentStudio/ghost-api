@@ -1,7 +1,11 @@
 import { Prisma } from '@prisma/client';
 
 import { prisma } from '../../db.js';
-import { PASSWORD_RESET_TTL_SECONDS, REFRESH_TOKEN_TTL_SECONDS } from './auth.constants.js';
+import {
+  EMAIL_VERIFICATION_TTL_SECONDS,
+  PASSWORD_RESET_TTL_SECONDS,
+  REFRESH_TOKEN_TTL_SECONDS,
+} from './auth.constants.js';
 import {
   createOpaqueToken,
   hashPassword,
@@ -14,6 +18,7 @@ export type PublicUser = {
   id: string;
   email: string;
   name: string | null;
+  emailVerifiedAt: string | null;
   createdAt: string;
 };
 
@@ -40,15 +45,13 @@ export async function register(input: {
   password: string;
   userAgent?: string;
   ipAddress?: string;
-}): Promise<AuthResult> {
+}): Promise<RegisterResult> {
   const email = normalizeEmail(input.email);
   const passwordHash = await hashPassword(input.password);
-  const refreshToken = createOpaqueToken();
-  const refreshTokenHash = hashToken(refreshToken);
-  const expiresAt = refreshExpiry();
+  const verificationToken = createOpaqueToken();
 
   try {
-    const result = await prisma.$transaction(async (tx) => {
+    const user = await prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: {
           email,
@@ -56,19 +59,17 @@ export async function register(input: {
           passwordHash,
         },
       });
-      const session = await tx.session.create({
+      await tx.emailVerification.create({
         data: {
           userId: user.id,
-          refreshTokenHash,
-          userAgent: input.userAgent,
-          ipAddress: input.ipAddress,
-          expiresAt,
+          tokenHash: hashToken(verificationToken),
+          expiresAt: new Date(Date.now() + EMAIL_VERIFICATION_TTL_SECONDS * 1000),
         },
       });
-      return { user, session };
+      return user;
     });
 
-    return toAuthResult(result.user, result.session, refreshToken);
+    return { user: serializeUser(user), verificationToken };
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
       throw new AuthError(409, 'Email is already registered');
@@ -89,6 +90,9 @@ export async function login(input: {
   if (!user || !(await verifyPassword(input.password, user.passwordHash))) {
     throw new AuthError(401, 'Invalid email or password');
   }
+  if (!user.emailVerifiedAt) {
+    throw new AuthError(403, 'Verify your email before signing in');
+  }
 
   const refreshToken = createOpaqueToken();
   const session = await prisma.session.create({
@@ -102,6 +106,44 @@ export async function login(input: {
   });
 
   return toAuthResult(user, session, refreshToken);
+}
+
+export async function createEmailVerification(email: string): Promise<{
+  email: string;
+  name: string | null;
+  verificationToken?: string;
+}> {
+  const user = await prisma.user.findUnique({
+    where: { email: normalizeEmail(email) },
+  });
+  if (!user || user.emailVerifiedAt) {
+    return { email: normalizeEmail(email), name: null };
+  }
+
+  const verificationToken = createOpaqueToken();
+  await prisma.$transaction([
+    prisma.emailVerification.updateMany({
+      where: {
+        userId: user.id,
+        usedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      data: { usedAt: new Date() },
+    }),
+    prisma.emailVerification.create({
+      data: {
+        userId: user.id,
+        tokenHash: hashToken(verificationToken),
+        expiresAt: new Date(Date.now() + EMAIL_VERIFICATION_TTL_SECONDS * 1000),
+      },
+    }),
+  ]);
+
+  return {
+    email: user.email,
+    name: user.name,
+    verificationToken,
+  };
 }
 
 export async function refreshSession(refreshToken: string): Promise<AuthResult> {
@@ -160,9 +202,13 @@ export async function revokeAllSessions(userId: string): Promise<number> {
   return result.count;
 }
 
-export async function createPasswordReset(email: string): Promise<{ resetToken?: string }> {
+export async function createPasswordReset(email: string): Promise<{
+  email: string;
+  name: string | null;
+  resetToken?: string;
+}> {
   const user = await prisma.user.findUnique({ where: { email: normalizeEmail(email) } });
-  if (!user) return {};
+  if (!user) return { email: normalizeEmail(email), name: null };
 
   const resetToken = createOpaqueToken();
   await prisma.passwordReset.create({
@@ -172,7 +218,35 @@ export async function createPasswordReset(email: string): Promise<{ resetToken?:
       expiresAt: new Date(Date.now() + PASSWORD_RESET_TTL_SECONDS * 1000),
     },
   });
-  return { resetToken };
+  return { email: user.email, name: user.name, resetToken };
+}
+
+export async function verifyEmail(token: string): Promise<void> {
+  const verification = await prisma.emailVerification.findUnique({
+    where: { tokenHash: hashToken(token) },
+  });
+  if (!verification || verification.usedAt || verification.expiresAt <= new Date()) {
+    throw new AuthError(400, 'Invalid or expired verification link');
+  }
+
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: verification.userId },
+      data: { emailVerifiedAt: new Date() },
+    }),
+    prisma.emailVerification.update({
+      where: { id: verification.id },
+      data: { usedAt: new Date() },
+    }),
+    prisma.emailVerification.updateMany({
+      where: {
+        userId: verification.userId,
+        usedAt: null,
+        id: { not: verification.id },
+      },
+      data: { usedAt: new Date() },
+    }),
+  ]);
 }
 
 export async function resetPassword(input: { token: string; password: string }): Promise<void> {
@@ -206,11 +280,17 @@ type AuthResult = {
   refreshToken: string;
 };
 
+type RegisterResult = {
+  user: PublicUser;
+  verificationToken: string;
+};
+
 async function toAuthResult(
   user: {
     id: string;
     email: string;
     name: string | null;
+    emailVerifiedAt: Date | null;
     createdAt: Date;
   },
   session: {
@@ -233,12 +313,14 @@ function serializeUser(user: {
   id: string;
   email: string;
   name: string | null;
+  emailVerifiedAt: Date | null;
   createdAt: Date;
 }): PublicUser {
   return {
     id: user.id,
     email: user.email,
     name: user.name,
+    emailVerifiedAt: user.emailVerifiedAt?.toISOString() ?? null,
     createdAt: user.createdAt.toISOString(),
   };
 }

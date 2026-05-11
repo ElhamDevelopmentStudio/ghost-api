@@ -1,19 +1,13 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { ArrowRight, Mail, User } from 'lucide-react';
 
 import { Button, Checkbox } from '@ghostapi/ui';
 
 import { ApiError } from '@/lib/api-client';
-
-import { AuthCard } from '../components/auth-card';
-import { AuthField } from '../components/auth-field';
-import { PasswordField } from '../components/password-field';
-import { PasswordStrength } from '../components/password-strength';
-import { useAuth } from '../hooks/use-auth';
+import { AuthCard, AuthField, PasswordField, PasswordStrength, useAuth } from '@/features/auth';
 
 export function RegisterPage() {
-  const navigate = useNavigate();
   const { register, isRegistering } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -21,6 +15,7 @@ export function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [acceptedTerms, setAcceptedTerms] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -37,15 +32,39 @@ export function RegisterPage() {
     }
 
     try {
-      await register({
+      const response = await register({
         name: name.trim() || undefined,
         email,
         password,
       });
-      navigate('/projects', { replace: true });
+      setSubmittedEmail(response.user.email);
     } catch (err) {
       setError(errorMessage(err, 'Unable to create your account.'));
     }
+  }
+
+  if (submittedEmail) {
+    return (
+      <AuthCard
+        title="Check your email"
+        subtitle={`We sent a verification link to ${submittedEmail}.`}
+        githubLabel="Sign up with GitHub"
+        compact
+        className="max-w-[570px]"
+        footer={
+          <>
+            Already verified?{' '}
+            <Link to="/login" className="text-primary hover:text-primary-hover transition">
+              Sign in
+            </Link>
+          </>
+        }
+      >
+        <div className="border-success/35 bg-success/10 text-success-foreground rounded-md border px-4 py-3 text-sm">
+          Open the email and verify your address before signing in.
+        </div>
+      </AuthCard>
+    );
   }
 
   return (

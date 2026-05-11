@@ -2,14 +2,16 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowRight, Mail } from 'lucide-react';
 
-import { Button } from '@ghostapi/ui';
+import { Button, toast } from '@ghostapi/ui';
 
 import { ApiError } from '@/lib/api-client';
-
-import { AuthCard } from '../components/auth-card';
-import { AuthField } from '../components/auth-field';
-import { PasswordField } from '../components/password-field';
-import { useAuth } from '../hooks/use-auth';
+import {
+  AuthCard,
+  AuthField,
+  PasswordField,
+  useAuth,
+  useResendVerification,
+} from '@/features/auth';
 
 type LocationState = { from?: { pathname: string } } | null;
 
@@ -17,6 +19,7 @@ export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { login, isLoggingIn } = useAuth();
+  const resendVerification = useResendVerification();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +34,24 @@ export function LoginPage() {
       await login({ email, password });
       navigate(from, { replace: true });
     } catch (err) {
+      if (err instanceof ApiError && err.status === 403) {
+        await resendVerificationLink();
+        return;
+      }
       setError(errorMessage(err, 'Unable to sign in. Check your email and password.'));
+    }
+  }
+
+  async function resendVerificationLink() {
+    setError(null);
+
+    try {
+      await resendVerification.mutateAsync({ email });
+      toast.info('Verification link sent', {
+        description: 'Check your email to finish setting up your account.',
+      });
+    } catch (err) {
+      setError(errorMessage(err, 'Unable to send a verification email.'));
     }
   }
 
@@ -90,7 +110,7 @@ export function LoginPage() {
 
         <Button
           type="submit"
-          loading={isLoggingIn}
+          loading={isLoggingIn || resendVerification.isPending}
           className="h-[58px] w-full bg-[linear-gradient(90deg,#6d33ff,#7b2cff,#681eff)] text-base shadow-[0_16px_40px_rgba(124,77,255,0.25)] hover:brightness-110"
         >
           Sign in
