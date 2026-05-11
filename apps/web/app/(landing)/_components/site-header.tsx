@@ -7,7 +7,13 @@ import Link from 'next/link';
 
 import { Button } from '@ghostapi/ui';
 
-const NAV_ITEMS = ['FEATURES', 'HOW IT WORKS', 'PRICING', 'DOCS', 'CHANGELOG'] as const;
+const NAV_ITEMS = [
+  { label: 'FEATURES', href: '#features' },
+  { label: 'HOW IT WORKS', href: '#how-it-works' },
+  { label: 'PRICING', href: '#pricing' },
+  { label: 'DOCS', href: '/docs' },
+  { label: 'CHANGELOG', href: '#changelog' },
+] as const;
 
 /**
  * Fixed top nav for the public landing page. Translucent so the hero
@@ -28,6 +34,7 @@ export function SiteHeader(): React.JSX.Element {
           width={32}
           height={32}
           priority
+          unoptimized
           className="size-8"
         />
         <span className="text-lg font-semibold tracking-wider">
@@ -37,13 +44,13 @@ export function SiteHeader(): React.JSX.Element {
       </Link>
 
       <nav className="hidden items-center gap-8 md:flex">
-        {NAV_ITEMS.map((label) => (
+        {NAV_ITEMS.map((item) => (
           <Link
-            key={label}
-            href="#"
+            key={item.label}
+            href={item.href}
             className="text-muted-foreground hover:text-foreground text-xs font-medium tracking-wider transition-colors"
           >
-            {label}
+            {item.label}
           </Link>
         ))}
       </nav>

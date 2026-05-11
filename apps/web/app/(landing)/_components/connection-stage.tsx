@@ -10,7 +10,6 @@ import {
   type SinkBeam,
   type SourceBeam,
 } from '@ghostapi/ui';
-
 import { LANDING_API_LOG } from './live-api-activity';
 
 type Anchor = { x: number; y: number };
@@ -75,8 +74,7 @@ export function ConnectionStage(): React.JSX.Element {
       const dashRect = dashboard.getBoundingClientRect();
       const sinkX = dashRect.left - hostRect.left;
       const sourceYs = sources.map((s) => s.y);
-      const sourceSpanCenter =
-        (Math.min(...sourceYs) + Math.max(...sourceYs)) / 2;
+      const sourceSpanCenter = (Math.min(...sourceYs) + Math.max(...sourceYs)) / 2;
       const dashCenterY = dashRect.top + dashRect.height / 2 - hostRect.top;
       // Translate each source Y by the offset between the two centers.
       const offset = dashCenterY - sourceSpanCenter;
@@ -133,10 +131,7 @@ export function ConnectionStage(): React.JSX.Element {
   });
 
   return (
-    <div
-      ref={setContainer}
-      className="pointer-events-none absolute inset-0 overflow-visible"
-    >
+    <div ref={setContainer} className="pointer-events-none absolute inset-0 overflow-visible">
       <AmbientParticles />
 
       {size.w > 0 && (
@@ -159,6 +154,7 @@ export function ConnectionStage(): React.JSX.Element {
               width={72}
               height={72}
               priority
+              unoptimized
             />
           </GlowOrb>
         </div>

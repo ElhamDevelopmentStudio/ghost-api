@@ -1,14 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import {
-  BarChart3,
-  Menu,
-  Plus,
-  Settings,
-  ShoppingCart,
-  Users,
-} from 'lucide-react';
+import { BarChart3, Menu, Plus, Settings, ShoppingCart, Users } from 'lucide-react';
 
 import { Button } from '@ghostapi/ui';
 
@@ -58,10 +51,7 @@ export function FrontendDashboard(): React.JSX.Element {
           <div className="bg-background/80 border-border/40 flex w-12 flex-col items-center gap-4 border-r py-4">
             <Menu className="text-muted-foreground/70 size-4" />
             <span className="bg-border/60 h-px w-6" />
-            <motion.div
-              whileHover={{ scale: 1.1 }}
-              className="bg-primary/20 rounded-lg p-1.5"
-            >
+            <motion.div whileHover={{ scale: 1.1 }} className="bg-primary/20 rounded-lg p-1.5">
               <Users className="text-primary size-4" />
             </motion.div>
             <Settings className="text-muted-foreground/70 hover:text-muted-foreground size-4 cursor-pointer transition-colors" />

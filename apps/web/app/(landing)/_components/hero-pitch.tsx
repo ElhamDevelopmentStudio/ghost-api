@@ -16,7 +16,7 @@ const TRUST_BULLETS = ['No credit card', 'Open source', 'Works in seconds'] as c
  */
 export function HeroPitch(): React.JSX.Element {
   return (
-    <div className="relative z-10 font-mono pt-28">
+    <div className="relative z-10 pt-28 font-mono">
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -73,7 +73,11 @@ export function HeroPitch(): React.JSX.Element {
           </span>
           GET STARTED FREE
         </Button>
-        <Button variant="tertiary" size="lg" className="text-muted-foreground gap-3 tracking-[0.08em]">
+        <Button
+          variant="tertiary"
+          size="lg"
+          className="text-muted-foreground gap-3 tracking-[0.08em]"
+        >
           <span className="border-border-strong flex size-8 items-center justify-center rounded-full border">
             <Play className="ml-[1px] size-3 fill-current" />
           </span>

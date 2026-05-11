@@ -20,7 +20,7 @@
   "dependencies": {
     "@ghostapi/mock-engine": "workspace:*",
     "@ghostapi/types": "workspace:*",
-    "hono": "^4.6.16"
+    "hono": "^4.12.18"
   },
   "devDependencies": {
     "@ghostapi/eslint-config": "workspace:*",
