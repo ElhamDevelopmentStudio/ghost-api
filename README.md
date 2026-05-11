@@ -281,14 +281,23 @@ Schemas are attached to projects.
 
 # Tech Stack
 
-# Frontend
+# Public Frontend
 
 - Next.js App Router
 - TypeScript
 - Tailwind CSS
 - shadcn/ui
+
+# Protected Frontend
+
+- React
+- Vite
+- TypeScript
+- Tailwind CSS
+- shadcn/ui
 - Zustand
 - TanStack Query
+- React Hook Form
 - Monaco Editor
 
 ---
@@ -334,6 +343,7 @@ API Workspace
 ```txt
 apps/
   web/        → Next.js frontend
+  app/        → React/Vite protected app
   server/     → Hono backend
 
 packages/
@@ -343,6 +353,7 @@ packages/
   types/      → shared types
   ui/         → shared UI components
   config/     → shared config
+  eslint-config/ → shared lint config
 ```
 
 ---
@@ -352,7 +363,7 @@ packages/
 # Requirements
 
 - Node.js 20+
-- pnpm
+- pnpm 10+
 - Docker
 
 ---
@@ -377,21 +388,26 @@ pnpm install
 
 # Setup Environment
 
-Create:
+Copy the tracked examples before starting services:
 
-```txt
-.env
+```bash
+cp .env.example .env
+cp apps/app/.env.example apps/app/.env
 ```
 
-Example:
+The root example matches `docker-compose.yml` defaults:
 
 ```env
 DATABASE_URL=postgresql://ghostapi:ghostapi@localhost:5432/ghostapi
 REDIS_URL=redis://localhost:6379
-
-NEXT_PUBLIC_API_URL=http://localhost:3000
-
-JWT_SECRET=super-secret
+NEXT_PUBLIC_API_URL=http://localhost:3001
+VITE_API_URL=http://localhost:3001
+VITE_APP_NAME=GhostAPI
+PORT=3001
+LOG_LEVEL=info
+NODE_ENV=development
+CORS_ORIGINS=http://localhost:3000,http://localhost:3002
+JWT_SECRET=change-me-change-me-change-me-change-me
 ```
 
 ---
@@ -407,9 +423,8 @@ docker compose up -d
 # Run Database Migrations
 
 ```bash
-cd apps/server
-
-pnpm prisma migrate dev
+pnpm --filter @ghostapi/server prisma:generate
+pnpm --filter @ghostapi/server prisma:migrate
 ```
 
 ---
@@ -419,6 +434,52 @@ pnpm prisma migrate dev
 ```bash
 pnpm dev
 ```
+
+Default local ports:
+
+- `apps/web`: http://localhost:3000
+- `apps/server`: http://localhost:3001
+- `apps/app`: http://localhost:3002
+- `packages/ui` Storybook: http://localhost:6006
+
+Single-app commands:
+
+```bash
+pnpm --filter @ghostapi/web dev
+pnpm --filter @ghostapi/server dev
+pnpm --filter @ghostapi/app dev
+pnpm --filter @ghostapi/ui storybook
+```
+
+---
+
+# Verification Commands
+
+Root scripts are defined in `package.json` and run through Turborepo:
+
+```bash
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
+pnpm format:check
+```
+
+Formatting can be applied with:
+
+```bash
+pnpm format
+```
+
+CI mirrors the main verification flow: install dependencies, generate the Prisma client, then run
+lint, typecheck, tests, and build with Postgres and Redis services.
+
+---
+
+# Agent Notes
+
+Future coding-agent sessions should start with `AGENTS.md`. It documents the current workspace
+state, do-not-edit generated paths, package boundaries, command map, and "done when" criteria.
 
 ---
 

@@ -322,8 +322,6 @@ ghostapi/
 │  ├ config/
 │  └ eslint-config/
 │
-├ docker/
-├ scripts/
 ├ .github/
 │
 ├ turbo.json
@@ -331,6 +329,108 @@ ghostapi/
 ├ package.json
 └ docker-compose.yml
 ```
+
+---
+
+# Current Repository Status
+
+The repository has already been scaffolded. Treat the "Initial Setup" section below as historical
+foundation guidance unless a task explicitly asks to recreate or compare the scaffold.
+
+Current implemented surfaces include:
+
+- `package.json`, `pnpm-workspace.yaml`, `turbo.json`, and `pnpm-lock.yaml`
+- `docker-compose.yml` with Postgres 16 and Redis 7
+- `.github/workflows/ci.yml`
+- root Prettier, Commitlint, Husky, and lint-staged config
+- `apps/web`, `apps/app`, and `apps/server`
+- `packages/config`, `packages/eslint-config`, `packages/mock-engine`, `packages/parser`,
+  `packages/runtime`, `packages/types`, and `packages/ui`
+- Prisma schema in `apps/server/prisma/schema.prisma`
+- Vitest tests in parser, runtime, mock-engine, config, and server packages
+- Storybook config and stories in `packages/ui`
+
+Generated/local paths such as `node_modules/`, `.next/`, `.turbo/`, `dist/`, `coverage/`,
+`storybook-static/`, `*.tsbuildinfo`, `.env`, `.env.*`, and `.omx/` should not be edited by
+agents unless the task explicitly targets them. Do not remove unrelated user assets.
+
+---
+
+# Current Commands
+
+Requirements:
+
+- Node.js `>=20`
+- pnpm `>=10`
+- Docker / Docker Compose
+
+Install and local infrastructure:
+
+```bash
+pnpm install
+docker compose up -d
+```
+
+Environment setup:
+
+```bash
+cp .env.example .env
+cp apps/app/.env.example apps/app/.env
+```
+
+Database:
+
+```bash
+pnpm --filter @ghostapi/server prisma:generate
+pnpm --filter @ghostapi/server prisma:migrate
+pnpm --filter @ghostapi/server prisma:studio
+```
+
+Development:
+
+```bash
+pnpm dev
+pnpm --filter @ghostapi/web dev
+pnpm --filter @ghostapi/server dev
+pnpm --filter @ghostapi/app dev
+pnpm --filter @ghostapi/ui storybook
+```
+
+Ports:
+
+- `apps/web`: `3000`
+- `apps/server`: `3001`
+- `apps/app`: `3002`
+- `packages/ui` Storybook: `6006`
+
+Verification:
+
+```bash
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
+pnpm format:check
+pnpm --filter @ghostapi/ui build-storybook
+```
+
+CI runs install, Prisma generate, lint, typecheck, test, and build against Postgres and Redis.
+
+---
+
+# Current Unknowns / Gaps
+
+These are repository facts to keep future setup work honest:
+
+- There is no dedicated test documentation file beyond `README.md`, this setup doc, package
+  scripts, and CI.
+- There is no committed `scripts/` directory at the repository root.
+- There is no committed `docker/` directory; local infrastructure is currently only
+  `docker-compose.yml`.
+- No Prisma migrations directory was present when this doc was updated; `prisma:migrate` is the
+  discovered package script, but migration state should be checked before database-changing work.
+- Storybook is configured in `packages/ui`, but it is run on demand and is not part of the
+  current root CI workflow.
 
 ---
 
@@ -526,6 +626,9 @@ Shared configuration:
 ---
 
 # Initial Setup
+
+This section records the original scaffold plan. Do not run these steps in an already cloned
+workspace unless the task is specifically about rebuilding the scaffold.
 
 # 1. Create Repository
 
@@ -790,21 +893,26 @@ Never incremental IDs.
 
 # Environment Variables
 
-Create:
+Tracked examples:
 
-```txt id="jlwmp23"
+```txt
 .env.example
+apps/app/.env.example
 ```
 
-Must contain:
+The root example currently contains:
 
-```env id="jlwmp24"
-DATABASE_URL=
-REDIS_URL=
-
-NEXT_PUBLIC_API_URL=
-
-JWT_SECRET=
+```env
+DATABASE_URL=postgresql://ghostapi:ghostapi@localhost:5432/ghostapi
+REDIS_URL=redis://localhost:6379
+NEXT_PUBLIC_API_URL=http://localhost:3001
+VITE_API_URL=http://localhost:3001
+VITE_APP_NAME=GhostAPI
+PORT=3001
+LOG_LEVEL=info
+NODE_ENV=development
+CORS_ORIGINS=http://localhost:3000,http://localhost:3002
+JWT_SECRET=change-me-change-me-change-me-change-me
 ```
 
 ---
@@ -815,15 +923,23 @@ Use:
 
 ## Zod
 
-Create:
+Implemented in:
 
 ```txt id="jlwmp25"
-packages/config/env.ts
+packages/config/src/env.ts
 ```
 
 Application startup must fail loudly if env values are invalid or missing.
 
 Never trust env blindly.
+
+Use the package loaders:
+
+- `loadServerEnv` for the Hono backend
+- `loadPublicEnv` for the public Next.js app
+- `loadVitePublicEnv` for the protected Vite SPA
+
+Do not parse environment variables ad hoc in application code.
 
 ---
 
@@ -1030,13 +1146,15 @@ pnpm add -D husky lint-staged
 
 # Pre-commit Checks
 
-Must run:
+Current Husky pre-commit runs:
 
-- lint
-- typecheck
-- tests
+```bash
+pnpm exec lint-staged
+```
 
-before commit.
+`lint-staged` formats staged `ts`, `tsx`, `js`, `jsx`, `json`, `md`, `yml`, and `yaml` files
+with Prettier. Typecheck, tests, lint, and build are enforced in CI and should be run locally
+before opening a PR or after broad changes.
 
 ---
 

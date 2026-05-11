@@ -1,83 +1,170 @@
 # AGENTS.md
 
-This file provides guidance to Codex agents when working in this repository.
+This file is the first-stop context for Codex sessions in this repository. Keep it short,
+accurate, and grounded in files that exist.
 
-## Repository Status
+## Current Repository State
 
-Pre-implementation. The repo currently contains only planning documents (`README.md`, `docs/SYNOPSIS.md`, `docs/SETUP.md`) and the banner asset — no source code, no `package.json`, no `docker-compose.yml`, no scaffolding yet. Treat the docs as the spec; when scaffolding the project, follow them rather than improvising structure.
+GhostAPI is an implemented pnpm/Turborepo workspace, not a planning-only repo. It currently
+contains app/package scaffolding, source code, tests, Storybook config, Docker Compose, Prisma
+schema, env examples, CI, Husky hooks, and generated local outputs from previous runs.
+
+Before changing code, inspect the relevant package and manifest rather than relying only on
+older planning language in `docs/`.
 
 ## Product
 
-GhostAPI turns OpenAPI 3.x schemas into runnable mock REST APIs with editable responses, latency/error/auth simulation, request logs, and an in-app playground. Target user: frontend devs unblocked from waiting on a backend. Phase 1 explicitly excludes GraphQL, tRPC, AI generation, collaboration, billing, analytics, and realtime — see `docs/SYNOPSIS.md` for the full out-of-scope list before adding anything.
+GhostAPI turns OpenAPI 3.x schemas into runnable mock REST APIs with editable responses,
+latency/error/auth simulation, request logs, and an in-app playground. The target user is a
+frontend developer who needs to keep building while the backend is incomplete.
 
-## Architecture (planned)
+Phase 1 is REST/OpenAPI-focused. Do not add GraphQL, tRPC, AI generation, collaboration,
+billing, analytics, snapshot testing, realtime sync, or marketplace behavior unless the task
+explicitly changes scope. See `docs/SYNOPSIS.md` for product scope.
 
-The single most important architectural rule: **everything downstream of parsing depends only on a `NormalizedEndpoint` model, never on raw OpenAPI structures.** This abstraction is what enables future GraphQL/tRPC/gRPC parsers to plug in without rewriting the workspace, runtime, logs, or generators. Frontend code and the runtime server must not import OpenAPI types directly.
+## Load-Bearing Architecture Rule
+
+Everything downstream of parsing depends on `NormalizedEndpoint` / `NormalizedSchema` from
+`packages/types`, never on raw OpenAPI structures.
+
+Allowed OpenAPI-specific code belongs in `packages/parser` and OpenAPI documentation helpers.
+Runtime, mock generation, app workspace UI, logs, and server route consumers should use the
+normalized model. This is what keeps future protocol parsers from forcing rewrites.
 
 Pipeline:
 
+```txt
+OpenAPI upload -> packages/parser -> NormalizedSchema/NormalizedEndpoint
+                                      -> packages/mock-engine
+                                      -> packages/runtime
+                                      -> apps/server (Hono API + Prisma)
+                                      -> apps/app (protected SPA)
+                                      -> apps/web (public Next.js site)
 ```
-OpenAPI Upload → packages/parser → NormalizedEndpoint
-                                 → packages/mock-engine (fake data)
-                                 → packages/runtime (dynamic route mounting, latency/auth/error sim)
-                                 → apps/server (Hono) ←→ apps/app (React SPA workspace)
-                                                     ←→ apps/web (Next.js public site)
-```
 
-Planned monorepo layout (Turborepo + pnpm workspaces):
+## Workspace Map
 
-- `apps/web` — **Public** Next.js App Router site (port 3000). Landing, docs, blog, marketing, SEO-sensitive pages. **Does NOT contain auth, login/register, dashboard logic, the API workspace, or any protected flow.** Lives here purely for SSR/SEO.
-- `apps/app` — **Protected** React + Vite SPA (port 3002). Login, register, projects, the unified API workspace, logs, settings — every authenticated flow. Built as an SPA so it can be packaged into Electron later. Stack: React 19, Vite 6, React Router v7 (data router), TanStack Query (server state), Zustand (UI/editor state — do not mix the two), React Hook Form, Tailwind v4 via `@tailwindcss/vite`, consumes `@ghostapi/ui`. Env validated via `loadVitePublicEnv` from `@ghostapi/config` against `import.meta.env` (must be `VITE_*`-prefixed).
-- `apps/server` — Hono backend (port 3001). API routes, auth, DB, runtime orchestration, schema ingestion. **No frontend rendering.** Serves both web and app over the same API surface.
-- `packages/parser` — OpenAPI validation, extraction, normalization. Future protocol parsers must produce the same `NormalizedEndpoint` shape.
-- `packages/runtime` — Dynamic mock runtime: route mounting, latency/auth/error simulation. Kept isolated from data generation.
-- `packages/mock-engine` — Schema-aware fake data generation (Faker.js-based). Isolated from runtime logic.
-- `packages/types` — Shared DTOs, enums, normalized endpoint types. Avoid duplicating types across apps.
-- `packages/ui` — Shared design system. shadcn/ui is initialized here (`components.json` lives in this package). Layout: `components/` for shadcn primitives, `layouts/` for shells, `blocks/` for GhostAPI-specific composed UI (endpoint sidebar, request builder, log viewer, etc.), `lib/utils.ts` for `cn`, `styles/globals.css` for theme tokens. **Theme tokens, colors, spacing, and typography live ONLY here** — apps/web's `globals.css` just `@import`s this file. Add primitives via `cd packages/ui && pnpm dlx shadcn@latest add <name>` — but expect to customize the generated file to match the GhostAPI variants (e.g. Button uses `primary | secondary | tertiary | destructive`, not the shadcn defaults). Storybook lives in `.storybook/` here; stories colocate with components as `<name>.stories.tsx`. Run with `pnpm --filter @ghostapi/ui storybook`.
-- `packages/config` — Zod env validation, tsconfig, runtime configs. Startup must fail loudly on invalid env.
+- `apps/web` — public Next.js App Router site on port `3000`. Landing, docs, SEO-sensitive
+  public pages. Do not put auth flows, protected dashboard logic, or the API workspace here.
+- `apps/app` — protected React/Vite SPA on port `3002`. Login/register, projects, workspace,
+  logs, settings, and future Electron-friendly authenticated flows.
+- `apps/server` — Hono backend on port `3001`. API routes, auth, Prisma, schema ingestion,
+  OpenAPI/Scalar docs, and runtime orchestration. No frontend rendering.
+- `apps/server/src/features/auth` — full auth feature module. Keep auth internals behind its
+  `index.ts` public surface where practical.
+- `packages/parser` — OpenAPI validation, loading, dereferencing, and normalization.
+- `packages/runtime` — dynamic route mounting and mock-serving behavior. Keep data generation
+  out of this package.
+- `packages/mock-engine` — schema-aware fake response generation. Keep runtime concerns out.
+- `packages/types` — shared DTOs, Zod schemas, and normalized endpoint types.
+- `packages/ui` — shared UI package, design tokens, shadcn primitives, blocks, layouts,
+  Storybook stories, and `styles/globals.css`.
+- `packages/config` — Zod env loaders and shared tsconfig presets. App code should use these
+  loaders instead of direct env parsing.
+- `packages/eslint-config` — shared ESLint configs.
 
-## Product Surface — Unified API Workspace
+## Commands
 
-The API Workspace is the heart of the product. It deliberately merges endpoint browsing, request building, response viewing, and mock behavior configuration into one screen. **Do not split these into separate dashboard pages, separate endpoint editors, or a disconnected playground** — that splits the `Request → Response` mental model the product is built around.
-
-## Stack (planned)
-
-Public frontend (`apps/web`): Next.js App Router, TypeScript, Tailwind, shadcn/ui (consumed from `@ghostapi/ui`).
-
-Protected frontend (`apps/app`): React 19, Vite 6, TypeScript, Tailwind v4, shadcn/ui (consumed from `@ghostapi/ui`), React Router v7 data router, TanStack Query (server state), Zustand (UI/editor/builder state — do not mix the two), React Hook Form, Monaco Editor (when the request body editor lands). The SPA exists in addition to the Next site so it can be packaged into Electron later.
-
-Backend: Hono, TypeScript, Zod, Prisma, Pino (structured logs only — no `console.log`).
-
-Infra: PostgreSQL (in Docker from day one — no local installs, no cloud DBs for dev), Redis (added in Phase 1 even though uses are minimal, to avoid migration pain later), Docker Compose, Turborepo, pnpm.
-
-## Planned Commands
-
-Per `README.md` and `docs/SETUP.md`. None of these work yet — they're the contract for scaffolding.
+Use commands from `package.json`, package manifests, and `.github/workflows/ci.yml`.
 
 ```bash
-pnpm install                                  # install workspace deps
-docker compose up -d                          # start postgres + redis
-cd apps/server && pnpm prisma migrate dev     # run migrations
-pnpm dev                                      # turbo dev across apps (web :3000, app :3002, server :3001)
-
-# Single-app dev:
-pnpm --filter @ghostapi/app dev               # Vite dev server for the protected SPA
-pnpm --filter @ghostapi/web dev               # Next.js dev server for the public site
-pnpm --filter @ghostapi/server dev            # Hono backend
+pnpm install
+docker compose up -d
+pnpm --filter @ghostapi/server prisma:generate
+pnpm --filter @ghostapi/server prisma:migrate
+pnpm dev
 ```
 
-`turbo.json` defines `build`, `dev` (uncached), `lint`, `test`, `build-storybook`, and `storybook` (uncached, persistent). Pre-commit (Husky + lint-staged) and CI must run lint, typecheck, tests, and build. Storybook is run on demand: `pnpm --filter @ghostapi/ui storybook` for local review, `pnpm --filter @ghostapi/ui build-storybook` to produce a static bundle.
+Root scripts:
+
+```bash
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
+pnpm format
+pnpm format:check
+```
+
+Useful package scripts:
+
+```bash
+pnpm --filter @ghostapi/web dev          # Next.js, port 3000
+pnpm --filter @ghostapi/server dev       # Hono, port 3001
+pnpm --filter @ghostapi/app dev          # Vite SPA, port 3002
+pnpm --filter @ghostapi/ui storybook     # Storybook, port 6006
+pnpm --filter @ghostapi/ui build-storybook
+pnpm --filter @ghostapi/server prisma:studio
+```
+
+CI runs install, Prisma generate, lint, typecheck, tests, and build with Postgres and Redis
+services. For code changes, prefer the smallest targeted test first, then broader root checks
+when the blast radius warrants it.
+
+## Environment
+
+- Root `.env.example` mirrors Docker defaults for Postgres and Redis plus public URLs.
+- `apps/app/.env.example` documents Vite-exposed env.
+- `packages/config/src/env.ts` exposes `loadServerEnv`, `loadPublicEnv`, and
+  `loadVitePublicEnv`.
+- Do not read `process.env` directly outside env loader boundaries, config glue, or tests.
+- `JWT_SECRET` must be at least 32 characters.
+- `VITE_*` values are browser-visible in `apps/app`; `NEXT_PUBLIC_*` values are browser-visible
+  in `apps/web`.
 
 ## Conventions
 
-- TypeScript `"strict": true` everywhere. Avoid `any`. Prefer Zod-validated DTOs at boundaries.
-- Prisma is **persistence only** — no business logic in models. Columns are `snake_case`. Every table has `created_at` / `updated_at`. **UUIDs only**, never incrementing IDs.
-- Env vars validated via Zod in `packages/config/env.ts`. Never read `process.env` directly elsewhere. The package exposes three loaders: `loadServerEnv` (Hono backend), `loadPublicEnv` (Next public site, `NEXT_PUBLIC_*`), `loadVitePublicEnv` (React SPA, `VITE_*`).
-- Uploaded OpenAPI schemas must be validated, sanitized, and parsed safely. **Never `eval` uploaded schemas or execute uploaded JavaScript.**
-- Design language: dark-first, terminal-inspired, sharp spacing, monospace where it earns its place. Avoid SaaS-style cards, gradients, marketing-dashboard layouts.
-- Test priorities: parser engine, mock generation determinism, runtime endpoint serving (Vitest).
+- TypeScript is strict everywhere. Avoid `any`; prefer Zod-validated DTOs at boundaries.
+- Prisma is persistence only. Business logic belongs in services, routes, runtime, parser, or
+  package modules, not Prisma models.
+- Database columns are `snake_case` via `@map` / `@@map`; IDs are UUIDs; tables include
+  `created_at` / `updated_at` unless the schema intentionally documents otherwise.
+- Backend logging uses Pino structured logs. Do not add stray `console.log`.
+- Uploaded schemas must be validated and parsed safely. Never `eval` uploaded schemas or execute
+  uploaded JavaScript.
+- In `apps/app`, use TanStack Query for server state and Zustand for UI/editor/workspace state.
+  Do not mix those responsibilities.
+- Shared theme tokens, typography, spacing, and component styling live in `packages/ui`.
+  App-level CSS should import or compose from the UI package rather than redefining the system.
+- The visual style is dark-first, technical, terminal-inspired, and low-noise. Avoid generic
+  SaaS dashboards, excessive cards, oversized gradients, and analytics-heavy layouts.
+- Commit messages are currently checked by Commitlint conventional config, despite the broader
+  OMX lore protocol in higher-level instructions.
 
-## Docs to Read First
+## Generated And Local Files
 
-- `docs/SYNOPSIS.md` — product scope, phases, database tables, what's explicitly out of scope.
-- `docs/SETUP.md` — repo structure, stack rationale, engineering rules, scaffolding steps.
+Avoid editing generated or machine-local outputs unless the task explicitly targets them:
+
+- `node_modules/`
+- `.next/`
+- `.turbo/`
+- `dist/`
+- `coverage/`
+- `storybook-static/`
+- `*.tsbuildinfo`
+- `.env` and `.env.*` except tracked examples
+- `.omx/` runtime state and logs
+- `pnpm-lock.yaml` unless dependencies or workspace resolution actually change
+
+The worktree may contain user changes. At the time this guidance was updated, an untracked
+`assets/screens/landing-hero.png` existed. Do not remove or overwrite unrelated assets.
+
+## Docs To Read First
+
+- `README.md` — product overview and current setup/verification quick start.
+- `docs/SETUP.md` — architecture, tooling, commands, and engineering rules.
+- `docs/SYNOPSIS.md` — product phases, explicit out-of-scope items, and data model direction.
+- `docs/AUTHENTICATION.md` — auth architecture and security constraints.
+- `apps/server/src/README.md` — backend source layout and auth module boundaries.
+
+## Done When
+
+For future Codex tasks, completion means:
+
+- The requested behavior or documentation change is implemented and scoped to the request.
+- Relevant tests, lint, typecheck, format check, build, or smoke checks were run.
+- If a check cannot run, the blocker is stated explicitly with the next-best evidence.
+- Generated/local files are not edited accidentally.
+- Product constraints above are still respected.
+- The final response lists changed files, verification commands and results, known blockers or
+  unknowns, and any useful follow-up.
