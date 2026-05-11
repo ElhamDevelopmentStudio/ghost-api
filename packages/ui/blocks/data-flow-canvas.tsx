@@ -11,11 +11,14 @@ type SourceBeam = {
   d: string;
   /** Method this beam carries — drives the stroke gradient. */
   method: HttpMethod;
+  /** Main request path; rendered brighter than background hairlines. */
+  emphasis?: boolean;
 };
 
 /** Bezier path from the canvas center out to a destination side. */
 type SinkBeam = {
   d: string;
+  emphasis?: boolean;
 };
 
 type DataFlowCanvasProps = {
@@ -64,10 +67,11 @@ export function DataFlowCanvas({
   sinks,
   viewBox = { width: 520, height: 600 },
 }: DataFlowCanvasProps): React.JSX.Element {
-  const [colors, setColors] = useState<Record<HttpMethod, string>>(() =>
-    Object.fromEntries(
-      (Object.keys(METHOD_VAR) as HttpMethod[]).map((m) => [m, '#7c4dff']),
-    ) as Record<HttpMethod, string>,
+  const [colors, setColors] = useState<Record<HttpMethod, string>>(
+    () =>
+      Object.fromEntries(
+        (Object.keys(METHOD_VAR) as HttpMethod[]).map((m) => [m, '#7c4dff']),
+      ) as Record<HttpMethod, string>,
   );
   const [particles, setParticles] = useState<Particle[]>([]);
   const particleId = useRef(0);
@@ -125,7 +129,7 @@ export function DataFlowCanvas({
     >
       <defs>
         <filter id="dfc-line-glow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="3" result="b" />
+          <feGaussianBlur stdDeviation="2" result="b" />
           <feMerge>
             <feMergeNode in="b" />
             <feMergeNode in="SourceGraphic" />
@@ -141,14 +145,7 @@ export function DataFlowCanvas({
 
         {/* One gradient per method — used by the source beam strokes. */}
         {(Object.keys(METHOD_VAR) as HttpMethod[]).map((m) => (
-          <linearGradient
-            key={m}
-            id={`dfc-grad-${m}`}
-            x1="0%"
-            y1="0%"
-            x2="100%"
-            y2="0%"
-          >
+          <linearGradient key={m} id={`dfc-grad-${m}`} x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor={colors[m]} stopOpacity="0.5" />
             <stop offset="100%" stopColor={colors[m]} stopOpacity="0.9" />
           </linearGradient>
@@ -169,15 +166,16 @@ export function DataFlowCanvas({
             d={beam.d}
             fill="none"
             stroke={colors[beam.method]}
-            strokeWidth="1.5"
-            strokeOpacity="0.55"
+            strokeWidth={beam.emphasis ? '1.9' : '0.7'}
+            strokeOpacity={beam.emphasis ? '0.9' : '0.24'}
             strokeLinecap="round"
+            filter={beam.emphasis ? 'url(#dfc-line-glow)' : undefined}
           />
           <motion.path
             d={beam.d}
             fill="none"
             stroke={`url(#dfc-grad-${beam.method})`}
-            strokeWidth="2.5"
+            strokeWidth={beam.emphasis ? '2.6' : '1'}
             strokeLinecap="round"
             filter="url(#dfc-line-glow)"
             initial={{ pathLength: 0, opacity: 0 }}
@@ -199,14 +197,15 @@ export function DataFlowCanvas({
             d={beam.d}
             fill="none"
             stroke="rgba(139, 92, 246, 0.55)"
-            strokeWidth="1.5"
+            strokeWidth={beam.emphasis ? '1.3' : '0.7'}
+            strokeOpacity={beam.emphasis ? '0.45' : '0.24'}
             strokeLinecap="round"
           />
           <motion.path
             d={beam.d}
             fill="none"
             stroke="url(#dfc-grad-out)"
-            strokeWidth="2.5"
+            strokeWidth={beam.emphasis ? '1.8' : '0.9'}
             strokeLinecap="round"
             filter="url(#dfc-line-glow)"
             initial={{ pathLength: 0, opacity: 0 }}
@@ -223,14 +222,13 @@ export function DataFlowCanvas({
       ))}
 
       {particles.map((p) => {
-        const beam =
-          p.direction === 'in' ? sources[p.pathIndex] : sinks[p.pathIndex];
+        const beam = p.direction === 'in' ? sources[p.pathIndex] : sinks[p.pathIndex];
         if (!beam) return null;
         const fill = p.direction === 'in' ? colors[(beam as SourceBeam).method] : '#c4b5fd';
         return (
           <motion.circle
             key={p.id}
-            r="5"
+            r="2.2"
             fill={fill}
             filter="url(#dfc-particle-glow)"
             initial={{ opacity: 0 }}

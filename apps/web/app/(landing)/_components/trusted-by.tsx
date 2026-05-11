@@ -11,9 +11,9 @@ export function TrustedBy(): React.JSX.Element {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 1 }}
-      className="border-border/40 border-t py-16"
+      className="border-border/40 border-t py-6"
     >
-      <div className="mb-10 text-center">
+      <div className="mb-6 text-center">
         <span className="text-muted-foreground font-mono text-xs tracking-[0.3em]">
           TRUSTED BY DEVELOPERS AT
         </span>

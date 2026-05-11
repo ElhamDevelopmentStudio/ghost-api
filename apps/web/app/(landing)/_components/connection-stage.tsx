@@ -15,9 +15,10 @@ import { LANDING_API_LOG } from './constants';
 
 type Anchor = { x: number; y: number };
 
-/** Radius of the glassy orb in pixels (matches the `size` passed to `GlowOrb` below). */
-const ORB_SIZE = 128;
+/** Radius of the glowing ghost node in pixels (matches the `size` passed to `GlowOrb` below). */
+const ORB_SIZE = 110;
 const ORB_RADIUS = ORB_SIZE / 2;
+const BEAM_OFFSETS = [-34, -22, -11, 0, 11, 22, 34] as const;
 
 /**
  * Project (fromX, fromY) onto the orb's perimeter — beams should *meet* the
@@ -54,7 +55,7 @@ export function ConnectionStage(): React.JSX.Element {
 
   const measure = useCallback((host: HTMLElement) => {
     const hostRect = host.getBoundingClientRect();
-    const theater = host.parentElement;
+    const theater = host.closest<HTMLElement>('[data-theater]');
     if (!theater) return;
 
     const sources: Anchor[] = Array.from(
@@ -101,39 +102,48 @@ export function ConnectionStage(): React.JSX.Element {
     };
   }, [container, measure]);
 
-  const orbX = size.w / 2;
-  const orbY = size.h / 2;
+  const sourceEdgeX =
+    sourceAnchors.length > 0 ? Math.max(...sourceAnchors.map((source) => source.x)) : 0;
+  const sinkEdgeX =
+    sinkAnchors.length > 0 ? Math.min(...sinkAnchors.map((sink) => sink.x)) : size.w;
+  const orbX = sourceEdgeX > 0 && sinkEdgeX < size.w ? (sourceEdgeX + sinkEdgeX) / 2 : size.w / 2;
+  const orbY = size.h / 2 + 18;
 
-  const sources: SourceBeam[] = sourceAnchors.map((a, i) => {
+  const sources: SourceBeam[] = sourceAnchors.flatMap((a, i) => {
     const method = LANDING_API_LOG[i]?.method ?? 'GET';
-    // Project the source onto the orb's perimeter so beams meet the sphere
-    // tangentially instead of stabbing through to the center.
-    const e = orbEdge(a.x, a.y, orbX, orbY);
-    // Sweep horizontally from the card, then curve along the orb's tangent.
-    const c1x = a.x + (orbX - a.x) * 0.5;
-    const c1y = a.y;
-    const c2x = e.x - (orbX - a.x) * 0.05;
-    const c2y = e.y;
-    return {
-      method,
-      d: `M ${a.x} ${a.y} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${e.x} ${e.y}`,
-    };
+    return BEAM_OFFSETS.map((offset, offsetIndex) => {
+      const start = { x: a.x, y: a.y + offset };
+      const e = orbEdge(start.x, start.y, orbX, orbY);
+      const c1x = start.x + (orbX - start.x) * (offsetIndex === 3 ? 0.48 : 0.42);
+      const c1y = start.y - offset * 0.12;
+      const c2x = e.x - (orbX - start.x) * 0.08;
+      const c2y = e.y + offset * 0.08;
+      return {
+        method,
+        emphasis: offset === 0,
+        d: `M ${start.x} ${start.y} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${e.x} ${e.y}`,
+      };
+    });
   });
 
-  const sinks: SinkBeam[] = sinkAnchors.map((a) => {
-    const e = orbEdge(a.x, a.y, orbX, orbY);
-    const c1x = e.x + (a.x - orbX) * 0.05;
-    const c1y = e.y;
-    const c2x = a.x - (a.x - orbX) * 0.5;
-    const c2y = a.y;
-    return {
-      d: `M ${e.x} ${e.y} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${a.x} ${a.y}`,
-    };
-  });
+  const sinks: SinkBeam[] = sinkAnchors.flatMap((a) =>
+    BEAM_OFFSETS.map((offset) => {
+      const end = { x: a.x, y: a.y + offset * 0.7 };
+      const e = orbEdge(end.x, end.y, orbX, orbY);
+      const c1x = e.x + (end.x - orbX) * 0.08;
+      const c1y = e.y + offset * 0.08;
+      const c2x = end.x - (end.x - orbX) * 0.55;
+      const c2y = end.y - offset * 0.1;
+      return {
+        emphasis: offset === 0,
+        d: `M ${e.x} ${e.y} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${end.x} ${end.y}`,
+      };
+    }),
+  );
 
   return (
     <div ref={setContainer} className="pointer-events-none absolute inset-0 overflow-visible">
-      <AmbientParticles />
+      <AmbientParticles count={120} region={{ top: 10, bottom: 82, left: 18, right: 72 }} />
 
       {size.w > 0 && (
         <DataFlowCanvas
@@ -148,12 +158,12 @@ export function ConnectionStage(): React.JSX.Element {
           className="absolute -translate-x-1/2 -translate-y-1/2"
           style={{ left: orbX, top: orbY }}
         >
-          <GlowOrb size={128}>
+          <GlowOrb size={110}>
             <Image
               src="/logo/logo-sm.png"
               alt="GhostAPI"
-              width={72}
-              height={72}
+              width={124}
+              height={124}
               priority
               unoptimized
             />

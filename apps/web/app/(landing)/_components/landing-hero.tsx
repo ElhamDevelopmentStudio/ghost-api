@@ -1,18 +1,15 @@
 import { ConnectionStage } from '@/app/(landing)/_components/connection-stage';
 import { FrontendDashboard } from '@/app/(landing)/_components/frontend-dashboard';
 import { HeroPitch } from '@/app/(landing)/_components/hero-pitch';
-import { HeroTerminal } from '@/app/(landing)/_components/hero-terminal';
 import { LiveApiActivity } from '@/app/(landing)/_components/live-api-activity';
 
 /**
- * Public hero.
- *
- * ≥ 1280px: pitch + terminal on the left, animation theater on the right.
- * < 1280px: theater hides so the copy stays readable.
+ * Public hero. The pitch sits above the beaming API theater so the motion
+ * system is the main first-viewport focus.
  */
 export function LandingHero(): React.JSX.Element {
   return (
-    <section className="relative min-h-screen">
+    <section className="relative min-h-[1220px] overflow-hidden">
       <div
         aria-hidden
         className="absolute inset-0 opacity-[0.03]"
@@ -40,23 +37,23 @@ export function LandingHero(): React.JSX.Element {
         }}
       />
 
-      <div className="relative z-10 mx-auto max-w-[2000px] px-6 pt-20">
-        <div className="flex min-h-[calc(100vh-80px)] flex-col items-center xl:flex-row xl:items-start xl:justify-between xl:gap-20">
-          <div className="z-20 flex w-full max-w-[400px] flex-col xl:w-[400px] xl:shrink-0">
-            <HeroPitch />
-            <HeroTerminal />
+      <div className="relative z-10 mx-auto flex max-w-[1500px] flex-col items-center px-[42px] pt-6">
+        <HeroPitch />
+
+        <div
+          className="relative mt-8 hidden min-h-[700px] w-full max-w-[1220px] grid-cols-[320px_minmax(280px,1fr)_410px] gap-8 lg:grid"
+          data-theater
+        >
+          <ConnectionStage />
+
+          <div className="relative z-10">
+            <LiveApiActivity />
           </div>
 
-          <div className="relative hidden h-[760px] flex-1 xl:block" data-theater>
-            <ConnectionStage />
+          <div aria-hidden />
 
-            <div className="absolute left-0 top-28 z-10">
-              <LiveApiActivity />
-            </div>
-
-            <div className="absolute right-0 top-28 z-10">
-              <FrontendDashboard />
-            </div>
+          <div className="relative z-10">
+            <FrontendDashboard />
           </div>
         </div>
       </div>

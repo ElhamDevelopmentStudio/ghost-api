@@ -17,6 +17,8 @@ type TerminalWindowProps = React.ComponentProps<'div'> & {
   lines: TerminalLine[];
   /** Delay (ms) between each line reveal. */
   revealMs?: number;
+  /** Show the traffic-light title bar. */
+  chrome?: boolean;
 };
 
 /**
@@ -27,6 +29,7 @@ type TerminalWindowProps = React.ComponentProps<'div'> & {
 export function TerminalWindow({
   lines,
   revealMs = 400,
+  chrome = true,
   className,
   ...props
 }: TerminalWindowProps): React.JSX.Element {
@@ -42,19 +45,18 @@ export function TerminalWindow({
 
   return (
     <div
-      className={cn(
-        'border-border/60 bg-surface/95 overflow-hidden rounded-lg border',
-        className,
-      )}
+      className={cn('border-border/60 bg-surface/95 overflow-hidden rounded-lg border', className)}
       {...props}
     >
-      <div className="border-border/60 bg-surface-elevated flex items-center gap-2 border-b px-4 py-2">
-        <span className="bg-destructive/80 size-3 rounded-full" />
-        <span className="bg-warning/80 size-3 rounded-full" />
-        <span className="bg-success/80 size-3 rounded-full" />
-      </div>
+      {chrome && (
+        <div className="border-border/60 bg-surface-elevated flex items-center gap-2 border-b px-4 py-2">
+          <span className="bg-destructive/80 size-3 rounded-full" />
+          <span className="bg-warning/80 size-3 rounded-full" />
+          <span className="bg-success/80 size-3 rounded-full" />
+        </div>
+      )}
 
-      <div className="space-y-2 p-4 font-mono text-sm">
+      <div className="space-y-2 p-5 font-mono text-sm">
         {lines.slice(0, visible).map((line, i) => (
           <motion.div
             key={i}
@@ -63,9 +65,7 @@ export function TerminalWindow({
             transition={{ duration: 0.2 }}
             className="flex items-center gap-2"
           >
-            {line.type === 'command' && (
-              <span className="text-muted-foreground">{line.text}</span>
-            )}
+            {line.type === 'command' && <span className="text-muted-foreground">{line.text}</span>}
             {line.type === 'success' && (
               <>
                 <span className="text-success">✓</span>

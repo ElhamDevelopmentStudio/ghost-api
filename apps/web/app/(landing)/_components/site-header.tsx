@@ -15,17 +15,14 @@ const NAV_ITEMS = [
   { label: 'CHANGELOG', href: '#changelog' },
 ] as const;
 
-/**
- * Fixed top nav for the public landing page. Translucent so the hero
- * gradient is visible behind it. Animated in on mount.
- */
+/** Top nav for the public landing page. */
 export function SiteHeader(): React.JSX.Element {
   return (
     <motion.header
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="bg-background/80 border-border/40 fixed inset-x-0 top-0 z-50 flex items-center justify-between border-b px-6 py-4 backdrop-blur-md"
+      className="relative z-50 flex items-center justify-between px-[42px] py-[21px]"
     >
       <Link href="/" className="flex items-center gap-3" aria-label="GhostAPI">
         <Image
@@ -48,7 +45,7 @@ export function SiteHeader(): React.JSX.Element {
           <Link
             key={item.label}
             href={item.href}
-            className="text-muted-foreground hover:text-foreground text-xs font-medium tracking-wider transition-colors"
+            className="text-foreground hover:text-primary text-xs font-medium tracking-normal transition-colors"
           >
             {item.label}
           </Link>
