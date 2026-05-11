@@ -17,7 +17,7 @@ const NAV = [
  * current page's controls. Pages render into the central scroll area.
  */
 export function AppLayout() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, isSigningOut } = useAuth();
 
   return (
     <div className="bg-background text-foreground flex min-h-screen">
@@ -47,7 +47,13 @@ export function AppLayout() {
             <div className="text-foreground truncate">{user?.name ?? 'Signed in'}</div>
             <div className="text-muted-foreground truncate">{user?.email}</div>
           </div>
-          <Button variant="tertiary" size="icon-sm" aria-label="Sign out" onClick={() => signOut()}>
+          <Button
+            variant="tertiary"
+            size="icon-sm"
+            aria-label="Sign out"
+            loading={isSigningOut}
+            onClick={() => void signOut()}
+          >
             <LogOut />
           </Button>
         </div>

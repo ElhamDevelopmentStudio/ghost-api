@@ -26,8 +26,8 @@ type RequestOptions = Omit<RequestInit, 'body'> & {
  *   - parses JSON responses (or returns null for 204)
  *   - throws `ApiError` for non-2xx responses
  *
- * Use this from TanStack Query `queryFn` / `mutationFn`. Keep auth wiring
- * here once the auth flow is built (e.g. attach the bearer token).
+ * Use this from TanStack Query `queryFn` / `mutationFn`. Authentication is
+ * cookie-based, so the wrapper always includes credentials.
  */
 export async function apiRequest<T = unknown>({
   path,
@@ -52,14 +52,29 @@ export async function apiRequest<T = unknown>({
   const parsed = text.length > 0 ? safeJson(text) : null;
 
   if (!response.ok) {
-    const message =
-      (parsed && typeof parsed === 'object' && 'message' in parsed
-        ? String((parsed as { message: unknown }).message)
-        : null) ?? response.statusText;
+    const message = extractErrorMessage(parsed) ?? response.statusText;
     throw new ApiError(response.status, message, parsed);
   }
 
   return parsed as T;
+}
+
+function extractErrorMessage(body: unknown): string | null {
+  if (!body || typeof body !== 'object') return null;
+
+  if ('message' in body && typeof body.message === 'string') {
+    return body.message;
+  }
+
+  if ('error' in body) {
+    const error = body.error;
+    if (typeof error === 'string') return error;
+    if (error && typeof error === 'object' && 'message' in error) {
+      return String((error as { message: unknown }).message);
+    }
+  }
+
+  return null;
 }
 
 function safeJson(text: string): unknown {

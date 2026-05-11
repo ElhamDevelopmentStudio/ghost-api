@@ -11,6 +11,12 @@ export { cn } from './lib/utils.js';
 export { Button, buttonVariants } from './components/button.js';
 export type { ButtonProps } from './components/button.js';
 
+export { Input } from './components/input.js';
+export type { InputProps } from './components/input.js';
+
+export { Checkbox } from './components/checkbox.js';
+export type { CheckboxProps } from './components/checkbox.js';
+
 export { Badge, badgeVariants } from './components/badge.js';
 
 export { Chip, chipVariants } from './components/chip.js';
