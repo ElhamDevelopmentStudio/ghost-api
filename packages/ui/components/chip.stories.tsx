@@ -1,6 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
-import { CheckCircle2, GitBranch, Sparkles, Tag } from 'lucide-react';
+import {
+  RiCheckboxCircleLine,
+  RiGitBranchLine,
+  RiPriceTag3Line,
+  RiSparkling2Line,
+} from '@remixicon/react';
 
 import { Chip } from './chip.js';
 
@@ -46,7 +51,7 @@ export const Destructive: Story = { args: { variant: 'destructive', children: 'F
 export const Info: Story = { args: { variant: 'info', children: 'Beta' } };
 
 export const WithIcon: Story = {
-  args: { icon: <Tag />, children: 'public' },
+  args: { icon: <RiPriceTag3Line />, children: 'public' },
 };
 
 export const Removable: Story = {
@@ -54,7 +59,7 @@ export const Removable: Story = {
 };
 
 export const Interactive: Story = {
-  args: { variant: 'neutral', children: 'Filter', icon: <GitBranch />, onClick: fn() },
+  args: { variant: 'neutral', children: 'Filter', icon: <RiGitBranchLine />, onClick: fn() },
 };
 
 export const AllVariants: Story = {
@@ -74,10 +79,10 @@ export const AllVariants: Story = {
             ))}
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Chip variant="success" size={size} icon={<CheckCircle2 />}>
+            <Chip variant="success" size={size} icon={<RiCheckboxCircleLine />}>
               200 OK
             </Chip>
-            <Chip variant="info" size={size} icon={<Sparkles />}>
+            <Chip variant="info" size={size} icon={<RiSparkling2Line />}>
               new
             </Chip>
             <Chip variant="primary" size={size} onDismiss={fn()}>

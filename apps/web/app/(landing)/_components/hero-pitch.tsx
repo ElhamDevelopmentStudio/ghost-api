@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Play } from 'lucide-react';
+import { RiPlayLine } from '@remixicon/react';
 
 import { Button } from '@ghostapi/ui';
 
@@ -64,7 +64,7 @@ export function HeroPitch(): React.JSX.Element {
           className="text-muted-foreground gap-3 tracking-normal"
         >
           <span className="border-border-strong flex size-8 items-center justify-center rounded-full border">
-            <Play className="ml-[1px] size-3 fill-current" />
+            <RiPlayLine className="ml-[1px] size-3 fill-current" />
           </span>
           WATCH DEMO
         </Button>

@@ -1,6 +1,12 @@
 import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { CheckCircle2, Info, TriangleAlert, XCircle, X } from 'lucide-react';
+import {
+  RiAlertLine,
+  RiCheckboxCircleLine,
+  RiCloseCircleLine,
+  RiCloseLine,
+  RiInformationLine,
+} from '@remixicon/react';
 
 import { cn } from '@ghostapi/ui/lib/utils';
 
@@ -33,11 +39,11 @@ const DEFAULT_ICON: Record<
   NonNullable<VariantProps<typeof alertVariants>['variant']>,
   React.ComponentType<{ className?: string }> | null
 > = {
-  default: Info,
-  success: CheckCircle2,
-  warning: TriangleAlert,
-  destructive: XCircle,
-  info: Info,
+  default: RiInformationLine,
+  success: RiCheckboxCircleLine,
+  warning: RiAlertLine,
+  destructive: RiCloseCircleLine,
+  info: RiInformationLine,
 };
 
 type AlertProps = React.ComponentProps<'div'> &
@@ -77,7 +83,7 @@ function Alert({
           aria-label="Dismiss alert"
           className="text-muted-foreground hover:text-foreground focus-visible:ring-ring -mr-1 -mt-0.5 rounded-sm p-1 transition-colors focus-visible:outline-none focus-visible:ring-2"
         >
-          <X className="size-4" />
+          <RiCloseLine className="size-4" />
         </button>
       ) : null}
     </div>

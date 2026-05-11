@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Check } from 'lucide-react';
+import { RiCheckLine } from '@remixicon/react';
 
 import { Button, Card, CardContent } from '@ghostapi/ui';
 
@@ -58,8 +58,7 @@ export function PricingSection(): React.JSX.Element {
 
         <div className="grid gap-6 lg:grid-cols-4">
           {PRICING_PLANS.map((plan) => {
-            const price =
-              billingCycle === 'yearly' ? plan.yearlyPrice : plan.monthlyPrice;
+            const price = billingCycle === 'yearly' ? plan.yearlyPrice : plan.monthlyPrice;
             const description =
               billingCycle === 'yearly' ? plan.yearlyDescription : plan.description;
 
@@ -86,7 +85,7 @@ export function PricingSection(): React.JSX.Element {
                   <ul className="text-muted-foreground mt-8 space-y-3 text-xs">
                     {plan.features.map((feature) => (
                       <li key={feature} className="flex items-start gap-2">
-                        <Check className="text-success mt-0.5 size-3.5 shrink-0" />
+                        <RiCheckLine className="text-success mt-0.5 size-3.5 shrink-0" />
                         <span>{feature}</span>
                       </li>
                     ))}

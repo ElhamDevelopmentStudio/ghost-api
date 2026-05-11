@@ -1,5 +1,11 @@
 import * as React from 'react';
-import { CheckCircle2, Info, Loader2, TriangleAlert, XCircle } from 'lucide-react';
+import {
+  RiAlertLine,
+  RiCheckboxCircleLine,
+  RiCloseCircleLine,
+  RiInformationLine,
+  RiLoader4Line,
+} from '@remixicon/react';
 import { Toaster as Sonner, toast, type ToasterProps } from 'sonner';
 
 /**
@@ -19,11 +25,11 @@ function Toaster({ ...props }: ToasterProps): React.JSX.Element {
       theme="dark"
       className="toaster group"
       icons={{
-        success: <CheckCircle2 className="size-4" />,
-        info: <Info className="size-4" />,
-        warning: <TriangleAlert className="size-4" />,
-        error: <XCircle className="size-4" />,
-        loading: <Loader2 className="size-4 animate-spin" />,
+        success: <RiCheckboxCircleLine className="size-4" />,
+        info: <RiInformationLine className="size-4" />,
+        warning: <RiAlertLine className="size-4" />,
+        error: <RiCloseCircleLine className="size-4" />,
+        loading: <RiLoader4Line className="size-4 animate-spin" />,
       }}
       toastOptions={{
         classNames: {

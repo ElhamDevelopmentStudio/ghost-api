@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { X } from 'lucide-react';
+import { RiCloseLine } from '@remixicon/react';
 import { Dialog as SheetPrimitive } from 'radix-ui';
 
 import { cn } from '@ghostapi/ui/lib/utils';
@@ -84,7 +84,7 @@ function SheetContent({
             aria-label="Close"
             className="text-muted-foreground hover:text-foreground focus-visible:ring-ring absolute right-4 top-4 inline-flex size-7 items-center justify-center rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:pointer-events-none"
           >
-            <X className="size-4" />
+            <RiCloseLine className="size-4" />
           </SheetPrimitive.Close>
         ) : null}
       </SheetPrimitive.Content>

@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Github, Star } from 'lucide-react';
+import { RiGithubFill, RiStarLine } from '@remixicon/react';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -55,10 +55,10 @@ export function SiteHeader(): React.JSX.Element {
       <div className="flex items-center gap-3">
         <Button asChild variant="secondary" size="sm" className="hidden sm:inline-flex">
           <a href="https://github.com" target="_blank" rel="noreferrer">
-            <Github />
+            <RiGithubFill />
             <span>Star on GitHub</span>
             <span className="text-warning ml-1 flex items-center gap-1">
-              <Star className="fill-warning size-3" />
+              <RiStarLine className="fill-warning size-3" />
               1.2k
             </span>
           </a>

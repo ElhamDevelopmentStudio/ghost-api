@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { ArrowUpRight, Plus, TrendingUp, Users } from 'lucide-react';
+import { RiAddLine, RiExternalLinkLine, RiLineChartLine, RiTeamLine } from '@remixicon/react';
 
 import { Avatar, AvatarFallback, AvatarGroup, AvatarGroupCount } from './avatar.js';
 import { Badge } from './badge.js';
@@ -59,7 +59,7 @@ export const MetricCard: Story = {
         <CardTitle className="font-mono text-3xl tabular-nums">128.7K</CardTitle>
         <CardAction>
           <Badge variant="outline" className="text-success gap-1 font-mono">
-            <TrendingUp className="size-3" />
+            <RiLineChartLine className="size-3" />
             +12.4%
           </Badge>
         </CardAction>
@@ -83,7 +83,7 @@ export const ActionCard: Story = {
       <CardFooter className="justify-end">
         <Button>
           Upgrade
-          <ArrowUpRight />
+          <RiExternalLinkLine />
         </Button>
       </CardFooter>
     </Card>
@@ -98,7 +98,7 @@ export const TeamMembers: Story = {
         <CardDescription>4 members with access to this project.</CardDescription>
         <CardAction>
           <Button variant="tertiary" size="icon-sm" aria-label="Invite member">
-            <Plus />
+            <RiAddLine />
           </Button>
         </CardAction>
       </CardHeader>
@@ -153,7 +153,7 @@ export const WithIconHeader: Story = {
     <Card className="w-[320px]">
       <CardHeader>
         <div className="bg-primary/10 text-primary mb-2 inline-flex size-9 items-center justify-center rounded-md">
-          <Users className="size-5" />
+          <RiTeamLine className="size-5" />
         </div>
         <CardTitle>Team activity</CardTitle>
         <CardDescription>
@@ -163,7 +163,7 @@ export const WithIconHeader: Story = {
       <CardFooter className="justify-end">
         <Button variant="tertiary" size="sm">
           View activity
-          <ArrowUpRight />
+          <RiExternalLinkLine />
         </Button>
       </CardFooter>
     </Card>

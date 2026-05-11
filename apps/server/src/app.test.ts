@@ -8,6 +8,12 @@ beforeEach(() => {
   process.env.REDIS_URL = 'redis://localhost:6379';
   process.env.JWT_SECRET = 'test-secret-test-secret-test-secret-32';
   process.env.CORS_ORIGINS = 'http://localhost:3002';
+  process.env.R2_ACCOUNT_ID = 'test-account';
+  process.env.R2_ACCESS_KEY_ID = 'test-access-key';
+  process.env.R2_SECRET_ACCESS_KEY = 'test-secret-key';
+  process.env.R2_BUCKET = 'ghostapi-test';
+  process.env.R2_REGION = 'auto';
+  process.env.R2_ENDPOINT_URL = 'https://test.r2.cloudflarestorage.com';
   clearRateLimitBuckets();
 });
 

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { ArrowRight, Download, Plus, Trash2 } from 'lucide-react';
+import { RiAddLine, RiArrowRightLine, RiDeleteBinLine, RiDownloadLine } from '@remixicon/react';
 
 import { Button } from './button.js';
 
@@ -75,7 +75,7 @@ export const WithLeadingIcon: Story = {
   args: {
     children: (
       <>
-        <Plus />
+        <RiAddLine />
         Add endpoint
       </>
     ),
@@ -87,7 +87,7 @@ export const WithTrailingIcon: Story = {
     children: (
       <>
         Continue
-        <ArrowRight />
+        <RiArrowRightLine />
       </>
     ),
   },
@@ -97,7 +97,7 @@ export const IconOnly: Story = {
   args: {
     size: 'icon',
     'aria-label': 'Add endpoint',
-    children: <Plus />,
+    children: <RiAddLine />,
   },
 };
 
@@ -107,7 +107,7 @@ export const AsChildLink: Story = {
     variant: 'tertiary',
     children: (
       <a href="https://example.com" target="_blank" rel="noreferrer">
-        <Download />
+        <RiDownloadLine />
         Download spec
       </a>
     ),
@@ -172,7 +172,7 @@ export const AllStates: Story = {
             </Cell>
             <Cell label="with icon">
               <Button variant={variant}>
-                {variant === 'destructive' ? <Trash2 /> : <Plus />}
+                {variant === 'destructive' ? <RiDeleteBinLine /> : <RiAddLine />}
                 {variant === 'destructive' ? 'Delete' : 'Add'}
               </Button>
             </Cell>
@@ -198,7 +198,7 @@ export const AllSizes: Story = {
               Button
             </Button>
             <Button size={size}>
-              <Plus />
+              <RiAddLine />
               With icon
             </Button>
           </div>
@@ -207,13 +207,13 @@ export const AllSizes: Story = {
       <Cell label="icon only">
         <div className="flex items-center gap-3">
           <Button size="icon-sm" aria-label="Add">
-            <Plus />
+            <RiAddLine />
           </Button>
           <Button size="icon" aria-label="Add">
-            <Plus />
+            <RiAddLine />
           </Button>
           <Button size="icon-lg" aria-label="Add">
-            <Plus />
+            <RiAddLine />
           </Button>
         </div>
       </Cell>

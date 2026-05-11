@@ -68,13 +68,29 @@ export function registerBackendOpenApi(app: OpenAPIHono<AppEnv>): void {
           'application/json': {
             schema: z.object({
               projects: z.array(
-                projectSchema.pick({
-                  id: true,
-                  name: true,
-                  slug: true,
-                  description: true,
-                  createdAt: true,
-                }),
+                projectSchema
+                  .pick({
+                    id: true,
+                    name: true,
+                    slug: true,
+                    description: true,
+                    icon: true,
+                    createdAt: true,
+                    updatedAt: true,
+                  })
+                  .extend({
+                    role: z.enum(['OWNER', 'ADMIN', 'EDITOR', 'VIEWER']),
+                    visibility: z.enum(['Private', 'Team']),
+                    status: z.enum(['Live', 'Paused']),
+                    endpointCount: z.number().int().min(0),
+                    requestCount: z.number().int().min(0),
+                    environment: z
+                      .object({
+                        name: z.string(),
+                        baseUrl: z.string(),
+                      })
+                      .nullable(),
+                  }),
               ),
             }),
           },
@@ -104,8 +120,13 @@ export function registerBackendOpenApi(app: OpenAPIHono<AppEnv>): void {
                 .string()
                 .min(1)
                 .max(64)
-                .regex(/^[a-z0-9][a-z0-9-]*$/),
+                .regex(/^[a-z0-9][a-z0-9-]*$/)
+                .optional(),
               description: z.string().max(500).optional(),
+              icon: z.string().max(64).optional(),
+              imageAttachmentId: z.string().uuid().optional(),
+              baseUrl: z.string().max(250).optional(),
+              environment: z.enum(['Development', 'Staging', 'Production']).default('Development'),
             }),
           },
         },
@@ -119,6 +140,64 @@ export function registerBackendOpenApi(app: OpenAPIHono<AppEnv>): void {
       401: {
         description: 'Missing or invalid auth cookie.',
         content: { 'application/json': { schema: authErrorSchema() } },
+      },
+    },
+  });
+
+  app.openAPIRegistry.registerPath({
+    method: 'post',
+    path: '/uploads',
+    tags: ['Uploads'],
+    summary: 'Create a presigned upload for an attachment',
+    security: [{ accessCookie: [] }, { csrfHeader: [] }],
+    request: {
+      body: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: z.object({
+              purpose: z.enum(['project-avatar', 'user-avatar', 'workspace-attachment']),
+              fileName: z.string().min(1).max(180),
+              mimeType: z.string().min(1).max(120),
+              sizeBytes: z
+                .number()
+                .int()
+                .positive()
+                .max(8 * 1024 * 1024),
+            }),
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Presigned R2 PUT URL and pending attachment reference.',
+        content: { 'application/json': { schema: z.record(z.unknown()) } },
+      },
+      400: {
+        description: 'Invalid upload metadata.',
+        content: { 'application/json': { schema: errorSchema } },
+      },
+    },
+  });
+
+  app.openAPIRegistry.registerPath({
+    method: 'post',
+    path: '/uploads/{id}/complete',
+    tags: ['Uploads'],
+    summary: 'Finalize an uploaded attachment and generate image thumbnails',
+    security: [{ accessCookie: [] }, { csrfHeader: [] }],
+    request: {
+      params: z.object({ id: z.string().uuid() }),
+    },
+    responses: {
+      200: {
+        description: 'Attachment finalized.',
+        content: { 'application/json': { schema: z.record(z.unknown()) } },
+      },
+      422: {
+        description: 'The uploaded R2 object could not be read or transformed.',
+        content: { 'application/json': { schema: errorSchema } },
       },
     },
   });

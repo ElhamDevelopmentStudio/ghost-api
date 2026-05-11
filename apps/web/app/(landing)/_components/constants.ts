@@ -1,19 +1,19 @@
 import type { ApiLogEntry, TerminalLine } from '@ghostapi/ui';
-import type { LucideIcon } from 'lucide-react';
+import type { ComponentType } from 'react';
 import {
-  Activity,
-  Braces,
-  Code2,
-  FileCode2,
-  Globe,
-  Layers,
-  RefreshCw,
-  Rocket,
-  Settings2,
-  SlidersHorizontal,
-  Users,
-  Zap,
-} from 'lucide-react';
+  RiBracesLine,
+  RiCodeLine,
+  RiEqualizerLine,
+  RiFileCodeLine,
+  RiFlashlightLine,
+  RiGlobalLine,
+  RiPulseLine,
+  RiRefreshLine,
+  RiRocketLine,
+  RiSettings3Line,
+  RiStackLine,
+  RiTeamLine,
+} from '@remixicon/react';
 
 export type BillingCycle = 'monthly' | 'yearly';
 
@@ -36,12 +36,12 @@ export type DashboardOrder = {
 export type LandingFeature = {
   title: string;
   description: string;
-  icon: LucideIcon;
+  icon: ComponentType<{ className?: string }>;
 };
 
 export type TrustedCompany = {
   name: string;
-  icon: LucideIcon;
+  icon: ComponentType<{ className?: string }>;
 };
 
 export const HERO_TRUST_BULLETS = ['No credit card', 'Open source', 'Works in seconds'] as const;
@@ -158,32 +158,32 @@ export const FEATURES: LandingFeature[] = [
   {
     title: 'OpenAPI -> Mock API',
     description: 'Upload your OpenAPI schema and get a fully working API in seconds.',
-    icon: FileCode2,
+    icon: RiFileCodeLine,
   },
   {
     title: 'Realistic Responses',
     description: 'Dynamic data, relationships, and custom rules that feel real.',
-    icon: Braces,
+    icon: RiBracesLine,
   },
   {
     title: 'Behavior Controls',
     description: 'Simulate delays, errors, auth, and edge cases with ease.',
-    icon: SlidersHorizontal,
+    icon: RiEqualizerLine,
   },
   {
     title: 'Live Request Logs',
     description: 'See every request in real-time with headers, query params, and payloads.',
-    icon: Activity,
+    icon: RiPulseLine,
   },
   {
     title: 'Team Workspaces',
     description: 'Collaborate with your team and share mock environments.',
-    icon: Users,
+    icon: RiTeamLine,
   },
   {
     title: 'Environment Sync',
     description: 'Switch between multiple environments in one click.',
-    icon: RefreshCw,
+    icon: RiRefreshLine,
   },
 ];
 
@@ -273,12 +273,12 @@ export const TESTIMONIALS = [
 ] as const;
 
 export const TRUSTED_COMPANIES: TrustedCompany[] = [
-  { name: 'ShipFast', icon: Layers },
-  { name: 'ByteCraft', icon: Code2 },
-  { name: 'DevStack', icon: Settings2 },
-  { name: 'LaunchKit', icon: Rocket },
-  { name: 'Codewave', icon: Zap },
-  { name: 'Acme Corp', icon: Globe },
+  { name: 'ShipFast', icon: RiStackLine },
+  { name: 'ByteCraft', icon: RiCodeLine },
+  { name: 'DevStack', icon: RiSettings3Line },
+  { name: 'LaunchKit', icon: RiRocketLine },
+  { name: 'Codewave', icon: RiFlashlightLine },
+  { name: 'Acme Corp', icon: RiGlobalLine },
 ];
 
 export const FOOTER_GROUPS = [

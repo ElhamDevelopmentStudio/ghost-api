@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Plus } from 'lucide-react';
+import { RiAddLine } from '@remixicon/react';
 
 import { Button, cn } from '@ghostapi/ui';
 
@@ -18,7 +18,7 @@ export function DashboardUsersSection(): React.JSX.Element {
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-foreground text-sm font-semibold">Users</h3>
         <Button size="sm" className="h-6 gap-1 px-2 text-[10px]">
-          <Plus />
+          <RiAddLine />
           New User
         </Button>
       </div>

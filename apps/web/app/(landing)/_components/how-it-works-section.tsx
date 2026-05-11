@@ -1,4 +1,10 @@
-import { ArrowRight, Copy, FileCode2, Rocket, Settings2 } from 'lucide-react';
+import {
+  RiArrowRightLine,
+  RiFileCodeLine,
+  RiFileCopyLine,
+  RiRocketLine,
+  RiSettings3Line,
+} from '@remixicon/react';
 import Link from 'next/link';
 
 import { Button, Card, CardContent } from '@ghostapi/ui';
@@ -28,7 +34,7 @@ export function HowItWorksSection(): React.JSX.Element {
           >
             <Link href="/docs">
               VIEW DOCS
-              <ArrowRight className="size-3.5" />
+              <RiArrowRightLine className="size-3.5" />
             </Link>
           </Button>
         </div>
@@ -38,7 +44,7 @@ export function HowItWorksSection(): React.JSX.Element {
             number="1."
             title="Upload OpenAPI Schema"
             description="Upload your openapi.yaml or JSON file."
-            badge={<FileCode2 className="size-4" />}
+            badge={<RiFileCodeLine className="size-4" />}
           >
             <pre className="border-border/40 bg-background/80 text-success overflow-hidden rounded-md border p-5 text-[11px] leading-5">
               {HOW_IT_WORKS_SCHEMA}
@@ -49,7 +55,7 @@ export function HowItWorksSection(): React.JSX.Element {
             number="2."
             title="Configure Behavior"
             description="Control responses, errors, delays, and authentication."
-            badge={<Settings2 className="size-4" />}
+            badge={<RiSettings3Line className="size-4" />}
           >
             <div className="border-border/40 bg-background/80 rounded-md border p-5">
               <div className="grid grid-cols-2 gap-4 text-[11px]">
@@ -84,7 +90,7 @@ export function HowItWorksSection(): React.JSX.Element {
             number="3."
             title="Start & Integrate"
             description="Get your mock API base URL and start building."
-            badge={<Rocket className="size-4" />}
+            badge={<RiRocketLine className="size-4" />}
           >
             <div className="border-primary/20 bg-primary/10 rounded-md border p-5">
               <h4 className="text-foreground font-mono text-sm font-semibold">
@@ -139,7 +145,7 @@ function CopyField({ label, value }: { label: string; value: string }): React.JS
       <div className="text-muted-foreground mb-2 text-[10px]">{label}</div>
       <div className="border-border/40 bg-background/80 text-foreground flex items-center justify-between rounded border px-3 py-2 font-mono text-xs">
         <span className="truncate">{value}</span>
-        <Copy className="text-primary ml-3 size-3.5 shrink-0" />
+        <RiFileCopyLine className="text-primary ml-3 size-3.5 shrink-0" />
       </div>
     </div>
   );

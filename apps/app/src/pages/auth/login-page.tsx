@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ArrowRight, Mail } from 'lucide-react';
+import { RiArrowRightLine, RiMailLine } from '@remixicon/react';
 
 import { Button, toast } from '@ghostapi/ui';
 
@@ -76,7 +76,7 @@ export function LoginPage() {
           type="email"
           autoComplete="email"
           placeholder="you@example.com"
-          icon={<Mail className="size-5" />}
+          icon={<RiMailLine className="size-5" />}
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           required
@@ -114,7 +114,7 @@ export function LoginPage() {
           className="h-[58px] w-full bg-[linear-gradient(90deg,#6d33ff,#7b2cff,#681eff)] text-base shadow-[0_16px_40px_rgba(124,77,255,0.25)] hover:brightness-110"
         >
           Sign in
-          <ArrowRight className="ml-auto size-5" />
+          <RiArrowRightLine className="ml-auto size-5" />
         </Button>
       </form>
     </AuthCard>

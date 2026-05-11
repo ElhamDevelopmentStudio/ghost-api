@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { CheckCircle2, Sparkles } from 'lucide-react';
+import { RiCheckboxCircleLine, RiSparkling2Line } from '@remixicon/react';
 
 import { Badge } from './badge.js';
 
@@ -44,7 +44,7 @@ export const WithIcon: Story = {
     variant: 'outline',
     children: (
       <>
-        <CheckCircle2 />
+        <RiCheckboxCircleLine />
         Healthy
       </>
     ),
@@ -78,7 +78,7 @@ export const AllVariants: Story = {
           200 OK
         </Badge>
         <Badge>
-          <Sparkles />
+          <RiSparkling2Line />
           New
         </Badge>
       </div>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { RiArrowRightLine } from '@remixicon/react';
 
 import { Button } from '@ghostapi/ui';
 
@@ -60,7 +60,7 @@ export function VerifyEmailPage() {
           className="h-[58px] w-full bg-[linear-gradient(90deg,#6d33ff,#7b2cff,#681eff)] text-base shadow-[0_16px_40px_rgba(124,77,255,0.25)] hover:brightness-110"
         >
           Sign in
-          <ArrowRight className="ml-auto size-5" />
+          <RiArrowRightLine className="ml-auto size-5" />
         </Button>
       ) : (
         <div className="space-y-5">
@@ -85,7 +85,7 @@ export function VerifyEmailPage() {
             className="h-[58px] w-full bg-[linear-gradient(90deg,#6d33ff,#7b2cff,#681eff)] text-base shadow-[0_16px_40px_rgba(124,77,255,0.25)] hover:brightness-110"
           >
             Verify email
-            <ArrowRight className="ml-auto size-5" />
+            <RiArrowRightLine className="ml-auto size-5" />
           </Button>
         </div>
       )}

@@ -24,6 +24,21 @@ enum ProjectRole {
   @@map("project_role")
 }
 
+enum AttachmentPurpose {
+  PROJECT_AVATAR
+  USER_AVATAR
+  WORKSPACE_ATTACHMENT
+
+  @@map("attachment_purpose")
+}
+
+enum AttachmentStatus {
+  PENDING
+  READY
+
+  @@map("attachment_status")
+}
+
 model User {
   id              String    @id @default(uuid()) @db.Uuid
   email           String    @unique
@@ -38,6 +53,7 @@ model User {
   sessions           Session[]
   passwordResets     PasswordReset[]
   emailVerifications EmailVerification[]
+  attachments        Attachment[]
 
   @@map("users")
 }
@@ -112,6 +128,26 @@ model Project {
 
   @@index([ownerId])
   @@map("projects")
+}
+
+model Attachment {
+  id           String            @id @default(uuid()) @db.Uuid
+  ownerId      String            @map("owner_id") @db.Uuid
+  purpose      AttachmentPurpose
+  status       AttachmentStatus  @default(PENDING)
+  fileName     String            @map("file_name")
+  mimeType     String            @map("mime_type")
+  sizeBytes    Int               @map("size_bytes")
+  objectKey    String            @unique @map("object_key")
+  thumbnailKey String?           @unique @map("thumbnail_key")
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId, purpose])
+  @@index([status])
+  @@map("attachments")
 }
 
 model ProjectMember {

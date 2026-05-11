@@ -12,6 +12,12 @@ const serverEnvSchema = z.object({
   MAIL_USERNAME: z.string().default('resend'),
   MAIL_PASSWORD: z.string().optional(),
   MAIL_FROM: z.string().email().default('noreply@elhamullah.dev'),
+  R2_ACCOUNT_ID: z.string().min(1),
+  R2_ACCESS_KEY_ID: z.string().min(1),
+  R2_SECRET_ACCESS_KEY: z.string().min(1),
+  R2_BUCKET: z.string().min(1).default('ghostapi'),
+  R2_REGION: z.string().min(1).default('auto'),
+  R2_ENDPOINT_URL: z.string().url(),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;

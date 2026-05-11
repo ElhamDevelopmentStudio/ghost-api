@@ -5,6 +5,10 @@ const validEnv = {
   DATABASE_URL: 'postgresql://user:pass@localhost:5432/db',
   REDIS_URL: 'redis://localhost:6379',
   JWT_SECRET: 'a'.repeat(32),
+  R2_ACCOUNT_ID: 'test-account',
+  R2_ACCESS_KEY_ID: 'test-access-key',
+  R2_SECRET_ACCESS_KEY: 'test-secret-key',
+  R2_ENDPOINT_URL: 'https://test.r2.cloudflarestorage.com',
 } as NodeJS.ProcessEnv;
 
 describe('loadServerEnv', () => {

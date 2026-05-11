@@ -1,15 +1,21 @@
 import { NavLink, Outlet } from 'react-router-dom';
-import { FolderKanban, LogOut, ScrollText, Settings, Workflow } from 'lucide-react';
+import {
+  RiFileList3Line,
+  RiFlowChart,
+  RiFolderLine,
+  RiLogoutBoxRLine,
+  RiSettings3Line,
+} from '@remixicon/react';
 
 import { Button, cn } from '@ghostapi/ui';
 
 import { useAuth } from '@/features/auth';
 
 const NAV = [
-  { to: '/projects', label: 'Projects', icon: FolderKanban },
-  { to: '/workspace', label: 'Workspace', icon: Workflow },
-  { to: '/logs', label: 'Logs', icon: ScrollText },
-  { to: '/settings', label: 'Settings', icon: Settings },
+  { to: '/projects', label: 'Projects', icon: RiFolderLine },
+  { to: '/workspace', label: 'Workspace', icon: RiFlowChart },
+  { to: '/logs', label: 'Logs', icon: RiFileList3Line },
+  { to: '/settings', label: 'Settings', icon: RiSettings3Line },
 ] as const;
 
 /**
@@ -54,7 +60,7 @@ export function AppLayout() {
             loading={isSigningOut}
             onClick={() => void signOut()}
           >
-            <LogOut />
+            <RiLogoutBoxRLine />
           </Button>
         </div>
       </aside>

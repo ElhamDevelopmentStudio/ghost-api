@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { Loader2 } from 'lucide-react';
+import { RiLoader4Line } from '@remixicon/react';
 import { Slot } from 'radix-ui';
 
 import { cn } from '@ghostapi/ui/lib/utils';
@@ -75,7 +75,7 @@ function Button({
         children
       ) : (
         <>
-          {loading ? <Loader2 className="animate-spin" aria-hidden /> : null}
+          {loading ? <RiLoader4Line className="animate-spin" aria-hidden /> : null}
           {children}
         </>
       )}

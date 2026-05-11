@@ -17,5 +17,5 @@
     "lib": "@ghostapi/ui/lib",
     "hooks": "@ghostapi/ui/hooks"
   },
-  "iconLibrary": "lucide"
+  "iconLibrary": "remixicon"
 }

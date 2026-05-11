@@ -1,4 +1,4 @@
-import { Github } from 'lucide-react';
+import { RiGithubFill } from '@remixicon/react';
 
 import { Button, cn } from '@ghostapi/ui';
 
@@ -55,7 +55,7 @@ export function AuthCard({
         aria-disabled="true"
         title="GitHub authentication is not connected yet."
       >
-        <Github className="size-5" />
+        <RiGithubFill className="size-5" />
         {githubLabel}
       </Button>
 

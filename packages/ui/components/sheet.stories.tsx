@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Filter } from 'lucide-react';
+import { RiFilter3Line } from '@remixicon/react';
 
 import { Badge } from './badge.js';
 import { Button } from './button.js';
@@ -147,7 +147,7 @@ export const FilterOptions: Story = {
     <Sheet>
       <SheetTrigger asChild>
         <Button variant="secondary">
-          <Filter />
+          <RiFilter3Line />
           Filters
           <Badge variant="secondary" className="ml-1">
             3

@@ -1,4 +1,4 @@
-import { Github, MessageCircle, Twitter } from 'lucide-react';
+import { RiGithubFill, RiMessage3Line, RiTwitterXFill } from '@remixicon/react';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -27,9 +27,9 @@ export function FooterSection(): React.JSX.Element {
             The developer-first API simulation platform.
           </p>
           <div className="text-muted-foreground mt-6 flex items-center gap-4">
-            <Github className="size-5" />
-            <Twitter className="size-5" />
-            <MessageCircle className="size-5" />
+            <RiGithubFill className="size-5" />
+            <RiTwitterXFill className="size-5" />
+            <RiMessage3Line className="size-5" />
           </div>
         </div>
 

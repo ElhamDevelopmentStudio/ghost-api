@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Eye, EyeOff, Lock } from 'lucide-react';
+import { RiEyeCloseLine, RiEyeLine, RiLockLine } from '@remixicon/react';
 
 import { AuthField } from './auth-field';
 
@@ -15,7 +15,7 @@ export function PasswordField(props: PasswordFieldProps) {
     <AuthField
       {...props}
       type={visible ? 'text' : 'password'}
-      icon={<Lock className="size-5" />}
+      icon={<RiLockLine className="size-5" />}
       trailing={
         <button
           type="button"
@@ -23,7 +23,7 @@ export function PasswordField(props: PasswordFieldProps) {
           aria-label={visible ? 'Hide password' : 'Show password'}
           onClick={() => setVisible((current) => !current)}
         >
-          {visible ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
+          {visible ? <RiEyeCloseLine className="size-5" /> : <RiEyeLine className="size-5" />}
         </button>
       }
     />

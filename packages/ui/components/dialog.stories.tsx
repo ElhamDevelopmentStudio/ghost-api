@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
-import { Trash2 } from 'lucide-react';
+import { RiDeleteBinLine } from '@remixicon/react';
 
 import { Button } from './button.js';
 import {
@@ -74,7 +74,7 @@ export const Confirmation: Story = {
     <Dialog>
       <DialogTrigger asChild>
         <Button variant="destructive">
-          <Trash2 />
+          <RiDeleteBinLine />
           Delete project
         </Button>
       </DialogTrigger>

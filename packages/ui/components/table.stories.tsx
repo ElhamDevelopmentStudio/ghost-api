@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { ArrowDown, ArrowUp, ArrowUpDown, MoreHorizontal } from 'lucide-react';
+import { RiArrowDownLine, RiArrowUpLine, RiExpandUpDownLine, RiMoreLine } from '@remixicon/react';
 
 import { Badge } from './badge.js';
 import { Button } from './button.js';
@@ -122,7 +122,7 @@ function SortHeader({
   direction?: 'asc' | 'desc';
   onClick?: () => void;
 }): React.JSX.Element {
-  const Icon = !active ? ArrowUpDown : direction === 'asc' ? ArrowUp : ArrowDown;
+  const Icon = !active ? RiExpandUpDownLine : direction === 'asc' ? RiArrowUpLine : RiArrowDownLine;
   return (
     <button
       type="button"
@@ -238,7 +238,7 @@ export const SelectableRows: Story = {
               <TableCell className="text-muted-foreground">{row.role}</TableCell>
               <TableCell className="text-right">
                 <Button variant="tertiary" size="icon-sm" aria-label="Row actions">
-                  <MoreHorizontal />
+                  <RiMoreLine />
                 </Button>
               </TableCell>
             </TableRow>

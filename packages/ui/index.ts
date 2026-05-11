@@ -17,6 +17,19 @@ export type { InputProps } from './components/input.js';
 export { Checkbox } from './components/checkbox.js';
 export type { CheckboxProps } from './components/checkbox.js';
 
+export {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectScrollDownButton,
+  SelectScrollUpButton,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from './components/select.js';
+
 export { Badge, badgeVariants } from './components/badge.js';
 
 export { Chip, chipVariants } from './components/chip.js';
@@ -37,6 +50,13 @@ export {
 } from './components/avatar.js';
 
 export { Skeleton } from './components/skeleton.js';
+
+export {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from './components/accordion.js';
 
 /* ---- Feedback / status ----------------------------------------------- */
 
@@ -102,6 +122,24 @@ export {
   DialogDescription,
 } from './components/dialog.js';
 export type { DialogContentProps } from './components/dialog.js';
+
+export {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuPortal,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from './components/dropdown-menu.js';
 
 export {
   Sheet,

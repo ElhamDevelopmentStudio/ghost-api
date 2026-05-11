@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Mail, User } from 'lucide-react';
+import { RiArrowRightLine, RiMailLine, RiUserLine } from '@remixicon/react';
 
 import { Button, Checkbox } from '@ghostapi/ui';
 
@@ -89,7 +89,7 @@ export function RegisterPage() {
           label="Full name"
           autoComplete="name"
           placeholder="Your full name"
-          icon={<User className="size-5" />}
+          icon={<RiUserLine className="size-5" />}
           value={name}
           onChange={(event) => setName(event.target.value)}
         />
@@ -100,7 +100,7 @@ export function RegisterPage() {
           type="email"
           autoComplete="email"
           placeholder="you@example.com"
-          icon={<Mail className="size-5" />}
+          icon={<RiMailLine className="size-5" />}
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           required
@@ -160,7 +160,7 @@ export function RegisterPage() {
           className="h-[58px] w-full bg-[linear-gradient(90deg,#6d33ff,#7b2cff,#681eff)] text-base shadow-[0_16px_40px_rgba(124,77,255,0.25)] hover:brightness-110"
         >
           Create account
-          <ArrowRight className="ml-auto size-5" />
+          <RiArrowRightLine className="ml-auto size-5" />
         </Button>
       </form>
     </AuthCard>

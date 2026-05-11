@@ -1,4 +1,4 @@
-import { Quote } from 'lucide-react';
+import { RiDoubleQuotesL } from '@remixicon/react';
 
 import { Card, CardContent } from '@ghostapi/ui';
 
@@ -22,7 +22,7 @@ export function TestimonialsSection(): React.JSX.Element {
             className="border-border/40 from-surface/80 to-primary/10 relative overflow-hidden bg-gradient-to-br py-0 shadow-2xl shadow-black/20"
           >
             <CardContent className="p-8">
-              <Quote className="fill-primary text-primary absolute bottom-6 right-6 size-14 opacity-90" />
+              <RiDoubleQuotesL className="fill-primary text-primary absolute bottom-6 right-6 size-14 opacity-90" />
               <p className="text-foreground relative z-10 max-w-[280px] font-mono text-sm leading-7">
                 {item.quote}
               </p>

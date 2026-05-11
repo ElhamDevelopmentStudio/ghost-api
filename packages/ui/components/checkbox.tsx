@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Check } from 'lucide-react';
+import { RiCheckLine } from '@remixicon/react';
 
 import { cn } from '@ghostapi/ui/lib/utils';
 
@@ -20,7 +20,7 @@ function Checkbox({ className, checked, ...props }: CheckboxProps): React.JSX.El
         )}
         {...props}
       />
-      <Check
+      <RiCheckLine
         className="text-primary-foreground pointer-events-none absolute size-3.5 opacity-0 transition peer-checked:opacity-100"
         aria-hidden
       />

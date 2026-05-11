@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react';
+import { RiArrowLeftSLine, RiArrowRightSLine, RiMoreLine } from '@remixicon/react';
 
 import { cn } from '@ghostapi/ui/lib/utils';
 import { buttonVariants } from '@ghostapi/ui/components/button';
@@ -67,7 +67,7 @@ function PaginationPrevious({
       className={cn('gap-1 px-2.5 sm:pl-2.5', className)}
       {...props}
     >
-      <ChevronLeft />
+      <RiArrowLeftSLine />
       <span className="hidden sm:block">Previous</span>
     </PaginationLink>
   );
@@ -85,7 +85,7 @@ function PaginationNext({
       {...props}
     >
       <span className="hidden sm:block">Next</span>
-      <ChevronRight />
+      <RiArrowRightSLine />
     </PaginationLink>
   );
 }
@@ -101,7 +101,7 @@ function PaginationEllipsis({
       className={cn('text-muted-foreground flex size-9 items-center justify-center', className)}
       {...props}
     >
-      <MoreHorizontal className="size-4" />
+      <RiMoreLine className="size-4" />
       <span className="sr-only">More pages</span>
     </span>
   );

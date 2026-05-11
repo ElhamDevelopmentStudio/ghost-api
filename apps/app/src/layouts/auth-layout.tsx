@@ -1,14 +1,14 @@
 import { Link, Outlet, useLocation, Navigate } from 'react-router-dom';
 import {
-  Code2,
-  Database,
-  FileText,
-  Heart,
-  Server,
-  SlidersHorizontal,
-  Terminal,
-  Zap,
-} from 'lucide-react';
+  RiCodeLine,
+  RiDatabase2Line,
+  RiFileTextLine,
+  RiHeartLine,
+  RiServerLine,
+  RiTerminalLine,
+  RiEqualizerLine,
+  RiFlashlightLine,
+} from '@remixicon/react';
 
 import { cn } from '@ghostapi/ui';
 
@@ -159,16 +159,16 @@ function TerminalCommand() {
 function FlowDiagram({ compact }: { compact: boolean }) {
   const items = compact
     ? [
-        { label: 'your schema', icon: FileText },
+        { label: 'your schema', icon: RiFileTextLine },
         { label: 'ghostapi', brand: true },
-        { label: 'mock API', icon: Server },
-        { label: 'your frontend', icon: Heart },
+        { label: 'mock API', icon: RiServerLine },
+        { label: 'your frontend', icon: RiHeartLine },
       ]
     : [
-        { label: 'openapi.yaml', icon: FileText },
+        { label: 'openapi.yaml', icon: RiFileTextLine },
         { label: 'ghostapi', brand: true },
-        { label: 'live mock api', icon: Server },
-        { label: 'your frontend', icon: Code2 },
+        { label: 'live mock api', icon: RiServerLine },
+        { label: 'your frontend', icon: RiCodeLine },
       ];
 
   return (
@@ -224,22 +224,22 @@ function LoginFeatureList() {
 function RegisterFeatureList() {
   const items = [
     {
-      icon: Zap,
+      icon: RiFlashlightLine,
       title: 'Instant mock APIs',
       description: 'Generate working endpoints in seconds.',
     },
     {
-      icon: Database,
+      icon: RiDatabase2Line,
       title: 'Realistic data',
       description: 'Auto-generated responses that look real.',
     },
     {
-      icon: SlidersHorizontal,
+      icon: RiEqualizerLine,
       title: 'Full control',
       description: 'Simulate latency, errors, auth and more.',
     },
     {
-      icon: Terminal,
+      icon: RiTerminalLine,
       title: 'Built-in playground',
       description: 'Test your APIs right inside GhostAPI.',
     },

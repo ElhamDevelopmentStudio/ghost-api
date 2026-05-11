@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { X } from 'lucide-react';
+import { RiCloseLine } from '@remixicon/react';
 
 import { cn } from '@ghostapi/ui/lib/utils';
 
@@ -98,7 +98,7 @@ function Chip({
           }}
           className="text-current/60 -mr-1 inline-flex size-4 shrink-0 items-center justify-center rounded-full transition-colors hover:text-current focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-current"
         >
-          <X className="size-3" />
+          <RiCloseLine className="size-3" />
         </button>
       ) : null}
     </span>
