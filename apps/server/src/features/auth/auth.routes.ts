@@ -27,7 +27,12 @@ import {
   successSchema,
   verifyEmailBodySchema,
 } from './auth.schemas.js';
-import { sendPasswordResetEmail, sendVerificationEmail } from './auth.email.js';
+import {
+  EmailDeliveryError,
+  ensureEmailDeliveryConfigured,
+  sendPasswordResetEmail,
+  sendVerificationEmail,
+} from './auth.email.js';
 import {
   AuthError,
   createEmailVerification,
@@ -85,10 +90,15 @@ authRouter.openapi(
         description: 'Email already registered.',
         content: { 'application/json': { schema: errorResponseSchema } },
       },
+      503: {
+        description: 'Verification email delivery failed.',
+        content: { 'application/json': { schema: errorResponseSchema } },
+      },
     },
   }),
   async (c) => {
     try {
+      ensureEmailDeliveryConfigured();
       const result = await register({
         ...c.req.valid('json'),
         userAgent: c.req.header('user-agent'),
@@ -104,6 +114,9 @@ authRouter.openapi(
     } catch (err) {
       if (err instanceof AuthError) {
         return c.json({ success: false as const, error: { message: err.message } }, 409);
+      }
+      if (err instanceof EmailDeliveryError) {
+        return c.json({ success: false as const, error: { message: err.message } }, 503);
       }
       throw err;
     }
@@ -130,19 +143,31 @@ authRouter.openapi(
           'Returns success regardless of whether the account exists or is already verified.',
         content: { 'application/json': { schema: resendVerificationResponseSchema } },
       },
+      503: {
+        description: 'Verification email delivery failed.',
+        content: { 'application/json': { schema: errorResponseSchema } },
+      },
     },
   }),
   async (c) => {
-    const result = await createEmailVerification(c.req.valid('json').email);
-    if (result.verificationToken) {
-      await sendVerificationEmail({
-        to: result.email,
-        name: result.name,
-        verificationUrl: verificationUrl(result.verificationToken),
-      });
-    }
+    try {
+      ensureEmailDeliveryConfigured();
+      const result = await createEmailVerification(c.req.valid('json').email);
+      if (result.verificationToken) {
+        await sendVerificationEmail({
+          to: result.email,
+          name: result.name,
+          verificationUrl: verificationUrl(result.verificationToken),
+        });
+      }
 
-    return c.json({ success: true as const }, 200);
+      return c.json({ success: true as const }, 200);
+    } catch (err) {
+      if (err instanceof EmailDeliveryError) {
+        return c.json({ success: false as const, error: { message: err.message } }, 503);
+      }
+      throw err;
+    }
   },
 );
 
@@ -380,18 +405,30 @@ authRouter.openapi(
           'Returns success regardless of whether the email exists. Sends reset instructions when the account exists.',
         content: { 'application/json': { schema: forgotPasswordResponseSchema } },
       },
+      503: {
+        description: 'Password reset email delivery failed.',
+        content: { 'application/json': { schema: errorResponseSchema } },
+      },
     },
   }),
   async (c) => {
-    const result = await createPasswordReset(c.req.valid('json').email);
-    if (result.resetToken) {
-      await sendPasswordResetEmail({
-        to: result.email,
-        name: result.name,
-        resetUrl: resetPasswordUrl(result.resetToken),
-      });
+    try {
+      ensureEmailDeliveryConfigured();
+      const result = await createPasswordReset(c.req.valid('json').email);
+      if (result.resetToken) {
+        await sendPasswordResetEmail({
+          to: result.email,
+          name: result.name,
+          resetUrl: resetPasswordUrl(result.resetToken),
+        });
+      }
+      return c.json({ success: true as const }, 200);
+    } catch (err) {
+      if (err instanceof EmailDeliveryError) {
+        return c.json({ success: false as const, error: { message: err.message } }, 503);
+      }
+      throw err;
     }
-    return c.json({ success: true as const }, 200);
   },
 );
 

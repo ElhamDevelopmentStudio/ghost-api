@@ -5,6 +5,21 @@ import { logger } from '../../logger.js';
 
 let resendClient: Resend | null = null;
 
+export class EmailDeliveryError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'EmailDeliveryError';
+  }
+}
+
+export function ensureEmailDeliveryConfigured(): void {
+  const e = env();
+
+  if (!e.MAIL_PASSWORD) {
+    throw new EmailDeliveryError('Email delivery is not configured.');
+  }
+}
+
 export async function sendVerificationEmail(input: {
   to: string;
   name: string | null;
@@ -13,13 +28,12 @@ export async function sendVerificationEmail(input: {
   const e = env();
 
   if (!e.MAIL_PASSWORD) {
-    logger.warn({ to: input.to }, 'Skipping email verification delivery; MAIL_PASSWORD is unset');
-    return;
+    throw new EmailDeliveryError('Email delivery is not configured.');
   }
 
   resendClient ??= new Resend(e.MAIL_PASSWORD);
 
-  const { error } = await resendClient.emails.send({
+  const { data, error } = await resendClient.emails.send({
     from: `GhostAPI <${e.MAIL_FROM}>`,
     to: input.to,
     subject: 'Verify your GhostAPI email',
@@ -29,8 +43,10 @@ export async function sendVerificationEmail(input: {
 
   if (error) {
     logger.error({ error, to: input.to }, 'Failed to send email verification');
-    throw new Error('Unable to send verification email');
+    throw new EmailDeliveryError(emailErrorMessage(error, 'Unable to send verification email.'));
   }
+
+  logger.info({ emailId: data?.id, to: input.to }, 'Sent email verification');
 }
 
 export async function sendPasswordResetEmail(input: {
@@ -41,13 +57,12 @@ export async function sendPasswordResetEmail(input: {
   const e = env();
 
   if (!e.MAIL_PASSWORD) {
-    logger.warn({ to: input.to }, 'Skipping password reset delivery; MAIL_PASSWORD is unset');
-    return;
+    throw new EmailDeliveryError('Email delivery is not configured.');
   }
 
   resendClient ??= new Resend(e.MAIL_PASSWORD);
 
-  const { error } = await resendClient.emails.send({
+  const { data, error } = await resendClient.emails.send({
     from: `GhostAPI <${e.MAIL_FROM}>`,
     to: input.to,
     subject: 'Reset your GhostAPI password',
@@ -57,8 +72,19 @@ export async function sendPasswordResetEmail(input: {
 
   if (error) {
     logger.error({ error, to: input.to }, 'Failed to send password reset');
-    throw new Error('Unable to send password reset email');
+    throw new EmailDeliveryError(emailErrorMessage(error, 'Unable to send password reset email.'));
   }
+
+  logger.info({ emailId: data?.id, to: input.to }, 'Sent password reset email');
+}
+
+function emailErrorMessage(error: unknown, fallback: string): string {
+  if (error && typeof error === 'object' && 'message' in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === 'string' && message.trim()) return message;
+  }
+
+  return fallback;
 }
 
 function verificationEmailText(input: { name: string | null; verificationUrl: string }): string {

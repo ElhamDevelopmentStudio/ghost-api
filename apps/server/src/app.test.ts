@@ -8,6 +8,9 @@ beforeEach(() => {
   process.env.REDIS_URL = 'redis://localhost:6379';
   process.env.JWT_SECRET = 'test-secret-test-secret-test-secret-32';
   process.env.CORS_ORIGINS = 'http://localhost:3002';
+  process.env.MAIL_USERNAME = 'resend';
+  process.env.MAIL_PASSWORD = '';
+  process.env.MAIL_FROM = 'noreply@example.com';
   process.env.R2_ACCOUNT_ID = 'test-account';
   process.env.R2_ACCESS_KEY_ID = 'test-access-key';
   process.env.R2_SECRET_ACCESS_KEY = 'test-secret-key';
@@ -47,6 +50,36 @@ describe('auth backend surface', () => {
     await expect(response.json()).resolves.toEqual({
       success: false,
       error: { message: 'Invalid CSRF token' },
+    });
+  });
+
+  it('does not claim registration email was sent when delivery is not configured', async () => {
+    const { createApp } = await import('./server/app.js');
+    const app = createApp();
+    const csrfResponse = await app.request('/auth/csrf', {
+      headers: { Origin: 'http://localhost:3002' },
+    });
+    const { csrfToken } = (await csrfResponse.json()) as { csrfToken: string };
+    const cookie = csrfResponse.headers.get('set-cookie') ?? '';
+
+    const response = await app.request('/auth/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Cookie: cookie,
+        'x-csrf-token': csrfToken,
+      },
+      body: JSON.stringify({
+        name: 'Dev',
+        email: 'dev@example.com',
+        password: 'password123',
+      }),
+    });
+
+    expect(response.status).toBe(503);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: { message: 'Email delivery is not configured.' },
     });
   });
 

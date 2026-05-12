@@ -7,6 +7,8 @@ import Link from 'next/link';
 
 import { Button } from '@ghostapi/ui';
 
+import type { AppLinks } from '@/app/(landing)/_lib/app-links';
+
 const NAV_ITEMS = [
   { label: 'FEATURES', href: '#features' },
   { label: 'HOW IT WORKS', href: '#how-it-works' },
@@ -15,8 +17,13 @@ const NAV_ITEMS = [
   { label: 'CHANGELOG', href: '#changelog' },
 ] as const;
 
+type SiteHeaderProps = {
+  appLinks: AppLinks;
+  isAuthenticated: boolean;
+};
+
 /** Top nav for the public landing page. */
-export function SiteHeader(): React.JSX.Element {
+export function SiteHeader({ appLinks, isAuthenticated }: SiteHeaderProps): React.JSX.Element {
   return (
     <motion.header
       initial={{ opacity: 0, y: -20 }}
@@ -63,12 +70,31 @@ export function SiteHeader(): React.JSX.Element {
             </span>
           </a>
         </Button>
-        <Button asChild size="sm">
-          <Link href="/login">
-            OPEN DASHBOARD
-            <span aria-hidden>→</span>
-          </Link>
-        </Button>
+        {isAuthenticated ? (
+          <Button asChild size="sm">
+            <a href={appLinks.dashboard}>
+              DASHBOARD
+              <span aria-hidden>→</span>
+            </a>
+          </Button>
+        ) : (
+          <>
+            <Button
+              asChild
+              variant="tertiary"
+              size="sm"
+              className="hidden font-mono sm:inline-flex"
+            >
+              <a href={appLinks.login}>LOGIN</a>
+            </Button>
+            <Button asChild size="sm">
+              <a href={appLinks.register}>
+                SIGN UP
+                <span aria-hidden>→</span>
+              </a>
+            </Button>
+          </>
+        )}
       </div>
     </motion.header>
   );

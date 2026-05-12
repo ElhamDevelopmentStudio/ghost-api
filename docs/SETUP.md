@@ -906,6 +906,7 @@ The root example currently contains:
 DATABASE_URL=postgresql://ghostapi:ghostapi@localhost:5432/ghostapi
 REDIS_URL=redis://localhost:6379
 NEXT_PUBLIC_API_URL=http://localhost:3001
+NEXT_PUBLIC_APP_URL=http://localhost:3002
 VITE_API_URL=http://localhost:3001
 VITE_APP_NAME=GhostAPI
 PORT=3001

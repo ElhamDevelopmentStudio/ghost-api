@@ -37,6 +37,7 @@ export function loadServerEnv(source: NodeJS.ProcessEnv = process.env): ServerEn
 
 const publicEnvSchema = z.object({
   NEXT_PUBLIC_API_URL: z.string().url(),
+  NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:3002'),
 });
 
 export type PublicEnv = z.infer<typeof publicEnvSchema>;

@@ -5,11 +5,21 @@ import { RiPlayLine } from '@remixicon/react';
 
 import { Button } from '@ghostapi/ui';
 
+import type { AppLinks } from '@/app/(landing)/_lib/app-links';
+
+type HeroPitchProps = {
+  appLinks: AppLinks;
+  isAuthenticated: boolean;
+};
+
 /**
  * Centered hero copy. The visual theater below now carries the developer
  * simulation story, so this stays compact and lets the beaming section lead.
  */
-export function HeroPitch(): React.JSX.Element {
+export function HeroPitch({ appLinks, isAuthenticated }: HeroPitchProps): React.JSX.Element {
+  const primaryHref = isAuthenticated ? appLinks.dashboard : appLinks.register;
+  const primaryLabel = isAuthenticated ? 'OPEN DASHBOARD' : 'GET STARTED FREE';
+
   return (
     <div className="relative z-10 mx-auto flex max-w-[780px] flex-col items-center pt-4 text-center font-mono">
       <motion.h1
@@ -50,13 +60,16 @@ export function HeroPitch(): React.JSX.Element {
         className="flex items-center justify-center gap-7"
       >
         <Button
+          asChild
           size="lg"
           className="shadow-primary/40 h-14 min-w-[212px] tracking-normal shadow-lg"
         >
-          <span aria-hidden className="opacity-80">
-            {'>_'}
-          </span>
-          GET STARTED FREE
+          <a href={primaryHref}>
+            <span aria-hidden className="opacity-80">
+              {'>_'}
+            </span>
+            {primaryLabel}
+          </a>
         </Button>
         <Button
           variant="tertiary"

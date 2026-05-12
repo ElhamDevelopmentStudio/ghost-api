@@ -2,7 +2,20 @@ import Image from 'next/image';
 
 import { Button, Card, CardContent } from '@ghostapi/ui';
 
-export function FinalCtaSection(): React.JSX.Element {
+import type { AppLinks } from '@/app/(landing)/_lib/app-links';
+
+type FinalCtaSectionProps = {
+  appLinks: AppLinks;
+  isAuthenticated: boolean;
+};
+
+export function FinalCtaSection({
+  appLinks,
+  isAuthenticated,
+}: FinalCtaSectionProps): React.JSX.Element {
+  const primaryHref = isAuthenticated ? appLinks.dashboard : appLinks.register;
+  const primaryLabel = isAuthenticated ? 'OPEN DASHBOARD' : 'GET STARTED FREE';
+
   return (
     <section className="relative z-10 mx-auto max-w-7xl px-6 pb-16">
       <Card className="border-primary/50 bg-surface/55 shadow-primary/10 relative overflow-hidden py-0 shadow-2xl">
@@ -20,9 +33,11 @@ export function FinalCtaSection(): React.JSX.Element {
                 Start simulating APIs in seconds. No credit card required.
               </p>
             </div>
-            <Button size="lg" className="w-fit font-mono tracking-[0.08em]">
-              <span aria-hidden>{'>_'}</span>
-              GET STARTED FREE
+            <Button asChild size="lg" className="w-fit font-mono tracking-[0.08em]">
+              <a href={primaryHref}>
+                <span aria-hidden>{'>_'}</span>
+                {primaryLabel}
+              </a>
             </Button>
           </div>
           <Image
