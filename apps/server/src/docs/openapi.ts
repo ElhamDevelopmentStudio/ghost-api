@@ -1,5 +1,14 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { z } from '@hono/zod-openapi';
+import {
+  createProjectBodySchema as sharedCreateProjectBodySchema,
+  createUploadBodySchema as sharedCreateUploadBodySchema,
+  listProjectsResponseSchema as sharedListProjectsResponseSchema,
+  projectDetailResponseSchema as sharedProjectDetailResponseSchema,
+  projectResponseSchema as sharedProjectResponseSchema,
+  createUploadResponseSchema as sharedCreateUploadResponseSchema,
+  completeUploadResponseSchema as sharedCompleteUploadResponseSchema,
+} from '@ghostapi/types';
 
 import type { AppEnv } from '../server/types.js';
 
@@ -10,18 +19,15 @@ const errorSchema = z
   })
   .openapi('RouteError');
 
-const projectSchema = z
-  .object({
-    id: z.string().uuid(),
-    ownerId: z.string().uuid(),
-    name: z.string(),
-    slug: z.string(),
-    description: z.string().nullable(),
-    icon: z.string().nullable(),
-    createdAt: z.string().datetime(),
-    updatedAt: z.string().datetime(),
-  })
-  .openapi('Project');
+const createProjectBodySchema = sharedCreateProjectBodySchema.openapi('CreateProjectRequest');
+const listProjectsResponseSchema = sharedListProjectsResponseSchema.openapi('ProjectListResponse');
+const projectResponseSchema = sharedProjectResponseSchema.openapi('ProjectResponse');
+const projectDetailResponseSchema =
+  sharedProjectDetailResponseSchema.openapi('ProjectDetailResponse');
+const createUploadBodySchema = sharedCreateUploadBodySchema.openapi('CreateUploadRequest');
+const createUploadResponseSchema = sharedCreateUploadResponseSchema.openapi('CreateUploadResponse');
+const completeUploadResponseSchema =
+  sharedCompleteUploadResponseSchema.openapi('CompleteUploadResponse');
 
 export function registerBackendOpenApi(app: OpenAPIHono<AppEnv>): void {
   app.openAPIRegistry.registerPath({
@@ -64,37 +70,7 @@ export function registerBackendOpenApi(app: OpenAPIHono<AppEnv>): void {
     responses: {
       200: {
         description: 'Projects owned by or shared with the current user.',
-        content: {
-          'application/json': {
-            schema: z.object({
-              projects: z.array(
-                projectSchema
-                  .pick({
-                    id: true,
-                    name: true,
-                    slug: true,
-                    description: true,
-                    icon: true,
-                    createdAt: true,
-                    updatedAt: true,
-                  })
-                  .extend({
-                    role: z.enum(['OWNER', 'ADMIN', 'EDITOR', 'VIEWER']),
-                    visibility: z.enum(['Private', 'Team']),
-                    status: z.enum(['Live', 'Paused']),
-                    endpointCount: z.number().int().min(0),
-                    requestCount: z.number().int().min(0),
-                    environment: z
-                      .object({
-                        name: z.string(),
-                        baseUrl: z.string(),
-                      })
-                      .nullable(),
-                  }),
-              ),
-            }),
-          },
-        },
+        content: { 'application/json': { schema: listProjectsResponseSchema } },
       },
       401: {
         description: 'Missing or invalid auth cookie.',
@@ -112,30 +88,13 @@ export function registerBackendOpenApi(app: OpenAPIHono<AppEnv>): void {
     request: {
       body: {
         required: true,
-        content: {
-          'application/json': {
-            schema: z.object({
-              name: z.string().min(1).max(100),
-              slug: z
-                .string()
-                .min(1)
-                .max(64)
-                .regex(/^[a-z0-9][a-z0-9-]*$/)
-                .optional(),
-              description: z.string().max(500).optional(),
-              icon: z.string().max(64).optional(),
-              imageAttachmentId: z.string().uuid().optional(),
-              baseUrl: z.string().max(250).optional(),
-              environment: z.enum(['Development', 'Staging', 'Production']).default('Development'),
-            }),
-          },
-        },
+        content: { 'application/json': { schema: createProjectBodySchema } },
       },
     },
     responses: {
       201: {
         description: 'Project created. Ownership is derived from the session user.',
-        content: { 'application/json': { schema: z.object({ project: projectSchema }) } },
+        content: { 'application/json': { schema: projectResponseSchema } },
       },
       401: {
         description: 'Missing or invalid auth cookie.',
@@ -153,26 +112,13 @@ export function registerBackendOpenApi(app: OpenAPIHono<AppEnv>): void {
     request: {
       body: {
         required: true,
-        content: {
-          'application/json': {
-            schema: z.object({
-              purpose: z.enum(['project-avatar', 'user-avatar', 'workspace-attachment']),
-              fileName: z.string().min(1).max(180),
-              mimeType: z.string().min(1).max(120),
-              sizeBytes: z
-                .number()
-                .int()
-                .positive()
-                .max(8 * 1024 * 1024),
-            }),
-          },
-        },
+        content: { 'application/json': { schema: createUploadBodySchema } },
       },
     },
     responses: {
       200: {
         description: 'Presigned R2 PUT URL and pending attachment reference.',
-        content: { 'application/json': { schema: z.record(z.unknown()) } },
+        content: { 'application/json': { schema: createUploadResponseSchema } },
       },
       400: {
         description: 'Invalid upload metadata.',
@@ -193,7 +139,7 @@ export function registerBackendOpenApi(app: OpenAPIHono<AppEnv>): void {
     responses: {
       200: {
         description: 'Attachment finalized.',
-        content: { 'application/json': { schema: z.record(z.unknown()) } },
+        content: { 'application/json': { schema: completeUploadResponseSchema } },
       },
       422: {
         description: 'The uploaded R2 object could not be read or transformed.',
@@ -214,7 +160,7 @@ export function registerBackendOpenApi(app: OpenAPIHono<AppEnv>): void {
     responses: {
       200: {
         description: 'Project detail with environments, recent schemas, and endpoint count.',
-        content: { 'application/json': { schema: z.object({ project: z.record(z.unknown()) }) } },
+        content: { 'application/json': { schema: projectDetailResponseSchema } },
       },
       404: {
         description: 'Project does not exist or is not visible to this user.',

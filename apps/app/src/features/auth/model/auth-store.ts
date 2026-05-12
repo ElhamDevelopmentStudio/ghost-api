@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-import type { AuthResponse, AuthSession, AuthStatus, AuthUser } from './auth-types';
+import type { AuthResponse, AuthSession, AuthStatus, AuthUser } from '@ghostapi/types';
 
 type AuthState = {
   status: AuthStatus;

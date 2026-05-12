@@ -4,7 +4,12 @@ import { extname } from 'node:path';
 import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono';
 import sharp from 'sharp';
-import { z } from 'zod';
+import {
+  type Attachment,
+  type AttachmentPurpose,
+  type AttachmentStatus,
+  createUploadBodySchema,
+} from '@ghostapi/types';
 
 import { prisma } from '../../db.js';
 import { logger } from '../../logger.js';
@@ -13,25 +18,16 @@ import { authContext, requireAuth, requireCsrf } from '../auth/index.js';
 import {
   attachmentPurposeByUploadPurpose,
   IMAGE_MIME_TYPES,
-  MAX_UPLOAD_BYTES,
   uploadFolderByPurpose,
-  uploadPurposeSchema,
 } from './upload.constants.js';
 import { attachmentOriginalUrl, attachmentThumbnailUrl } from './upload.urls.js';
 import { getObjectBuffer, headObject, putObject, signedGetUrl, signedPutUrl } from './r2.client.js';
-
-const createUploadSchema = z.object({
-  purpose: uploadPurposeSchema,
-  fileName: z.string().min(1).max(180),
-  mimeType: z.string().min(1).max(120),
-  sizeBytes: z.number().int().positive().max(MAX_UPLOAD_BYTES),
-});
 
 export const uploadsRouter = new Hono<AppEnv>();
 
 uploadsRouter.use('*', requireAuth);
 
-uploadsRouter.post('/', requireCsrf, zValidator('json', createUploadSchema), async (c) => {
+uploadsRouter.post('/', requireCsrf, zValidator('json', createUploadBodySchema), async (c) => {
   const input = c.req.valid('json');
   const { userId } = authContext(c);
   const isImage = IMAGE_MIME_TYPES.has(input.mimeType);
@@ -135,11 +131,11 @@ function serializeAttachment(attachment: {
   fileName: string;
   mimeType: string;
   objectKey: string;
-  purpose: string;
+  purpose: AttachmentPurpose;
   sizeBytes: number;
-  status: string;
+  status: AttachmentStatus;
   thumbnailKey: string | null;
-}) {
+}): Attachment {
   return {
     id: attachment.id,
     purpose: attachment.purpose,

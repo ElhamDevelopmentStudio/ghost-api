@@ -1,5 +1,14 @@
 import { useMutation } from '@tanstack/react-query';
 
+import type {
+  ForgotPasswordInput,
+  LoginInput,
+  RegisterInput,
+  ResendVerificationInput,
+  ResetPasswordInput,
+  VerifyEmailInput,
+} from '@ghostapi/types';
+
 import { queryClient } from '@/lib/query-client';
 
 import {
@@ -10,12 +19,6 @@ import {
   resendVerification,
   resetPassword,
   verifyEmail,
-  type ForgotPasswordInput,
-  type LoginInput,
-  type RegisterInput,
-  type ResendVerificationInput,
-  type ResetPasswordInput,
-  type VerifyEmailInput,
 } from '../api/auth-api';
 import { useAuthStore } from '../model/auth-store';
 

@@ -1,21 +1,9 @@
-import {
-  RiAddLine,
-  RiBox3Line,
-  RiFlashlightLine,
-  RiMenuLine,
-  RiSparkling2Line,
-  RiTeamLine,
-  RiTimeLine,
-} from '@remixicon/react';
-import type { ComponentType } from 'react';
+import { Link } from 'react-router-dom';
 
 import { cn } from '@ghostapi/ui';
 
-import { attachmentAssetUrl } from '@/features/uploads/api/uploads-api';
-import {
-  formatRelativeProjectTime,
-  parseInitialsIcon,
-} from '@/features/projects/utils/project-formatters';
+import { ProjectIcon } from '@/features/projects/components/project-icon';
+import { formatRelativeProjectTime } from '@/features/projects/utils/project-formatters';
 
 export type ProjectCardViewModel = {
   id?: string;
@@ -27,42 +15,6 @@ export type ProjectCardViewModel = {
   visibility: 'Private' | 'Team';
 };
 
-const iconStyles = [
-  'from-fuchsia-500/35 to-purple-700/35 text-fuchsia-300 ring-fuchsia-400/40',
-  'from-emerald-500/30 to-green-900/35 text-emerald-300 ring-emerald-400/30',
-  'from-orange-500/35 to-amber-900/35 text-orange-300 ring-orange-400/35',
-  'from-sky-500/35 to-blue-900/35 text-sky-300 ring-sky-400/35',
-  'from-violet-500/35 to-purple-900/35 text-violet-300 ring-violet-400/35',
-  'from-pink-500/35 to-rose-900/35 text-pink-300 ring-pink-400/35',
-  'from-cyan-500/35 to-teal-900/35 text-cyan-300 ring-cyan-400/35',
-  'from-slate-500/35 to-slate-800/45 text-slate-100 ring-slate-400/20',
-];
-
-type ProjectIconComponent = ComponentType<{ className?: string }>;
-
-const fallbackIcons: ProjectIconComponent[] = [
-  RiBox3Line,
-  RiFlashlightLine,
-  RiTimeLine,
-  RiTeamLine,
-  RiBox3Line,
-  RiMenuLine,
-  RiSparkling2Line,
-  RiAddLine,
-];
-const namedIcons: Record<string, ProjectIconComponent> = {
-  'shopping-cart': RiBox3Line,
-  users: RiTeamLine,
-  card: RiBox3Line,
-  analytics: RiTimeLine,
-  truck: RiBox3Line,
-  settings: RiSparkling2Line,
-  database: RiBox3Line,
-  shield: RiBox3Line,
-  globe: RiSparkling2Line,
-  key: RiBox3Line,
-};
-
 export function ProjectCard({
   project,
   index = 0,
@@ -71,16 +23,8 @@ export function ProjectCard({
   index?: number;
 }) {
   const live = project.status === 'Live';
-
-  return (
-    <article
-      className={cn(
-        'bg-app-panel/88 shadow-project-card relative flex h-[260px] flex-col rounded-xl border border-white/10 p-7',
-        index === 0 && 'bg-project-card-aura-purple',
-        index === 4 && 'bg-project-card-aura-violet',
-        index === 5 && 'bg-project-card-aura-rose',
-      )}
-    >
+  const content = (
+    <>
       <div className="flex items-center gap-4">
         <ProjectIcon icon={project.icon} index={index} />
         <div className="min-w-0">
@@ -116,31 +60,39 @@ export function ProjectCard({
           {project.visibility}
         </span>
       </div>
-    </article>
+    </>
   );
-}
+  const className = cn(
+    'bg-app-panel/88 shadow-project-card relative flex h-[260px] flex-col rounded-xl border border-white/10 p-7 transition-colors',
+    project.id &&
+      'hover:border-purple-300/40 focus-visible:border-purple-300/60 focus-visible:outline-none',
+    index === 0 && 'bg-project-card-aura-purple',
+    index === 4 && 'bg-project-card-aura-violet',
+    index === 5 && 'bg-project-card-aura-rose',
+  );
 
-function ProjectIcon({ icon, index }: { icon: string | null; index: number }) {
-  const parsedInitials = parseInitialsIcon(icon);
-  const iconUrl = icon?.startsWith('/uploads') ? icon : null;
-  const Icon =
-    (icon ? namedIcons[icon] : null) ?? fallbackIcons[index % fallbackIcons.length] ?? RiBox3Line;
+  if (project.id) {
+    return (
+      <Link
+        to={`/projects/${project.id}`}
+        className={className}
+        aria-label={`Open ${project.name}`}
+      >
+        {content}
+      </Link>
+    );
+  }
 
   return (
-    <div
+    <article
       className={cn(
-        'grid size-[60px] overflow-hidden rounded-lg bg-gradient-to-br ring-1',
-        iconUrl || parsedInitials ? '' : iconStyles[index % iconStyles.length],
+        'bg-app-panel/88 shadow-project-card relative flex h-[260px] flex-col rounded-xl border border-white/10 p-7',
+        index === 0 && 'bg-project-card-aura-purple',
+        index === 4 && 'bg-project-card-aura-violet',
+        index === 5 && 'bg-project-card-aura-rose',
       )}
-      style={parsedInitials ? { background: parsedInitials.color } : undefined}
     >
-      {iconUrl ? (
-        <img src={attachmentAssetUrl(iconUrl)} alt="" className="size-full object-cover" />
-      ) : parsedInitials ? (
-        <span className="m-auto text-lg font-semibold text-white">{parsedInitials.label}</span>
-      ) : (
-        <Icon className="m-auto size-8" />
-      )}
-    </div>
+      {content}
+    </article>
   );
 }

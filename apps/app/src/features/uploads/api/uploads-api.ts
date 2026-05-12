@@ -1,36 +1,16 @@
+import {
+  CSRF_HEADER,
+  type Attachment,
+  type CompleteUploadResponse,
+  type CreateUploadResponse,
+  type UploadPurpose,
+} from '@ghostapi/types';
+
 import { getCsrfToken } from '@/features/auth/api/auth-api';
 import { apiRequest } from '@/lib/api-client';
 import { env } from '@/lib/env';
 
-const CSRF_HEADER = 'x-csrf-token';
-
-export type UploadPurpose = 'project-avatar' | 'user-avatar' | 'workspace-attachment';
-
-export type Attachment = {
-  id: string;
-  purpose: string;
-  status: 'PENDING' | 'READY';
-  fileName: string;
-  mimeType: string;
-  sizeBytes: number;
-  objectKey: string;
-  url: string;
-  thumbnailUrl: string | null;
-};
-
-type CreateUploadResponse = {
-  attachment: Attachment;
-  upload: {
-    method: 'PUT';
-    url: string;
-    headers: Record<string, string>;
-    expiresInSeconds: number;
-  };
-};
-
-type CompleteUploadResponse = {
-  attachment: Attachment;
-};
+export type { Attachment, UploadPurpose };
 
 export async function uploadAttachment(input: {
   file: File;

@@ -13,4 +13,4 @@ export {
 } from './hooks/use-auth';
 export { useAuthStore } from './model/auth-store';
 export { getAuthErrorMessage } from './model/error-message';
-export type { AuthResponse, AuthSession, AuthStatus, AuthUser } from './model/auth-types';
+export type { AuthResponse, AuthSession, AuthStatus, AuthUser } from '@ghostapi/types';

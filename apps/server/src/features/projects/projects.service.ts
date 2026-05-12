@@ -1,0 +1,159 @@
+import { Prisma } from '@prisma/client';
+import type { CreateProjectParsed } from '@ghostapi/types';
+
+import { prisma } from '../../db.js';
+import { attachmentThumbnailUrl } from '../uploads/upload.urls.js';
+import { serializeProject, serializeProjectDetail } from './projects.serializers.js';
+import { slugifyProjectName } from './projects.utils.js';
+
+export class ProjectImageAttachmentNotFoundError extends Error {
+  constructor() {
+    super('Project image attachment not found');
+    this.name = 'ProjectImageAttachmentNotFoundError';
+  }
+}
+
+export class ProjectSlugConflictError extends Error {
+  constructor() {
+    super('A project with this slug already exists');
+    this.name = 'ProjectSlugConflictError';
+  }
+}
+
+export async function listProjectsForUser(userId: string) {
+  const projects = await prisma.project.findMany({
+    where: {
+      OR: [{ ownerId: userId }, { members: { some: { userId } } }],
+    },
+    orderBy: { updatedAt: 'desc' },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      description: true,
+      icon: true,
+      ownerId: true,
+      createdAt: true,
+      updatedAt: true,
+      members: { where: { userId }, select: { role: true } },
+      environments: {
+        orderBy: { createdAt: 'asc' },
+        take: 1,
+        select: { name: true, baseUrl: true },
+      },
+      _count: { select: { endpoints: true, requestLogs: true, members: true } },
+    },
+  });
+
+  return projects.map((project) => serializeProject(project, userId));
+}
+
+export async function createProjectForUser(input: CreateProjectParsed, userId: string) {
+  const slug = await uniqueProjectSlug(input.slug ?? input.name);
+  const projectIcon = await resolveProjectIcon(input, userId);
+
+  if (projectIcon === false) {
+    throw new ProjectImageAttachmentNotFoundError();
+  }
+
+  try {
+    const project = await prisma.project.create({
+      data: {
+        name: input.name,
+        slug,
+        description: input.description,
+        icon: projectIcon,
+        ownerId: userId,
+        members: {
+          create: {
+            userId,
+            role: 'OWNER',
+          },
+        },
+        environments: {
+          create: {
+            name: input.environment,
+            baseUrl: input.baseUrl ?? '',
+          },
+        },
+      },
+      include: {
+        members: { where: { userId }, select: { role: true } },
+        environments: { orderBy: { createdAt: 'asc' }, take: 1 },
+        _count: { select: { endpoints: true, requestLogs: true, members: true } },
+      },
+    });
+
+    return serializeProject(project, userId);
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      throw new ProjectSlugConflictError();
+    }
+
+    throw error;
+  }
+}
+
+export async function getProjectForUser(projectId: string, userId: string) {
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      description: true,
+      icon: true,
+      ownerId: true,
+      createdAt: true,
+      updatedAt: true,
+      members: { where: { userId }, select: { role: true } },
+      environments: {
+        orderBy: { createdAt: 'asc' },
+        select: { id: true, name: true, baseUrl: true, createdAt: true, updatedAt: true },
+      },
+      schemas: {
+        orderBy: { uploadedAt: 'desc' },
+        take: 5,
+        select: { id: true, version: true, uploadedAt: true },
+      },
+      _count: { select: { endpoints: true, requestLogs: true, members: true } },
+    },
+  });
+
+  if (!project) return null;
+  if (project.ownerId !== userId && project.members.length === 0) return null;
+
+  return serializeProjectDetail(project, userId);
+}
+
+async function uniqueProjectSlug(value: string): Promise<string> {
+  const baseSlug = slugifyProjectName(value);
+  let slug = baseSlug;
+  let suffix = 2;
+
+  while (await prisma.project.findUnique({ where: { slug }, select: { id: true } })) {
+    slug = `${baseSlug}-${suffix}`;
+    suffix += 1;
+  }
+
+  return slug;
+}
+
+async function resolveProjectIcon(
+  input: { icon?: string; imageAttachmentId?: string },
+  userId: string,
+): Promise<string | undefined | false> {
+  if (!input.imageAttachmentId) return input.icon;
+
+  const attachment = await prisma.attachment.findFirst({
+    where: {
+      id: input.imageAttachmentId,
+      ownerId: userId,
+      purpose: 'PROJECT_AVATAR',
+      status: 'READY',
+    },
+  });
+  if (!attachment) return false;
+
+  return attachmentThumbnailUrl(attachment) ?? `/uploads/${attachment.id}/file`;
+}

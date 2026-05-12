@@ -10,7 +10,6 @@ import {
 import { Button, DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, cn } from '@ghostapi/ui';
 
 import { APP_SHELL_WIDTH_CLASS, APP_SHELL_X_PADDING_CLASS } from '@/components/app-shell';
-import { Logo } from '@/components/logo';
 
 type AppTopbarProps = {
   search?: {
@@ -44,9 +43,7 @@ export function AppTopbar({
           APP_SHELL_X_PADDING_CLASS,
         )}
       >
-        <Logo imageClassName="h-11" />
-
-        <div className="flex items-center gap-6">
+        <div className="ml-auto flex items-center gap-6">
           {search ? <TopbarSearch search={search} /> : null}
 
           <NotificationsMenu />

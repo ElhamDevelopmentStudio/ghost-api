@@ -5,11 +5,11 @@ import { cors } from 'hono/cors';
 import { registerBackendOpenApi } from '../docs/openapi.js';
 import { env } from '../env.js';
 import { authRouter } from '../features/auth/index.js';
+import { projectsRouter } from '../features/projects/index.js';
 import { uploadsRouter } from '../features/uploads/uploads.routes.js';
 import { logger } from '../logger.js';
 import { healthRouter } from '../routes/health.js';
 import { mockRouter } from '../routes/mock.js';
-import { projectsRouter } from '../routes/projects.js';
 import { schemasRouter } from '../routes/schemas.js';
 import type { AppEnv } from './types.js';
 

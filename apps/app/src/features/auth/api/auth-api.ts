@@ -1,46 +1,21 @@
+import {
+  CSRF_HEADER,
+  type AuthResponse,
+  type CsrfResponse,
+  type ForgotPasswordInput,
+  type ForgotPasswordResponse,
+  type LoginInput,
+  type LogoutAllResponse,
+  type RegisterInput,
+  type RegisterResponse,
+  type ResendVerificationInput,
+  type ResendVerificationResponse,
+  type ResetPasswordInput,
+  type SuccessResponse,
+  type VerifyEmailInput,
+} from '@ghostapi/types';
+
 import { ApiError, apiRequest } from '@/lib/api-client';
-
-import type {
-  AuthResponse,
-  ForgotPasswordResponse,
-  RegisterResponse,
-  ResendVerificationResponse,
-  SuccessResponse,
-} from '../model/auth-types';
-
-type CsrfResponse = {
-  csrfToken: string;
-};
-
-type RegisterInput = {
-  name?: string;
-  email: string;
-  password: string;
-};
-
-type LoginInput = {
-  email: string;
-  password: string;
-};
-
-type ForgotPasswordInput = {
-  email: string;
-};
-
-type ResetPasswordInput = {
-  token: string;
-  password: string;
-};
-
-type VerifyEmailInput = {
-  token: string;
-};
-
-type ResendVerificationInput = {
-  email: string;
-};
-
-const CSRF_HEADER = 'x-csrf-token';
 let csrfTokenPromise: Promise<string> | null = null;
 
 export async function getCsrfToken(): Promise<string> {
@@ -81,12 +56,8 @@ export async function logout(): Promise<SuccessResponse> {
   return mutatingAuthRequest<SuccessResponse>('/auth/logout', undefined, 'POST');
 }
 
-export async function logoutAll(): Promise<SuccessResponse & { revokedSessions: number }> {
-  return mutatingAuthRequest<SuccessResponse & { revokedSessions: number }>(
-    '/auth/logout-all',
-    undefined,
-    'POST',
-  );
+export async function logoutAll(): Promise<LogoutAllResponse> {
+  return mutatingAuthRequest<LogoutAllResponse>('/auth/logout-all', undefined, 'POST');
 }
 
 export async function forgotPassword(input: ForgotPasswordInput): Promise<ForgotPasswordResponse> {
@@ -122,12 +93,3 @@ async function mutatingAuthRequest<T>(path: string, body: unknown, method: 'POST
     },
   });
 }
-
-export type {
-  ForgotPasswordInput,
-  LoginInput,
-  RegisterInput,
-  ResendVerificationInput,
-  ResetPasswordInput,
-  VerifyEmailInput,
-};

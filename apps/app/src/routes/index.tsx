@@ -10,6 +10,7 @@ import { VerifyEmailPage } from '@/pages/auth/verify-email-page';
 import { NotFoundPage } from '@/pages/not-found-page';
 import { LogsPage } from '@/pages/protected/activity-log-page';
 import { CreateProjectPage } from '@/pages/protected/create-project-page';
+import { ProjectDetailPage } from '@/pages/protected/project-detail-page';
 import { ProjectsPage } from '@/pages/protected/projects-page';
 import { SettingsPage } from '@/pages/protected/settings-page';
 import { WorkspacePage } from '@/pages/protected/workspace-page';
@@ -19,7 +20,7 @@ import { ProtectedRoute } from '@/routes/protected-route';
  * Route table for the protected SPA.
  *
  * Public branch:   AuthLayout > /login, /register, password recovery
- * Protected branch: ProtectedRoute > AppLayout > /projects, /workspace, /logs, /settings
+ * Protected branch: ProtectedRoute > projects, project detail, and workspace shell pages
  *
  * Add new pages here so the surface stays scannable.
  */
@@ -42,6 +43,7 @@ export const router = createBrowserRouter([
       { index: true, element: <Navigate to="/projects" replace /> },
       { path: 'projects', element: <ProjectsPage /> },
       { path: 'projects/new', element: <CreateProjectPage /> },
+      { path: 'projects/:projectId', element: <ProjectDetailPage /> },
       {
         element: <AppLayout />,
         children: [
