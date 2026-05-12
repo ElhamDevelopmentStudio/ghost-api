@@ -9,6 +9,8 @@ import {
 
 import { Button, cn } from '@ghostapi/ui';
 
+import { AppTopbar } from '@/components/app-topbar';
+import { Logo } from '@/components/logo';
 import { useAuth } from '@/features/auth';
 
 const NAV = [
@@ -29,7 +31,7 @@ export function AppLayout() {
     <div className="bg-background text-foreground flex min-h-screen">
       <aside className="bg-sidebar border-border flex w-[var(--sidebar-width)] shrink-0 flex-col border-r">
         <div className="border-border border-b px-5 py-4">
-          <span className="font-mono text-sm tracking-tight">GhostAPI</span>
+          <Logo imageClassName="h-7" />
         </div>
         <nav className="flex flex-1 flex-col gap-0.5 px-2 py-3">
           {NAV.map(({ to, label, icon: Icon }) => (
@@ -65,9 +67,10 @@ export function AppLayout() {
         </div>
       </aside>
 
-      <main className="flex-1 overflow-y-auto">
+      <div className="bg-app-canvas min-w-0 flex-1 overflow-y-auto text-white">
+        <AppTopbar />
         <Outlet />
-      </main>
+      </div>
     </div>
   );
 }

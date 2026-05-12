@@ -128,6 +128,26 @@ when the blast radius warrants it.
   App-level CSS should import or compose from the UI package rather than redefining the system.
 - The visual style is dark-first, technical, terminal-inspired, and low-noise. Avoid generic
   SaaS dashboards, excessive cards, oversized gradients, and analytics-heavy layouts.
+- UI consistency is a hard requirement. Reuse existing `packages/ui` primitives, layouts,
+  spacing, typography, icon treatment, badges, tables, pagination, dialogs, and page patterns
+  before creating new one-off UI. If a genuinely new pattern is needed, add it once as a shared
+  component and reuse it.
+- Browser-facing work must ship with real loading, empty, error, and disabled states. Use
+  `Skeleton` for loading, clear muted empty states, accessible focus states, and destructive
+  confirmation dialogs for irreversible actions. Do not leave placeholder buttons, dead actions,
+  TODO stubs, or blank states in admin-visible flows.
+- Favor task-focused product UX over generic SaaS decoration: dense but readable layouts,
+  obvious primary actions, URL-shareable state, keyboard-aware controls where expected, and
+  microcopy that explains what happened or what the user can do next.
+- In `apps/app`, URL-relevant state such as selected project, workspace view, filters,
+  pagination, search, sort, active tabs, and deep-linkable panels should live in React Router
+  params/search params instead of hidden component state.
+- App feature modules should keep API calls in `features/*/api`, reusable feature UI in
+  `features/*/components`, and feature-local state/types near the feature. Page files should
+  compose these pieces rather than accumulating request logic, data shaping, and large UI
+  primitives inline.
+- Icons should come from the repo's existing icon set, currently `@remixicon/react`. Do not mix
+  in another icon library unless the task explicitly adds or migrates the icon system.
 - Commit messages are currently checked by Commitlint conventional config, despite the broader
   OMX lore protocol in higher-level instructions.
 

@@ -1,4 +1,4 @@
-import { Link, Outlet, useLocation, Navigate } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import {
   RiCodeLine,
   RiDatabase2Line,
@@ -12,6 +12,7 @@ import {
 
 import { cn } from '@ghostapi/ui';
 
+import { Logo } from '@/components/logo';
 import { useAuth } from '@/features/auth';
 
 type AuthMode = 'login' | 'register' | 'recovery';
@@ -72,14 +73,7 @@ export function AuthLayout() {
 }
 
 function AuthBrand() {
-  return (
-    <Link to="/login" className="inline-flex items-center gap-3">
-      <img src="/logo/logo-sm.png" alt="" className="size-12" />
-      <span className="font-mono text-[32px] font-bold uppercase leading-none tracking-tight text-white">
-        GHOST<span className="text-primary">API</span>
-      </span>
-    </Link>
-  );
+  return <Logo to="/login" imageClassName="h-14" />;
 }
 
 function SidePanel({ mode }: { mode: AuthMode }) {

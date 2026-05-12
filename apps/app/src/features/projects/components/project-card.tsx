@@ -3,9 +3,7 @@ import {
   RiBox3Line,
   RiFlashlightLine,
   RiMenuLine,
-  RiMore2Line,
   RiSparkling2Line,
-  RiStarLine,
   RiTeamLine,
   RiTimeLine,
 } from '@remixicon/react';
@@ -14,6 +12,10 @@ import type { ComponentType } from 'react';
 import { cn } from '@ghostapi/ui';
 
 import { attachmentAssetUrl } from '@/features/uploads/api/uploads-api';
+import {
+  formatRelativeProjectTime,
+  parseInitialsIcon,
+} from '@/features/projects/utils/project-formatters';
 
 export type ProjectCardViewModel = {
   id?: string;
@@ -64,44 +66,32 @@ const namedIcons: Record<string, ProjectIconComponent> = {
 export function ProjectCard({
   project,
   index = 0,
-  preview = false,
 }: {
   project: ProjectCardViewModel;
   index?: number;
-  preview?: boolean;
 }) {
   const live = project.status === 'Live';
 
   return (
     <article
       className={cn(
-        'bg-app-panel/88 shadow-project-card relative flex flex-col rounded-xl border border-white/10 p-6',
-        preview ? 'h-[226px]' : 'h-[226px]',
+        'bg-app-panel/88 shadow-project-card relative flex h-[260px] flex-col rounded-xl border border-white/10 p-7',
         index === 0 && 'bg-project-card-aura-purple',
         index === 4 && 'bg-project-card-aura-violet',
         index === 5 && 'bg-project-card-aura-rose',
       )}
     >
-      {!preview ? (
-        <button type="button" aria-label="Favorite project" className="absolute right-6 top-6">
-          <RiStarLine
-            className={cn(
-              'size-5',
-              index === 0 ? 'fill-yellow-400 text-yellow-400' : 'text-slate-500',
-            )}
-          />
-        </button>
-      ) : null}
-
       <div className="flex items-center gap-4">
         <ProjectIcon icon={project.icon} index={index} />
         <div className="min-w-0">
           <h2 className="truncate text-base font-semibold text-white">{project.name}</h2>
-          <p className="mt-1 text-sm text-white/50">Updated {relativeTime(project.updatedAt)}</p>
+          <p className="mt-1 text-sm text-white/50">
+            Updated {formatRelativeProjectTime(project.updatedAt)}
+          </p>
         </div>
       </div>
 
-      <p className="text-white/54 mt-6 line-clamp-3 min-h-[60px] text-[15px] leading-6">
+      <p className="text-white/54 mt-7 line-clamp-3 min-h-[72px] text-[15px] leading-6">
         {project.description || 'Mock API project ready for schema uploads and simulated traffic.'}
       </p>
 
@@ -115,23 +105,16 @@ export function ProjectCard({
           <span className={cn('size-2 rounded-full', live ? 'bg-emerald-400' : 'bg-yellow-400')} />
           {project.status}
         </div>
-        <div className="flex items-center gap-4">
-          <span
-            className={cn(
-              'rounded-md border px-2 py-1 text-xs',
-              project.visibility === 'Team'
-                ? 'bg-purple-500/12 border-purple-400/10 text-purple-300'
-                : 'border-white/8 text-white/56 bg-white/[0.035]',
-            )}
-          >
-            {project.visibility}
-          </span>
-          {!preview ? (
-            <button type="button" aria-label="Project actions" className="text-white/45">
-              <RiMore2Line className="size-5" />
-            </button>
-          ) : null}
-        </div>
+        <span
+          className={cn(
+            'rounded-md border px-2 py-1 text-xs',
+            project.visibility === 'Team'
+              ? 'bg-purple-500/12 border-purple-400/10 text-purple-300'
+              : 'border-white/8 text-white/56 bg-white/[0.035]',
+          )}
+        >
+          {project.visibility}
+        </span>
       </div>
     </article>
   );
@@ -146,7 +129,7 @@ function ProjectIcon({ icon, index }: { icon: string | null; index: number }) {
   return (
     <div
       className={cn(
-        'grid size-[54px] overflow-hidden rounded-lg bg-gradient-to-br ring-1',
+        'grid size-[60px] overflow-hidden rounded-lg bg-gradient-to-br ring-1',
         iconUrl || parsedInitials ? '' : iconStyles[index % iconStyles.length],
       )}
       style={parsedInitials ? { background: parsedInitials.color } : undefined}
@@ -156,25 +139,8 @@ function ProjectIcon({ icon, index }: { icon: string | null; index: number }) {
       ) : parsedInitials ? (
         <span className="m-auto text-lg font-semibold text-white">{parsedInitials.label}</span>
       ) : (
-        <Icon className="m-auto size-7" />
+        <Icon className="m-auto size-8" />
       )}
     </div>
   );
-}
-
-function parseInitialsIcon(icon: string | null): { label: string; color: string } | null {
-  if (!icon?.startsWith('initials:')) return null;
-  const [, label, color] = icon.split(':');
-  if (!label || !color) return null;
-  return { label, color };
-}
-
-function relativeTime(value: string): string {
-  const updatedAt = new Date(value).getTime();
-  const diffMs = Date.now() - updatedAt;
-  const dayMs = 86_400_000;
-  if (diffMs < dayMs) return '2h ago';
-  const days = Math.max(1, Math.floor(diffMs / dayMs));
-  if (days < 7) return `${days}d ago`;
-  return `${Math.floor(days / 7)}w ago`;
 }

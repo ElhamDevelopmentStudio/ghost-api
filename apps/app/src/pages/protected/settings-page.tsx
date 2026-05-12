@@ -1,8 +1,9 @@
 import { PageHeader } from '@/components/page-header';
+import { ProtectedPageContent } from '@/components/protected-page-frame';
 
 export function SettingsPage() {
   return (
-    <div className="mx-auto max-w-3xl px-6 py-8">
+    <ProtectedPageContent>
       <PageHeader
         title="Settings"
         description="Project metadata, environments, mock behavior, schema, members, and the danger zone."
@@ -10,6 +11,6 @@ export function SettingsPage() {
       <div className="text-muted-foreground border-border rounded-lg border border-dashed p-12 text-center text-sm">
         Settings tabs will land here.
       </div>
-    </div>
+    </ProtectedPageContent>
   );
 }
