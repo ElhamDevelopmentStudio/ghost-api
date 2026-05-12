@@ -1,7 +1,7 @@
 'use client';
 
-import { cn } from '@ghostapi/ui/lib/utils';
-import { MethodBadge, type HttpMethod } from '@ghostapi/ui/components/method-badge';
+import { MethodBadge, type HttpMethod } from '../components/method-badge';
+import { cn } from '../lib/utils';
 
 export type ApiLogEntry = {
   id: string;
@@ -42,9 +42,7 @@ export function ApiLogRow({
       data-slot="api-log-row"
       className={cn(
         'bg-surface/90 relative rounded-lg border backdrop-blur-sm transition-all duration-300',
-        highlighted
-          ? 'border-primary/60 shadow-lg shadow-primary/20'
-          : 'border-border/40',
+        highlighted ? 'border-primary/60 shadow-primary/20 shadow-lg' : 'border-border/40',
         className,
       )}
       {...props}
@@ -53,9 +51,7 @@ export function ApiLogRow({
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-2">
             <MethodBadge method={entry.method} size="sm" />
-            <span className="text-foreground truncate font-mono text-sm">
-              {entry.endpoint}
-            </span>
+            <span className="text-foreground truncate font-mono text-sm">{entry.endpoint}</span>
           </div>
           <span className="text-muted-foreground/70 shrink-0 font-mono text-[10px]">
             {entry.timestamp}

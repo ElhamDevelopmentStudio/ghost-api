@@ -4,7 +4,7 @@ import * as React from 'react';
 import { RiArrowDownSLine, RiArrowUpSLine, RiCheckLine } from '@remixicon/react';
 import { Select as SelectPrimitive } from 'radix-ui';
 
-import { cn } from '@ghostapi/ui/lib/utils';
+import { cn } from '../lib/utils';
 
 function Select(props: React.ComponentProps<typeof SelectPrimitive.Root>): React.JSX.Element {
   return <SelectPrimitive.Root data-slot="select" {...props} />;

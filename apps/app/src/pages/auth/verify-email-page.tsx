@@ -1,11 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { RiArrowRightLine } from '@remixicon/react';
 
-import { Button } from '@ghostapi/ui';
-
-import { AuthCard, useVerifyEmail } from '@/features/auth';
-import { ApiError } from '@/lib/api-client';
+import { AuthCard, AuthSubmitButton, getAuthErrorMessage, useVerifyEmail } from '@/features/auth';
 
 export function VerifyEmailPage() {
   const navigate = useNavigate();
@@ -13,26 +9,30 @@ export function VerifyEmailPage() {
   const [searchParams] = useSearchParams();
   const verifyEmail = useVerifyEmail();
   const token = params.token ?? searchParams.get('token') ?? '';
+  const hasAttemptedVerification = useRef(false);
   const [verified, setVerified] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const handleVerify = useCallback(
+    async function handleVerify(nextToken: string) {
+      setError(null);
+
+      try {
+        await verifyEmail.mutateAsync({ token: nextToken });
+        setVerified(true);
+      } catch (err) {
+        setError(getAuthErrorMessage(err, 'Unable to verify this email address.'));
+      }
+    },
+    [verifyEmail],
+  );
+
   useEffect(() => {
-    if (!token || verified || verifyEmail.isPending) return;
+    if (!token || verified || verifyEmail.isPending || hasAttemptedVerification.current) return;
 
+    hasAttemptedVerification.current = true;
     void handleVerify(token);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  async function handleVerify(nextToken: string) {
-    setError(null);
-
-    try {
-      await verifyEmail.mutateAsync({ token: nextToken });
-      setVerified(true);
-    } catch (err) {
-      setError(errorMessage(err, 'Unable to verify this email address.'));
-    }
-  }
+  }, [handleVerify, token, verified, verifyEmail.isPending]);
 
   return (
     <AuthCard
@@ -54,14 +54,9 @@ export function VerifyEmailPage() {
       }
     >
       {verified ? (
-        <Button
-          type="button"
-          onClick={() => navigate('/login', { replace: true })}
-          className="h-[58px] w-full bg-[linear-gradient(90deg,#6d33ff,#7b2cff,#681eff)] text-base shadow-[0_16px_40px_rgba(124,77,255,0.25)] hover:brightness-110"
-        >
+        <AuthSubmitButton type="button" onClick={() => navigate('/login', { replace: true })}>
           Sign in
-          <RiArrowRightLine className="ml-auto size-5" />
-        </Button>
+        </AuthSubmitButton>
       ) : (
         <div className="space-y-5">
           {!token ? (
@@ -77,24 +72,16 @@ export function VerifyEmailPage() {
             </p>
           ) : null}
 
-          <Button
+          <AuthSubmitButton
             type="button"
             disabled={!token}
             onClick={() => void handleVerify(token)}
             loading={verifyEmail.isPending}
-            className="h-[58px] w-full bg-[linear-gradient(90deg,#6d33ff,#7b2cff,#681eff)] text-base shadow-[0_16px_40px_rgba(124,77,255,0.25)] hover:brightness-110"
           >
             Verify email
-            <RiArrowRightLine className="ml-auto size-5" />
-          </Button>
+          </AuthSubmitButton>
         </div>
       )}
     </AuthCard>
   );
-}
-
-function errorMessage(error: unknown, fallback: string): string {
-  if (error instanceof ApiError) return error.message;
-  if (error instanceof Error) return error.message;
-  return fallback;
 }

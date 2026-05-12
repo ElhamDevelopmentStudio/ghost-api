@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { cn } from '@ghostapi/ui/lib/utils';
+import { cn } from '../lib/utils';
 
 function Table({ className, ...props }: React.ComponentProps<'table'>): React.JSX.Element {
   return (

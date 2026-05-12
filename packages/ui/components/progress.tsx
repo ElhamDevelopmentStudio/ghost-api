@@ -2,7 +2,7 @@ import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { Progress as ProgressPrimitive } from 'radix-ui';
 
-import { cn } from '@ghostapi/ui/lib/utils';
+import { cn } from '../lib/utils';
 
 const trackVariants = cva('relative w-full overflow-hidden rounded-full bg-surface-elevated', {
   variants: {

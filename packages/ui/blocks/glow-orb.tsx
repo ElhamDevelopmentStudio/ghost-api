@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import * as React from 'react';
 
-import { cn } from '@ghostapi/ui/lib/utils';
+import { cn } from '../lib/utils';
 
 type GlowOrbProps = React.ComponentProps<'div'> & {
   /** Pixel size of the inner glassy bubble. Halo rings extend outside. */
@@ -47,9 +47,9 @@ export function GlowOrb({
       <motion.div
         animate={{
           filter: [
-            'drop-shadow(0 0 10px rgba(255,255,255,0.8)) drop-shadow(0 0 22px rgba(124,77,255,1)) drop-shadow(0 0 48px rgba(124,77,255,0.95))',
-            'drop-shadow(0 0 14px rgba(255,255,255,0.95)) drop-shadow(0 0 32px rgba(124,77,255,1)) drop-shadow(0 0 70px rgba(124,77,255,1))',
-            'drop-shadow(0 0 10px rgba(255,255,255,0.8)) drop-shadow(0 0 22px rgba(124,77,255,1)) drop-shadow(0 0 48px rgba(124,77,255,0.95))',
+            'var(--filter-glow-orb)',
+            'var(--filter-glow-orb-strong)',
+            'var(--filter-glow-orb)',
           ],
         }}
         transition={{ duration: 2.8, repeat: Infinity, ease: 'easeInOut' }}

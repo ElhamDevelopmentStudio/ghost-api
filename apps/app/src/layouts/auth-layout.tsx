@@ -28,9 +28,9 @@ export function AuthLayout() {
   }
 
   return (
-    <div className="text-foreground relative min-h-screen overflow-x-hidden bg-[#030408]">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(124,77,255,0.18),transparent_22%),radial-gradient(circle_at_82%_6%,rgba(124,77,255,0.08),transparent_18%),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(0deg,rgba(255,255,255,0.025)_1px,transparent_1px)] bg-[length:auto,auto,40px_40px,40px_40px]" />
-      <div className="pointer-events-none absolute inset-0 opacity-[0.18] [background-image:radial-gradient(rgba(124,77,255,0.75)_1px,transparent_1px)] [background-size:18px_18px]" />
+    <div className="text-foreground bg-auth-canvas relative min-h-screen overflow-x-hidden">
+      <div className="bg-auth-aura pointer-events-none absolute inset-0" />
+      <div className="bg-auth-dot-grid pointer-events-none absolute inset-0 opacity-[0.18]" />
 
       <main className="relative grid min-h-screen grid-cols-1 lg:grid-cols-[47.25%_52.75%]">
         <section className="border-border-subtle hidden min-h-screen border-r px-16 py-12 lg:flex lg:flex-col xl:px-[76px]">
@@ -140,7 +140,7 @@ function DecorativeMarks({ variant }: { variant: AuthMode }) {
 
 function TerminalCommand() {
   return (
-    <div className="border-border-strong mt-8 w-full max-w-[520px] rounded-md border bg-black/35 px-4 py-3 font-mono text-[15px] leading-7 shadow-[0_0_40px_rgba(124,77,255,0.06)]">
+    <div className="border-border-strong shadow-auth-terminal mt-8 w-full max-w-[520px] rounded-md border bg-black/35 px-4 py-3 font-mono text-[15px] leading-7">
       <div>
         <span className="text-emerald-400">$</span>{' '}
         <span className="text-white">ghostapi start </span>

@@ -9,11 +9,7 @@ export function FinalCtaSection(): React.JSX.Element {
         <CardContent className="px-8 py-8 md:px-12">
           <div
             aria-hidden
-            className="absolute inset-y-0 right-0 w-1/2 opacity-80"
-            style={{
-              background:
-                'radial-gradient(circle at 80% 50%, rgba(124,77,255,0.55), transparent 30%), linear-gradient(90deg, transparent, rgba(124,77,255,0.12))',
-            }}
+            className="bg-landing-final-cta-aura absolute inset-y-0 right-0 w-1/2 opacity-80"
           />
           <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div className="font-mono">

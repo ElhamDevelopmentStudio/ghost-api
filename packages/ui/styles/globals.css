@@ -45,12 +45,14 @@
 
   /* ---- Primary --------------------------------------------------------- */
   --primary: #7c4dff;
+  --primary-rgb: 124, 77, 255;
   --primary-hover: #8d6bff;
   --primary-active: #6c3bff;
   --primary-foreground: #f5f5ff;
 
   --primary-subtle: rgba(124, 77, 255, 0.12);
   --primary-muted: rgba(124, 77, 255, 0.06);
+  --primary-selection: rgba(124, 77, 255, 0.3);
 
   /* ---- Secondary / Accent (required by shadcn primitives) -------------- */
   --secondary: #1f2430;
@@ -114,6 +116,74 @@
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.45);
   --shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.55);
+  --shadow-auth-submit: 0 16px 40px var(--primary-subtle);
+  --shadow-auth-terminal: 0 0 40px var(--primary-muted);
+  --shadow-project-card: 0 18px 45px rgba(0, 0, 0, 0.22);
+  --shadow-project-search: 0 0 28px rgba(124, 58, 237, 0.16);
+  --shadow-project-input-focus: 0 0 0 1px rgba(124, 58, 237, 0.08);
+  --shadow-floating-ghost: 0 0 55px rgba(168, 85, 247, 0.68);
+  --filter-glow-orb: drop-shadow(0 0 10px rgba(255, 255, 255, 0.8))
+    drop-shadow(0 0 22px rgba(124, 77, 255, 1)) drop-shadow(0 0 48px rgba(124, 77, 255, 0.95));
+  --filter-glow-orb-strong: drop-shadow(0 0 14px rgba(255, 255, 255, 0.95))
+    drop-shadow(0 0 32px rgba(124, 77, 255, 1)) drop-shadow(0 0 70px rgba(124, 77, 255, 1));
+
+  /* ---- App-specific visual surfaces ----------------------------------- */
+  --app-canvas: #020711;
+  --auth-canvas: #030408;
+  --app-panel: #080d19;
+  --app-panel-strong: #070c18;
+  --app-panel-muted: #070c17;
+  --app-panel-soft: #060b15;
+  --app-panel-deep: #050a14;
+  --app-icon-surface: #07101d;
+
+  --brand-gradient-start: #8a36ff;
+  --brand-gradient-mid: #7b2cff;
+  --brand-gradient-end: #5d19d5;
+  --brand-accent: #7a22ff;
+  --brand-action: #6418ff;
+  --brand-action-hover: #762cff;
+  --brand-action-gradient: linear-gradient(90deg, #6d33ff, var(--brand-gradient-mid), #681eff);
+  --brand-ghost-foot: var(--brand-gradient-end);
+
+  --auth-aura:
+    radial-gradient(circle at 18% 12%, rgba(124, 77, 255, 0.18), transparent 22%),
+    radial-gradient(circle at 82% 6%, rgba(124, 77, 255, 0.08), transparent 18%),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  --auth-dot-grid: radial-gradient(rgba(124, 77, 255, 0.75) 1px, transparent 1px);
+  --landing-grid:
+    linear-gradient(rgba(var(--primary-rgb), 1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--primary-rgb), 1) 1px, transparent 1px);
+  --landing-aura: radial-gradient(
+    ellipse 80% 80% at 50% 40%,
+    var(--primary-subtle) 0%,
+    transparent 70%
+  );
+  --landing-vignette: radial-gradient(ellipse at center, transparent 0%, var(--background) 100%);
+  --landing-final-cta-aura:
+    radial-gradient(circle at 80% 50%, rgba(124, 77, 255, 0.55), transparent 30%),
+    linear-gradient(90deg, transparent, var(--primary-subtle));
+  --dashboard-chart-grid: rgba(255, 255, 255, 0.03);
+  --data-flow-out-start: #c4b5fd;
+  --data-flow-out-end: #8b5cf6;
+  --data-flow-out-trail: rgba(139, 92, 246, 0.55);
+  --project-card-aura-purple:
+    radial-gradient(circle at 4% 0%, rgba(126, 34, 206, 0.28), transparent 48%), var(--app-panel);
+  --project-card-aura-violet:
+    radial-gradient(circle at 4% 0%, rgba(109, 40, 217, 0.24), transparent 48%), var(--app-panel);
+  --project-card-aura-rose:
+    radial-gradient(circle at 4% 0%, rgba(190, 24, 93, 0.2), transparent 48%), var(--app-panel);
+  --floating-ghost-halo: radial-gradient(
+    ellipse at center,
+    rgba(105, 44, 255, 0.44),
+    transparent 65%
+  );
+  --floating-ghost-body: linear-gradient(
+    180deg,
+    var(--brand-gradient-start),
+    var(--brand-gradient-end)
+  );
 
   /* ---- Radii (4 / 8 / 12 / 16 px scale) -------------------------------- */
   --radius-none: 0px;
@@ -315,8 +385,8 @@
   }
 
   ::selection {
-    background: rgba(124, 77, 255, 0.3);
-    color: #ffffff;
+    background: var(--primary-selection);
+    color: var(--primary-foreground);
   }
 
   code,
@@ -346,7 +416,160 @@
 
 @layer base {
   button:not(:disabled),
-  [role="button"]:not(:disabled) {
+  [role='button']:not(:disabled) {
     cursor: pointer;
+  }
+}
+
+@layer utilities {
+  .bg-app-canvas {
+    background: var(--app-canvas);
+  }
+
+  .bg-auth-canvas {
+    background: var(--auth-canvas);
+  }
+
+  .bg-app-panel {
+    background: var(--app-panel);
+  }
+
+  .bg-app-panel\/88 {
+    background: color-mix(in srgb, var(--app-panel) 88%, transparent);
+  }
+
+  .bg-app-panel\/90 {
+    background: color-mix(in srgb, var(--app-panel) 90%, transparent);
+  }
+
+  .bg-app-panel-soft\/80 {
+    background: color-mix(in srgb, var(--app-panel-soft) 80%, transparent);
+  }
+
+  .bg-app-panel-soft\/86 {
+    background: color-mix(in srgb, var(--app-panel-soft) 86%, transparent);
+  }
+
+  .bg-app-panel-strong {
+    background: var(--app-panel-strong);
+  }
+
+  .bg-app-panel-muted {
+    background: var(--app-panel-muted);
+  }
+
+  .bg-app-panel-deep\/95 {
+    background: color-mix(in srgb, var(--app-panel-deep) 95%, transparent);
+  }
+
+  .bg-app-icon-surface {
+    background: var(--app-icon-surface);
+  }
+
+  .bg-brand-ghost {
+    background: linear-gradient(180deg, var(--brand-gradient-start), var(--brand-gradient-end));
+  }
+
+  .bg-brand-ghost-foot {
+    background: var(--brand-ghost-foot);
+  }
+
+  .bg-brand-action {
+    background: var(--brand-action);
+  }
+
+  .hover\:bg-brand-action-hover:hover {
+    background: var(--brand-action-hover);
+  }
+
+  .bg-brand-action-gradient {
+    background: var(--brand-action-gradient);
+  }
+
+  .text-brand-accent {
+    color: var(--brand-accent);
+  }
+
+  .bg-auth-aura {
+    background: var(--auth-aura);
+    background-size:
+      auto,
+      auto,
+      40px 40px,
+      40px 40px;
+  }
+
+  .bg-auth-dot-grid {
+    background-image: var(--auth-dot-grid);
+    background-size: 18px 18px;
+  }
+
+  .bg-landing-grid {
+    background-image: var(--landing-grid);
+    background-size: 60px 60px;
+  }
+
+  .bg-landing-aura {
+    background: var(--landing-aura);
+  }
+
+  .bg-landing-vignette {
+    background: var(--landing-vignette);
+  }
+
+  .bg-landing-final-cta-aura {
+    background: var(--landing-final-cta-aura);
+  }
+
+  .shadow-auth-terminal {
+    box-shadow: var(--shadow-auth-terminal);
+  }
+
+  .shadow-auth-submit {
+    box-shadow: var(--shadow-auth-submit);
+  }
+
+  .shadow-project-card {
+    box-shadow: var(--shadow-project-card);
+  }
+
+  .shadow-project-search {
+    box-shadow: var(--shadow-project-search);
+  }
+
+  .shadow-project-input-focus {
+    box-shadow: var(--shadow-project-input-focus);
+  }
+
+  .bg-project-card-aura-purple {
+    background: var(--project-card-aura-purple);
+  }
+
+  .bg-project-card-aura-violet {
+    background: var(--project-card-aura-violet);
+  }
+
+  .bg-project-card-aura-rose {
+    background: var(--project-card-aura-rose);
+  }
+
+  .bg-floating-ghost-halo {
+    background: var(--floating-ghost-halo);
+  }
+
+  .bg-floating-ghost-body {
+    background: var(--floating-ghost-body);
+  }
+
+  .shadow-floating-ghost {
+    box-shadow: var(--shadow-floating-ghost);
+  }
+
+  .filter-glow-orb {
+    filter: var(--filter-glow-orb);
+  }
+
+  .filter-glow-orb-strong {
+    filter: var(--filter-glow-orb-strong);
   }
 }

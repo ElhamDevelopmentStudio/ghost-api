@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { RiCheckLine } from '@remixicon/react';
 
-import { cn } from '@ghostapi/ui/lib/utils';
+import { cn } from '../lib/utils';
 
 type CheckboxProps = Omit<React.ComponentProps<'input'>, 'type'>;
 

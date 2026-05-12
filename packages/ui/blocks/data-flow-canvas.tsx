@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 
-import type { HttpMethod } from '@ghostapi/ui/components/method-badge';
+import type { HttpMethod } from '../components/method-badge';
 
 /** Bezier path from a source side to the canvas center. */
 type SourceBeam = {
@@ -70,7 +70,7 @@ export function DataFlowCanvas({
   const [colors, setColors] = useState<Record<HttpMethod, string>>(
     () =>
       Object.fromEntries(
-        (Object.keys(METHOD_VAR) as HttpMethod[]).map((m) => [m, '#7c4dff']),
+        (Object.keys(METHOD_VAR) as HttpMethod[]).map((m) => [m, 'var(--primary)']),
       ) as Record<HttpMethod, string>,
   );
   const [particles, setParticles] = useState<Particle[]>([]);
@@ -153,8 +153,8 @@ export function DataFlowCanvas({
 
         {/* Uniform purple gradient for sink beams. */}
         <linearGradient id="dfc-grad-out" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#c4b5fd" stopOpacity="0.9" />
-          <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.5" />
+          <stop offset="0%" stopColor="var(--data-flow-out-start)" stopOpacity="0.9" />
+          <stop offset="100%" stopColor="var(--data-flow-out-end)" stopOpacity="0.5" />
         </linearGradient>
       </defs>
 
@@ -196,7 +196,7 @@ export function DataFlowCanvas({
           <path
             d={beam.d}
             fill="none"
-            stroke="rgba(139, 92, 246, 0.55)"
+            stroke="var(--data-flow-out-trail)"
             strokeWidth={beam.emphasis ? '1.3' : '0.7'}
             strokeOpacity={beam.emphasis ? '0.45' : '0.24'}
             strokeLinecap="round"
@@ -224,7 +224,8 @@ export function DataFlowCanvas({
       {particles.map((p) => {
         const beam = p.direction === 'in' ? sources[p.pathIndex] : sinks[p.pathIndex];
         if (!beam) return null;
-        const fill = p.direction === 'in' ? colors[(beam as SourceBeam).method] : '#c4b5fd';
+        const fill =
+          p.direction === 'in' ? colors[(beam as SourceBeam).method] : 'var(--data-flow-out-start)';
         return (
           <motion.circle
             key={p.id}

@@ -3,7 +3,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { RiLoader4Line } from '@remixicon/react';
 import { Slot } from 'radix-ui';
 
-import { cn } from '@ghostapi/ui/lib/utils';
+import { cn } from '../lib/utils';
 
 const buttonVariants = cva(
   [

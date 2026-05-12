@@ -1,6 +1,7 @@
 node_modules
 dist
 .next
+.omx
 .turbo
 coverage
 pnpm-lock.yaml

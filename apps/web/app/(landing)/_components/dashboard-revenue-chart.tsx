@@ -21,9 +21,30 @@ export function DashboardRevenueChart(): React.JSX.Element {
               <stop offset="100%" stopColor="var(--primary)" stopOpacity="0.02" />
             </linearGradient>
           </defs>
-          <line x1="0" y1="0" x2="200" y2="0" stroke="rgba(255,255,255,0.03)" strokeWidth="1" />
-          <line x1="0" y1="40" x2="200" y2="40" stroke="rgba(255,255,255,0.03)" strokeWidth="1" />
-          <line x1="0" y1="80" x2="200" y2="80" stroke="rgba(255,255,255,0.03)" strokeWidth="1" />
+          <line
+            x1="0"
+            y1="0"
+            x2="200"
+            y2="0"
+            stroke="var(--dashboard-chart-grid)"
+            strokeWidth="1"
+          />
+          <line
+            x1="0"
+            y1="40"
+            x2="200"
+            y2="40"
+            stroke="var(--dashboard-chart-grid)"
+            strokeWidth="1"
+          />
+          <line
+            x1="0"
+            y1="80"
+            x2="200"
+            y2="80"
+            stroke="var(--dashboard-chart-grid)"
+            strokeWidth="1"
+          />
 
           <path
             d="M 0 60 Q 15 55, 30 50 T 60 45 T 90 40 T 120 35 T 150 18 T 180 15 T 200 28 L 200 80 L 0 80 Z"

@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { RiArrowRightLine } from '@remixicon/react';
 
-import { Button } from '@ghostapi/ui';
-
-import { ApiError } from '@/lib/api-client';
-import { AuthCard, PasswordField, PasswordStrength, useResetPassword } from '@/features/auth';
+import {
+  AuthCard,
+  AuthSubmitButton,
+  getAuthErrorMessage,
+  PasswordField,
+  PasswordStrength,
+  useResetPassword,
+} from '@/features/auth';
 
 export function ResetPasswordPage() {
   const navigate = useNavigate();
@@ -30,7 +33,7 @@ export function ResetPasswordPage() {
       await resetPassword.mutateAsync({ token, password });
       navigate('/login', { replace: true, state: { reset: true } });
     } catch (err) {
-      setError(errorMessage(err, 'Unable to reset your password.'));
+      setError(getAuthErrorMessage(err, 'Unable to reset your password.'));
     }
   }
 
@@ -87,22 +90,10 @@ export function ResetPasswordPage() {
           </p>
         ) : null}
 
-        <Button
-          type="submit"
-          disabled={!token}
-          loading={resetPassword.isPending}
-          className="h-[58px] w-full bg-[linear-gradient(90deg,#6d33ff,#7b2cff,#681eff)] text-base shadow-[0_16px_40px_rgba(124,77,255,0.25)] hover:brightness-110"
-        >
+        <AuthSubmitButton type="submit" disabled={!token} loading={resetPassword.isPending}>
           Reset password
-          <RiArrowRightLine className="ml-auto size-5" />
-        </Button>
+        </AuthSubmitButton>
       </form>
     </AuthCard>
   );
-}
-
-function errorMessage(error: unknown, fallback: string): string {
-  if (error instanceof ApiError) return error.message;
-  if (error instanceof Error) return error.message;
-  return fallback;
 }

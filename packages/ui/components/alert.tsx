@@ -8,7 +8,7 @@ import {
   RiInformationLine,
 } from '@remixicon/react';
 
-import { cn } from '@ghostapi/ui/lib/utils';
+import { cn } from '../lib/utils';
 
 const alertVariants = cva(
   [

@@ -14,7 +14,7 @@ export function FloatingGhost({ className, compact = false }: FloatingGhostProps
           50% { transform: translate(-50%, -7px); }
         }`}
       </style>
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(105,44,255,0.44),transparent_65%)]" />
+      <div className="bg-floating-ghost-halo absolute inset-0" />
       <div
         className={cn(
           'absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-[50%] border border-purple-500/25',
@@ -34,7 +34,7 @@ export function FloatingGhost({ className, compact = false }: FloatingGhostProps
       ) : null}
       <div
         className={cn(
-          'absolute left-1/2 bg-gradient-to-b from-[#8f43ff] to-[#5b19d8] shadow-[0_0_55px_rgba(168,85,247,0.68)]',
+          'bg-floating-ghost-body shadow-floating-ghost absolute left-1/2',
           compact
             ? 'top-[22px] h-[86px] w-[76px] rounded-b-[20px] rounded-t-[34px]'
             : 'top-[68px] h-[110px] w-[86px] rounded-b-[14px] rounded-t-[42px] border border-purple-300/25',

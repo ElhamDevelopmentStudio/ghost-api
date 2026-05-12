@@ -1,15 +1,9 @@
 import { Hono } from 'hono';
 import { Prisma } from '@prisma/client';
-import type {
-  EndpointMockConfig,
-  NormalizedEndpoint,
-  Parameter,
-  RequestBody,
-  ResponseDefinition,
-} from '@ghostapi/types';
 import { buildMockRouter, type MountInput } from '@ghostapi/runtime';
 import { prisma } from '../db.js';
 import { logger } from '../logger.js';
+import { toMountInput, type DbEndpoint } from './mock.mount-input.js';
 
 /**
  * Mounts `/mock/:projectId/*` — the public mock-API surface area for each
@@ -60,49 +54,11 @@ mockRouter.all('/:projectId/*', async (c) => {
   return router.fetch(subRequest);
 });
 
-interface DbEndpoint {
-  id: string;
-  method: string;
-  path: string;
-  group: string;
-  requestSchema: unknown;
-  responseSchema: unknown;
-  config: {
-    latencyMs: number;
-    statusCode: number | null;
-    authRequired: boolean;
-    errorChance: number;
-  } | null;
-  responses: { status: number; body: unknown }[];
-}
-
 async function loadMountInputs(projectId: string): Promise<MountInput[]> {
   const rows = (await prisma.endpoint.findMany({
     where: { projectId },
     include: { config: true, responses: true },
   })) as unknown as DbEndpoint[];
 
-  return rows.map((row): MountInput => {
-    const requestSchema =
-      (row.requestSchema as { parameters?: Parameter[]; requestBody?: RequestBody | null }) ?? {};
-    const responseSchema = (row.responseSchema as { responses?: ResponseDefinition[] }) ?? {};
-    const endpoint: NormalizedEndpoint = {
-      id: row.id,
-      method: row.method as NormalizedEndpoint['method'],
-      path: row.path,
-      group: row.group,
-      parameters: requestSchema.parameters ?? [],
-      requestBody: requestSchema.requestBody ?? undefined,
-      responses: responseSchema.responses ?? [],
-      authRequired: row.config?.authRequired ?? false,
-    };
-    const config: EndpointMockConfig = {
-      latencyMs: row.config?.latencyMs ?? 0,
-      statusCode: row.config?.statusCode ?? null,
-      authRequired: row.config?.authRequired ?? false,
-      errorChance: row.config?.errorChance ?? 0,
-    };
-    const successSaved = row.responses.find((r) => r.status >= 200 && r.status < 300);
-    return { endpoint, config, savedBody: successSaved?.body, seed: row.id };
-  });
+  return rows.map(toMountInput);
 }

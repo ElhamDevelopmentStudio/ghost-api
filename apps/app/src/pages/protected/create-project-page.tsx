@@ -68,14 +68,14 @@ const libraryIcons = [
 ] as const;
 
 const colors = [
-  '#651fff',
-  '#1767d8',
-  '#0f9ca7',
-  '#22c55e',
-  '#ff9811',
-  '#ff4356',
-  '#ec4899',
-  '#64748b',
+  'var(--brand-action)',
+  'var(--method-post)',
+  'var(--method-head)',
+  'var(--success)',
+  'var(--warning)',
+  'var(--destructive)',
+  'var(--chart-6)',
+  'var(--method-options)',
 ];
 
 export function CreateProjectPage() {
@@ -166,7 +166,7 @@ export function CreateProjectPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#020711] text-white">
+    <div className="bg-app-canvas min-h-screen text-white">
       <CreateTopbar />
 
       <main className="mx-auto max-w-[1120px] px-6 pb-10 pt-7">
@@ -194,7 +194,7 @@ export function CreateProjectPage() {
 
         <form onSubmit={handleSubmit}>
           <section className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
-            <div className="border-white/12 rounded-lg border bg-[#080d19]/90">
+            <div className="border-white/12 bg-app-panel/90 rounded-lg border">
               <div className="border-white/6 flex items-center gap-3 border-b px-7 py-5">
                 <RiBox3Line className="size-4 text-purple-400" />
                 <h2 className="text-base font-semibold">Project Details</h2>
@@ -205,7 +205,7 @@ export function CreateProjectPage() {
                   label="Project Name"
                   help="Choose a name that helps you identify this project."
                 >
-                  <div className="flex h-11 items-center rounded-md border border-purple-500 bg-[#070c17] px-4 shadow-[0_0_0_1px_rgba(124,58,237,0.08)]">
+                  <div className="bg-app-panel-muted shadow-project-input-focus flex h-11 items-center rounded-md border border-purple-500 px-4">
                     <RiBox3Line className="text-white/56 mr-4 size-4" />
                     <input
                       value={name}
@@ -223,7 +223,7 @@ export function CreateProjectPage() {
                   optional
                   help="A short description of what this project is for."
                 >
-                  <div className="rounded-md border border-white/10 bg-[#070c17] p-4">
+                  <div className="bg-app-panel-muted rounded-md border border-white/10 p-4">
                     <textarea
                       value={description}
                       onChange={(event) => setDescription(event.target.value.slice(0, 200))}
@@ -239,7 +239,7 @@ export function CreateProjectPage() {
                   optional
                   help="This will be the base URL for all endpoints in this project."
                 >
-                  <div className="flex h-11 rounded-md border border-white/10 bg-[#070c17]">
+                  <div className="bg-app-panel-muted flex h-11 rounded-md border border-white/10">
                     <Select
                       value={baseUrlProtocol}
                       onValueChange={(value) => setBaseUrlProtocol(value as 'https://' | 'http://')}
@@ -247,7 +247,7 @@ export function CreateProjectPage() {
                       <SelectTrigger className="border-white/8 h-11 w-[112px] rounded-r-none border-0 border-r bg-transparent text-white shadow-none focus-visible:ring-0">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="border-white/10 bg-[#080d19] text-white">
+                      <SelectContent className="bg-app-panel border-white/10 text-white">
                         <SelectItem value="https://">https://</SelectItem>
                         <SelectItem value="http://">http://</SelectItem>
                       </SelectContent>
@@ -272,12 +272,12 @@ export function CreateProjectPage() {
                       setEnvironment(value as 'Development' | 'Staging' | 'Production')
                     }
                   >
-                    <SelectTrigger className="h-11 w-full border-white/10 bg-[#070c17] px-4 text-white">
+                    <SelectTrigger className="bg-app-panel-muted h-11 w-full border-white/10 px-4 text-white">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent
                       position="popper"
-                      className="border-white/10 bg-[#080d19] text-white"
+                      className="bg-app-panel border-white/10 text-white"
                     >
                       {(['Development', 'Staging', 'Production'] as const).map((value) => (
                         <SelectItem key={value} value={value}>
@@ -317,7 +317,7 @@ export function CreateProjectPage() {
               </button>
               {advancedOpen ? (
                 <div className="border-white/6 grid gap-5 border-t px-7 py-5 sm:grid-cols-2">
-                  <label className="flex items-center justify-between rounded-md border border-white/10 bg-[#070c17] px-4 py-3 text-sm">
+                  <label className="bg-app-panel-muted flex items-center justify-between rounded-md border border-white/10 px-4 py-3 text-sm">
                     <span>
                       <span className="block font-semibold text-white">Start paused</span>
                       <span className="text-white/48 mt-1 block">
@@ -326,7 +326,7 @@ export function CreateProjectPage() {
                     </span>
                     <input type="checkbox" className="size-4 accent-purple-500" />
                   </label>
-                  <label className="block rounded-md border border-white/10 bg-[#070c17] px-4 py-3 text-sm">
+                  <label className="bg-app-panel-muted block rounded-md border border-white/10 px-4 py-3 text-sm">
                     <span className="font-semibold text-white">Mock latency</span>
                     <input
                       type="number"
@@ -340,7 +340,7 @@ export function CreateProjectPage() {
             </div>
 
             <div className="space-y-4">
-              <div className="border-white/12 rounded-lg border bg-[#080d19]/90 p-6">
+              <div className="border-white/12 bg-app-panel/90 rounded-lg border p-6">
                 <h2 className="text-base font-semibold">Project Icon</h2>
                 <p className="text-white/52 mt-1 text-sm">
                   Choose an icon that represents your project.
@@ -373,7 +373,7 @@ export function CreateProjectPage() {
                           type="button"
                           onClick={() => setIcon(item.id)}
                           className={cn(
-                            'grid size-[68px] place-items-center rounded-lg border bg-[#07101d]',
+                            'bg-app-icon-surface grid size-[68px] place-items-center rounded-lg border',
                             icon === item.id ? 'border-purple-500' : 'border-white/10',
                           )}
                         >
@@ -391,7 +391,7 @@ export function CreateProjectPage() {
                     <div
                       {...dropzone.getRootProps({
                         className: cn(
-                          'flex h-[150px] cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-white/14 bg-[#07101d] text-center text-sm text-white/58 transition hover:border-purple-500/60 hover:text-white',
+                          'bg-app-icon-surface flex h-[150px] cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-white/14 text-center text-sm text-white/58 transition hover:border-purple-500/60 hover:text-white',
                           dropzone.isDragActive && 'border-purple-500 bg-purple-500/10 text-white',
                         ),
                       })}
@@ -439,7 +439,7 @@ export function CreateProjectPage() {
                       onChange={(event) => setInitials(event.target.value.slice(0, 2))}
                       disabled={iconMode === 'upload'}
                       placeholder="Enter initials (max 2)"
-                      className="placeholder:text-white/42 h-11 min-w-0 flex-1 rounded-md border border-white/10 bg-[#070c17] px-4 text-sm text-white outline-none"
+                      className="placeholder:text-white/42 bg-app-panel-muted h-11 min-w-0 flex-1 rounded-md border border-white/10 px-4 text-sm text-white outline-none"
                     />
                   </div>
 
@@ -462,7 +462,7 @@ export function CreateProjectPage() {
                 </div>
               </div>
 
-              <div className="border-white/12 rounded-lg border bg-[#080d19]/90 p-6">
+              <div className="border-white/12 bg-app-panel/90 rounded-lg border p-6">
                 <h2 className="text-base font-semibold">Preview</h2>
                 <div className="mt-5">
                   <ProjectCard
@@ -495,7 +495,7 @@ export function CreateProjectPage() {
               type="submit"
               loading={mutation.isPending || uploadMutation.isPending}
               disabled={iconMode === 'upload' && !projectImage}
-              className="h-11 w-[182px] bg-[#6418ff] hover:bg-[#762cff]"
+              className="bg-brand-action hover:bg-brand-action-hover h-11 w-[182px]"
             >
               Create Project
               <span>-&gt;</span>
@@ -512,17 +512,17 @@ function CreateTopbar() {
     <header className="border-white/8 flex h-[75px] items-center justify-between border-b px-8 md:px-12">
       <div className="flex items-center gap-16">
         <Link to="/projects" className="flex items-center gap-3">
-          <div className="relative grid size-8 place-items-center rounded-b-md rounded-t-2xl bg-gradient-to-b from-[#8a36ff] to-[#5d19d5]">
+          <div className="bg-brand-ghost relative grid size-8 place-items-center rounded-b-md rounded-t-2xl">
             <RiSparkling2Line className="size-4 fill-white text-white" />
           </div>
           <span className="font-mono text-2xl font-bold tracking-[0] text-white">
-            GHOST<span className="text-[#7a22ff]">API</span>
+            GHOST<span className="text-brand-accent">API</span>
           </span>
         </Link>
       </div>
 
       <div className="flex items-center gap-6">
-        <label className="text-white/48 hidden h-10 w-[308px] items-center gap-3 rounded-lg border border-white/10 bg-[#050a14]/95 px-3 md:flex">
+        <label className="text-white/48 bg-app-panel-deep/95 hidden h-10 w-[308px] items-center gap-3 rounded-lg border border-white/10 px-3 md:flex">
           <RiSearchLine className="size-4" />
           <input
             className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/45"
@@ -532,28 +532,28 @@ function CreateTopbar() {
         </label>
         <button
           type="button"
-          className="hidden h-10 min-w-10 rounded-lg border border-white/10 bg-[#070c18] px-4 text-lg md:block"
+          className="bg-app-panel-strong hidden h-10 min-w-10 rounded-lg border border-white/10 px-4 text-lg md:block"
         >
           /
         </button>
         <button
           type="button"
           aria-label="Theme"
-          className="hidden size-10 place-items-center rounded-lg border border-white/10 bg-[#070c18] md:grid"
+          className="bg-app-panel-strong hidden size-10 place-items-center rounded-lg border border-white/10 md:grid"
         >
           <RiSunLine className="size-5" />
         </button>
         <button
           type="button"
           aria-label="Notifications"
-          className="relative hidden size-10 place-items-center rounded-lg border border-white/10 bg-[#070c18] md:grid"
+          className="bg-app-panel-strong relative hidden size-10 place-items-center rounded-lg border border-white/10 md:grid"
         >
           <RiNotification3Line className="size-5" />
-          <span className="absolute -right-1.5 -top-1.5 grid size-5 place-items-center rounded-full bg-[#6a22ff] text-xs font-bold">
+          <span className="bg-primary-active absolute -right-1.5 -top-1.5 grid size-5 place-items-center rounded-full text-xs font-bold">
             3
           </span>
         </button>
-        <Button className="h-10 rounded-md bg-[#6418ff] px-5 text-sm hover:bg-[#762cff]">
+        <Button className="bg-brand-action hover:bg-brand-action-hover h-10 rounded-md px-5 text-sm">
           <RiAddLine className="size-4" />
           New Project
         </Button>

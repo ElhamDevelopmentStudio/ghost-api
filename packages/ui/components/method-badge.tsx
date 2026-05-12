@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 
-import { cn } from '@ghostapi/ui/lib/utils';
+import { cn } from '../lib/utils';
 
 /** HTTP methods we visually distinguish across the product. */
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS';
@@ -46,12 +46,7 @@ type MethodBadgeProps = Omit<React.ComponentProps<'span'>, 'children'> &
  * page, etc. Backed by the `--method-*` tokens in the design system so the
  * color of "GET" stays consistent everywhere.
  */
-function MethodBadge({
-  className,
-  method,
-  size,
-  ...props
-}: MethodBadgeProps): React.JSX.Element {
+function MethodBadge({ className, method, size, ...props }: MethodBadgeProps): React.JSX.Element {
   return (
     <span
       data-slot="method-badge"

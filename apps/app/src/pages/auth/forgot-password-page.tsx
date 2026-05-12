@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { RiArrowRightLine, RiMailLine } from '@remixicon/react';
+import { RiMailLine } from '@remixicon/react';
 
-import { Button } from '@ghostapi/ui';
-
-import { ApiError } from '@/lib/api-client';
-import { AuthCard, AuthField, useForgotPassword } from '@/features/auth';
+import {
+  AuthCard,
+  AuthField,
+  AuthSubmitButton,
+  getAuthErrorMessage,
+  useForgotPassword,
+} from '@/features/auth';
 
 export function ForgotPasswordPage() {
   const forgotPassword = useForgotPassword();
@@ -21,7 +24,7 @@ export function ForgotPasswordPage() {
       await forgotPassword.mutateAsync({ email });
       setSubmitted(true);
     } catch (err) {
-      setError(errorMessage(err, 'Unable to send reset instructions.'));
+      setError(getAuthErrorMessage(err, 'Unable to send reset instructions.'));
     }
   }
 
@@ -65,21 +68,10 @@ export function ForgotPasswordPage() {
           </p>
         ) : null}
 
-        <Button
-          type="submit"
-          loading={forgotPassword.isPending}
-          className="h-[58px] w-full bg-[linear-gradient(90deg,#6d33ff,#7b2cff,#681eff)] text-base shadow-[0_16px_40px_rgba(124,77,255,0.25)] hover:brightness-110"
-        >
+        <AuthSubmitButton type="submit" loading={forgotPassword.isPending}>
           Send reset link
-          <RiArrowRightLine className="ml-auto size-5" />
-        </Button>
+        </AuthSubmitButton>
       </form>
     </AuthCard>
   );
-}
-
-function errorMessage(error: unknown, fallback: string): string {
-  if (error instanceof ApiError) return error.message;
-  if (error instanceof Error) return error.message;
-  return fallback;
 }

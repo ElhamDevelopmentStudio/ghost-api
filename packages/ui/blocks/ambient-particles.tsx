@@ -65,7 +65,7 @@ export function AmbientParticles({
             height: p.size,
             left: `${p.left}%`,
             top: `${p.top}%`,
-            backgroundColor: `rgba(124, 77, 255, ${p.alpha})`,
+            backgroundColor: `rgba(var(--primary-rgb), ${p.alpha})`,
           }}
           animate={{
             y: [0, -p.drift, 0],

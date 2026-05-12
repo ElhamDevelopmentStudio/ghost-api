@@ -10,32 +10,9 @@ import { LiveApiActivity } from '@/app/(landing)/_components/live-api-activity';
 export function LandingHero(): React.JSX.Element {
   return (
     <section className="relative min-h-[1220px] overflow-hidden">
-      <div
-        aria-hidden
-        className="absolute inset-0 opacity-[0.03]"
-        style={{
-          backgroundImage: `
-            linear-gradient(rgba(124,77,255,1) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(124,77,255,1) 1px, transparent 1px)
-          `,
-          backgroundSize: '60px 60px',
-        }}
-      />
-      <div
-        aria-hidden
-        className="absolute inset-0"
-        style={{
-          background:
-            'radial-gradient(ellipse 80% 80% at 50% 40%, rgba(124,77,255,0.12) 0%, transparent 70%)',
-        }}
-      />
-      <div
-        aria-hidden
-        className="absolute inset-0 opacity-60"
-        style={{
-          background: 'radial-gradient(ellipse at center, transparent 0%, var(--background) 100%)',
-        }}
-      />
+      <div aria-hidden className="bg-landing-grid absolute inset-0 opacity-[0.03]" />
+      <div aria-hidden className="bg-landing-aura absolute inset-0" />
+      <div aria-hidden className="bg-landing-vignette absolute inset-0 opacity-60" />
 
       <div className="relative z-10 mx-auto flex max-w-[1500px] flex-col items-center px-[42px] pt-6">
         <HeroPitch />

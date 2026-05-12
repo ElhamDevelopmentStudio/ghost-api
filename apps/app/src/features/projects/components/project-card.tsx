@@ -75,14 +75,11 @@ export function ProjectCard({
   return (
     <article
       className={cn(
-        'bg-[#080d19]/88 relative flex flex-col rounded-xl border border-white/10 p-6 shadow-[0_18px_45px_rgba(0,0,0,0.22)]',
+        'bg-app-panel/88 shadow-project-card relative flex flex-col rounded-xl border border-white/10 p-6',
         preview ? 'h-[226px]' : 'h-[226px]',
-        index === 0 &&
-          'bg-[radial-gradient(circle_at_4%_0%,rgba(126,34,206,0.28),transparent_48%),#080d19]',
-        index === 4 &&
-          'bg-[radial-gradient(circle_at_4%_0%,rgba(109,40,217,0.24),transparent_48%),#080d19]',
-        index === 5 &&
-          'bg-[radial-gradient(circle_at_4%_0%,rgba(190,24,93,0.20),transparent_48%),#080d19]',
+        index === 0 && 'bg-project-card-aura-purple',
+        index === 4 && 'bg-project-card-aura-violet',
+        index === 5 && 'bg-project-card-aura-rose',
       )}
     >
       {!preview ? (

@@ -4,18 +4,18 @@
 
 This document defines:
 
-* authentication architecture
-* authorization strategy
-* session management
-* frontend auth flow
-* backend auth flow
-* protected routing
-* Electron considerations
-* security rules
-* token lifecycle
-* database structure
-* auth APIs
-* engineering conventions
+- authentication architecture
+- authorization strategy
+- session management
+- frontend auth flow
+- backend auth flow
+- protected routing
+- Electron considerations
+- security rules
+- token lifecycle
+- database structure
+- auth APIs
+- engineering conventions
 
 The purpose is:
 
@@ -23,18 +23,18 @@ The purpose is:
 
 GhostAPI authentication should feel:
 
-* invisible
-* fast
-* modern
-* secure
-* low-friction
+- invisible
+- fast
+- modern
+- secure
+- low-friction
 
 NOT:
 
-* enterprise SSO complexity
-* session confusion
-* token chaos
-* auth-provider spaghetti
+- enterprise SSO complexity
+- session confusion
+- token chaos
+- auth-provider spaghetti
 
 ---
 
@@ -42,11 +42,11 @@ NOT:
 
 GhostAPI authentication should prioritize:
 
-* simplicity
-* security
-* developer experience
-* maintainability
-* Electron compatibility
+- simplicity
+- security
+- developer experience
+- maintainability
+- Electron compatibility
 
 The system should feel:
 
@@ -64,18 +64,18 @@ GhostAPI should use:
 
 NOT:
 
-* localStorage tokens
-* sessionStorage tokens
-* JWT-only frontend auth
-* client-managed auth
+- localStorage tokens
+- sessionStorage tokens
+- JWT-only frontend auth
+- client-managed auth
 
 Reason:
 
-* safer
-* cleaner
-* easier for Electron
-* easier for protected APIs
-* avoids token leakage
+- safer
+- cleaner
+- easier for Electron
+- easier for protected APIs
+- avoids token leakage
 
 ---
 
@@ -83,16 +83,16 @@ Reason:
 
 The system should combine:
 
-* short-lived access tokens
-* refresh tokens
-* database-backed session tracking
+- short-lived access tokens
+- refresh tokens
+- database-backed session tracking
 
 This allows:
 
-* device management
-* session revocation
-* logout-all-devices
-* future audit logging
+- device management
+- session revocation
+- logout-all-devices
+- future audit logging
 
 ---
 
@@ -100,17 +100,17 @@ This allows:
 
 Authentication architecture MUST work for:
 
-* browser
-* desktop app
-* future Electron runtime
+- browser
+- desktop app
+- future Electron runtime
 
 This is extremely important.
 
 Avoid:
 
-* SSR auth complexity
-* NextAuth
-* browser-specific assumptions
+- SSR auth complexity
+- NextAuth
+- browser-specific assumptions
 
 ---
 
@@ -118,9 +118,9 @@ Avoid:
 
 Frontend should NEVER:
 
-* decode tokens
-* validate auth manually
-* trust local auth state blindly
+- decode tokens
+- validate auth manually
+- trust local auth state blindly
 
 The backend is the source of truth.
 
@@ -130,27 +130,27 @@ The backend is the source of truth.
 
 # Backend
 
-* Hono
-* JWT
-* bcrypt
-* Prisma
-* Redis
-* Zod
+- Hono
+- JWT
+- bcrypt
+- Prisma
+- Redis
+- Zod
 
 ---
 
 # Frontend
 
-* React
-* Zustand
-* TanStack Query
+- React
+- Zustand
+- TanStack Query
 
 ---
 
 # Session Storage
 
-* PostgreSQL
-* Redis cache layer optional later
+- PostgreSQL
+- Redis cache layer optional later
 
 ---
 
@@ -178,8 +178,8 @@ HttpOnly cookie
 
 Purpose:
 
-* authenticated requests
-* protected APIs
+- authenticated requests
+- protected APIs
 
 ---
 
@@ -199,8 +199,8 @@ HttpOnly cookie
 
 Purpose:
 
-* refresh sessions
-* maintain login state
+- refresh sessions
+- maintain login state
 
 Refresh tokens MUST exist in database.
 
@@ -214,10 +214,10 @@ Every login creates:
 
 This enables:
 
-* session revocation
-* device management
-* logout everywhere
-* future audit features
+- session revocation
+- device management
+- logout everywhere
+- future audit features
 
 ---
 
@@ -283,15 +283,15 @@ Invalidate Refresh Token
 
 The public frontend:
 
-* does NOT own authentication state
-* does NOT manage protected routing
+- does NOT own authentication state
+- does NOT manage protected routing
 
 Its responsibility is:
 
-* landing pages
-* docs
-* marketing
-* redirecting to protected app
+- landing pages
+- docs
+- marketing
+- redirecting to protected app
 
 ---
 
@@ -299,10 +299,10 @@ Its responsibility is:
 
 The React application owns:
 
-* authenticated routing
-* session fetching
-* auth state
-* workspace protection
+- authenticated routing
+- session fetching
+- auth state
+- workspace protection
 
 This keeps Electron compatibility clean.
 
@@ -332,8 +332,8 @@ POST /auth/register
 
 Creates:
 
-* user
-* initial session
+- user
+- initial session
 
 ---
 
@@ -345,9 +345,9 @@ POST /auth/login
 
 Creates:
 
-* session
-* access token
-* refresh token
+- session
+- access token
+- refresh token
 
 ---
 
@@ -359,7 +359,7 @@ POST /auth/logout
 
 Deletes:
 
-* current session
+- current session
 
 ---
 
@@ -371,15 +371,15 @@ POST /auth/logout-all
 
 Deletes:
 
-* all sessions
+- all sessions
 
 ---
 
 # Refresh
 
 ```http id="
-```
 
+```
 
 # GhostAPI — Authentication Architecture & System Design
 
@@ -387,18 +387,18 @@ Deletes:
 
 This document defines:
 
-* authentication architecture
-* authorization strategy
-* session management
-* frontend auth flow
-* backend auth flow
-* protected routing
-* Electron considerations
-* security rules
-* token lifecycle
-* database structure
-* auth APIs
-* engineering conventions
+- authentication architecture
+- authorization strategy
+- session management
+- frontend auth flow
+- backend auth flow
+- protected routing
+- Electron considerations
+- security rules
+- token lifecycle
+- database structure
+- auth APIs
+- engineering conventions
 
 The purpose is:
 
@@ -406,18 +406,18 @@ The purpose is:
 
 GhostAPI authentication should feel:
 
-* invisible
-* fast
-* modern
-* secure
-* low-friction
+- invisible
+- fast
+- modern
+- secure
+- low-friction
 
 NOT:
 
-* enterprise SSO complexity
-* session confusion
-* token chaos
-* auth-provider spaghetti
+- enterprise SSO complexity
+- session confusion
+- token chaos
+- auth-provider spaghetti
 
 ---
 
@@ -425,11 +425,11 @@ NOT:
 
 GhostAPI authentication should prioritize:
 
-* simplicity
-* security
-* developer experience
-* maintainability
-* Electron compatibility
+- simplicity
+- security
+- developer experience
+- maintainability
+- Electron compatibility
 
 The system should feel:
 
@@ -447,18 +447,18 @@ GhostAPI should use:
 
 NOT:
 
-* localStorage tokens
-* sessionStorage tokens
-* JWT-only frontend auth
-* client-managed auth
+- localStorage tokens
+- sessionStorage tokens
+- JWT-only frontend auth
+- client-managed auth
 
 Reason:
 
-* safer
-* cleaner
-* easier for Electron
-* easier for protected APIs
-* avoids token leakage
+- safer
+- cleaner
+- easier for Electron
+- easier for protected APIs
+- avoids token leakage
 
 ---
 
@@ -466,16 +466,16 @@ Reason:
 
 The system should combine:
 
-* short-lived access tokens
-* refresh tokens
-* database-backed session tracking
+- short-lived access tokens
+- refresh tokens
+- database-backed session tracking
 
 This allows:
 
-* device management
-* session revocation
-* logout-all-devices
-* future audit logging
+- device management
+- session revocation
+- logout-all-devices
+- future audit logging
 
 ---
 
@@ -483,17 +483,17 @@ This allows:
 
 Authentication architecture MUST work for:
 
-* browser
-* desktop app
-* future Electron runtime
+- browser
+- desktop app
+- future Electron runtime
 
 This is extremely important.
 
 Avoid:
 
-* SSR auth complexity
-* NextAuth
-* browser-specific assumptions
+- SSR auth complexity
+- NextAuth
+- browser-specific assumptions
 
 ---
 
@@ -501,9 +501,9 @@ Avoid:
 
 Frontend should NEVER:
 
-* decode tokens
-* validate auth manually
-* trust local auth state blindly
+- decode tokens
+- validate auth manually
+- trust local auth state blindly
 
 The backend is the source of truth.
 
@@ -513,27 +513,27 @@ The backend is the source of truth.
 
 # Backend
 
-* Hono
-* JWT
-* bcrypt
-* Prisma
-* Redis
-* Zod
+- Hono
+- JWT
+- bcrypt
+- Prisma
+- Redis
+- Zod
 
 ---
 
 # Frontend
 
-* React
-* Zustand
-* TanStack Query
+- React
+- Zustand
+- TanStack Query
 
 ---
 
 # Session Storage
 
-* PostgreSQL
-* Redis cache layer optional later
+- PostgreSQL
+- Redis cache layer optional later
 
 ---
 
@@ -561,8 +561,8 @@ HttpOnly cookie
 
 Purpose:
 
-* authenticated requests
-* protected APIs
+- authenticated requests
+- protected APIs
 
 ---
 
@@ -582,8 +582,8 @@ HttpOnly cookie
 
 Purpose:
 
-* refresh sessions
-* maintain login state
+- refresh sessions
+- maintain login state
 
 Refresh tokens MUST exist in database.
 
@@ -597,10 +597,10 @@ Every login creates:
 
 This enables:
 
-* session revocation
-* device management
-* logout everywhere
-* future audit features
+- session revocation
+- device management
+- logout everywhere
+- future audit features
 
 ---
 
@@ -666,15 +666,15 @@ Invalidate Refresh Token
 
 The public frontend:
 
-* does NOT own authentication state
-* does NOT manage protected routing
+- does NOT own authentication state
+- does NOT manage protected routing
 
 Its responsibility is:
 
-* landing pages
-* docs
-* marketing
-* redirecting to protected app
+- landing pages
+- docs
+- marketing
+- redirecting to protected app
 
 ---
 
@@ -682,10 +682,10 @@ Its responsibility is:
 
 The React application owns:
 
-* authenticated routing
-* session fetching
-* auth state
-* workspace protection
+- authenticated routing
+- session fetching
+- auth state
+- workspace protection
 
 This keeps Electron compatibility clean.
 
@@ -715,8 +715,8 @@ POST /auth/register
 
 Creates:
 
-* user
-* initial session
+- user
+- initial session
 
 ---
 
@@ -728,9 +728,9 @@ POST /auth/login
 
 Creates:
 
-* session
-* access token
-* refresh token
+- session
+- access token
+- refresh token
 
 ---
 
@@ -742,7 +742,7 @@ POST /auth/logout
 
 Deletes:
 
-* current session
+- current session
 
 ---
 
@@ -754,7 +754,7 @@ POST /auth/logout-all
 
 Deletes:
 
-* all sessions
+- all sessions
 
 ---
 
@@ -766,8 +766,8 @@ POST /auth/refresh
 
 Refreshes:
 
-* access token
-* refresh token
+- access token
+- refresh token
 
 ---
 
@@ -779,8 +779,8 @@ GET /auth/me
 
 Returns:
 
-* authenticated user
-* active session
+- authenticated user
+- active session
 
 ---
 
@@ -866,8 +866,8 @@ Never store plaintext passwords.
 
 Refresh tokens MUST:
 
-* be hashed before storage
-* never stored raw
+- be hashed before storage
+- never stored raw
 
 ---
 
@@ -893,15 +893,15 @@ Secure=true
 
 Access tokens should contain:
 
-* user id
-* session id
-* expiration
+- user id
+- session id
+- expiration
 
 DO NOT:
 
-* store permissions
-* store large payloads
-* store sensitive information
+- store permissions
+- store large payloads
+- store sensitive information
 
 inside JWTs.
 
@@ -915,8 +915,8 @@ Since GhostAPI uses cookies:
 
 Recommended:
 
-* CSRF token header
-* double-submit cookie pattern
+- CSRF token header
+- double-submit cookie pattern
 
 ---
 
@@ -924,10 +924,10 @@ Recommended:
 
 Apply rate limits to:
 
-* login
-* register
-* forgot password
-* refresh
+- login
+- register
+- forgot password
+- refresh
 
 Recommended:
 
@@ -966,15 +966,15 @@ Recommended:
 
 The frontend auth store should contain:
 
-* user
-* loading state
-* authenticated state
+- user
+- loading state
+- authenticated state
 
 DO NOT:
 
-* store JWTs manually
-* decode tokens in frontend
-* persist auth manually
+- store JWTs manually
+- decode tokens in frontend
+- persist auth manually
 
 Cookies already manage sessions.
 
@@ -996,14 +996,14 @@ hydrates the authenticated state.
 
 Use React Query for:
 
-* current session
-* auth mutations
-* session refresh
-* logout mutations
+- current session
+- auth mutations
+- session refresh
+- logout mutations
 
 DO NOT:
 
-* manually synchronize auth state everywhere
+- manually synchronize auth state everywhere
 
 ---
 
@@ -1013,11 +1013,11 @@ DO NOT:
 
 Must include:
 
-* auth middleware
-* session validation
-* role validation
-* CSRF validation
-* rate limiting
+- auth middleware
+- session validation
+- role validation
+- CSRF validation
+- rate limiting
 
 ---
 
@@ -1025,9 +1025,9 @@ Must include:
 
 React route guards should:
 
-* redirect unauthenticated users
-* block protected pages
-* handle expired sessions gracefully
+- redirect unauthenticated users
+- block protected pages
+- handle expired sessions gracefully
 
 ---
 
@@ -1039,15 +1039,15 @@ GhostAPI is planned to support:
 
 Authentication MUST remain:
 
-* browser-compatible
-* Electron-compatible
-* cookie-compatible
+- browser-compatible
+- Electron-compatible
+- cookie-compatible
 
 Avoid:
 
-* NextAuth
-* SSR auth coupling
-* browser-only assumptions
+- NextAuth
+- SSR auth coupling
+- browser-only assumptions
 
 ---
 
@@ -1055,14 +1055,14 @@ Avoid:
 
 Electron should:
 
-* run the React protected app
-* use secure cookie storage
-* communicate with backend normally
+- run the React protected app
+- use secure cookie storage
+- communicate with backend normally
 
 The authentication flow should remain identical between:
 
-* web
-* desktop
+- web
+- desktop
 
 ---
 
@@ -1070,16 +1070,16 @@ The authentication flow should remain identical between:
 
 Phase 1 should support:
 
-* email/password only
+- email/password only
 
 Later phases may add:
 
-* GitHub OAuth
-* Google OAuth
+- GitHub OAuth
+- Google OAuth
 
 DO NOT:
 
-* overbuild OAuth early
+- overbuild OAuth early
 
 ---
 
@@ -1130,8 +1130,8 @@ Authorization MUST happen:
 
 Frontend visibility checks are:
 
-* UX only
-* NOT security
+- UX only
+- NOT security
 
 ---
 
@@ -1154,9 +1154,9 @@ Frontend visibility checks are:
 
 Frontend should:
 
-* redirect on 401
-* retry refresh automatically
-* gracefully recover sessions
+- redirect on 401
+- retry refresh automatically
+- gracefully recover sessions
 
 ---
 
@@ -1164,10 +1164,10 @@ Frontend should:
 
 Logout must:
 
-* clear cookies
-* revoke session
-* invalidate refresh token
-* reset frontend state
+- clear cookies
+- revoke session
+- invalidate refresh token
+- reset frontend state
 
 ---
 
@@ -1177,12 +1177,12 @@ NOT Phase 1.
 
 Future possible additions:
 
-* OAuth providers
-* 2FA
-* magic links
-* device approval
-* session history
-* login alerts
+- OAuth providers
+- 2FA
+- magic links
+- device approval
+- session history
+- login alerts
 
 DO NOT implement these early.
 
@@ -1192,17 +1192,17 @@ DO NOT implement these early.
 
 GhostAPI authentication should feel:
 
-* invisible
-* reliable
-* secure
-* predictable
+- invisible
+- reliable
+- secure
+- predictable
 
 The auth system should never become:
 
-* a product by itself
-* over-engineered
-* dependency-heavy
-* difficult to reason about
+- a product by itself
+- over-engineered
+- dependency-heavy
+- difficult to reason about
 
 The best authentication system is:
 

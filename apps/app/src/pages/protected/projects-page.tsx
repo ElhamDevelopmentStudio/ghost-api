@@ -48,7 +48,7 @@ export function ProjectsPage() {
   const requestTotal = projects.reduce((sum, project) => sum + project.requestCount, 0);
 
   return (
-    <div className="min-h-screen overflow-hidden bg-[#020711] text-white">
+    <div className="bg-app-canvas min-h-screen overflow-hidden text-white">
       <ProjectsTopbar query={query} onQueryChange={setQuery} />
 
       <main className="relative mx-auto max-w-[1390px] px-6 pb-10 pt-6">
@@ -89,7 +89,7 @@ export function ProjectsPage() {
                   'flex h-10 items-center gap-2 rounded-lg border px-4 text-sm transition',
                   active
                     ? 'border-purple-500/25 bg-purple-700/35 text-purple-300'
-                    : 'text-white/58 border-white/10 bg-[#060b15]/80 hover:border-white/20 hover:text-white',
+                    : 'text-white/58 bg-app-panel-soft/80 border-white/10 hover:border-white/20 hover:text-white',
                 )}
               >
                 <Icon className="size-4" />
@@ -99,7 +99,7 @@ export function ProjectsPage() {
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="flex h-10 rounded-lg border border-white/10 bg-[#070c18] p-1">
+            <div className="bg-app-panel-strong flex h-10 rounded-lg border border-white/10 p-1">
               <button
                 type="button"
                 aria-label="Grid view"
@@ -117,7 +117,7 @@ export function ProjectsPage() {
             </div>
             <button
               type="button"
-              className="flex h-10 items-center gap-7 rounded-lg border border-white/10 bg-[#070c18] px-4 text-sm text-white"
+              className="bg-app-panel-strong flex h-10 items-center gap-7 rounded-lg border border-white/10 px-4 text-sm text-white"
             >
               Last Modified
               <RiArrowDownSLine className="text-white/48 size-4" />
@@ -168,7 +168,7 @@ function ProjectsTopbar({
       <GhostLogo />
 
       <div className="flex items-center gap-6">
-        <label className="text-white/48 hidden h-10 w-[290px] items-center gap-3 rounded-lg border border-white/10 bg-[#050a14]/95 px-3 shadow-[0_0_28px_rgba(124,58,237,0.16)] md:flex">
+        <label className="text-white/48 bg-app-panel-deep/95 shadow-project-search hidden h-10 w-[290px] items-center gap-3 rounded-lg border border-white/10 px-3 md:flex">
           <RiSearchLine className="size-4" />
           <input
             value={query}
@@ -182,7 +182,7 @@ function ProjectsTopbar({
         <button
           type="button"
           aria-label="Command menu"
-          className="hidden h-10 min-w-10 rounded-lg border border-white/10 bg-[#070c18] px-4 text-lg text-white md:block"
+          className="bg-app-panel-strong hidden h-10 min-w-10 rounded-lg border border-white/10 px-4 text-lg text-white md:block"
         >
           /
         </button>
@@ -192,7 +192,10 @@ function ProjectsTopbar({
         <IconButton label="Notifications" badge="3">
           <RiNotification3Line className="size-5" />
         </IconButton>
-        <Button asChild className="h-10 rounded-md bg-[#6418ff] px-5 text-sm hover:bg-[#762cff]">
+        <Button
+          asChild
+          className="bg-brand-action hover:bg-brand-action-hover h-10 rounded-md px-5 text-sm"
+        >
           <Link to="/projects/new">
             <RiAddLine className="size-4" />
             New Project
@@ -221,7 +224,7 @@ function Metric({
   };
 
   return (
-    <div className="bg-[#060b15]/86 flex h-[77px] items-center gap-4 rounded-lg border border-white/10 px-5">
+    <div className="bg-app-panel-soft/86 flex h-[77px] items-center gap-4 rounded-lg border border-white/10 px-5">
       <div className={cn('grid size-11 place-items-center rounded-full', tones[tone])}>
         <Icon className="size-5" />
       </div>
@@ -236,15 +239,15 @@ function Metric({
 function GhostLogo() {
   return (
     <Link to="/projects" className="flex items-center gap-3">
-      <div className="relative grid size-8 place-items-center rounded-b-md rounded-t-2xl bg-gradient-to-b from-[#8a36ff] to-[#5d19d5]">
-        <span className="absolute bottom-[-3px] left-[5px] size-2 rounded-full bg-[#5d19d5]" />
-        <span className="absolute bottom-[-3px] left-[13px] size-2 rounded-full bg-[#5d19d5]" />
-        <span className="absolute bottom-[-3px] right-[5px] size-2 rounded-full bg-[#5d19d5]" />
+      <div className="bg-brand-ghost relative grid size-8 place-items-center rounded-b-md rounded-t-2xl">
+        <span className="bg-brand-ghost-foot absolute bottom-[-3px] left-[5px] size-2 rounded-full" />
+        <span className="bg-brand-ghost-foot absolute bottom-[-3px] left-[13px] size-2 rounded-full" />
+        <span className="bg-brand-ghost-foot absolute bottom-[-3px] right-[5px] size-2 rounded-full" />
         <span className="mt-1 h-1.5 w-1.5 rounded-full bg-white" />
         <span className="absolute right-2.5 top-3 h-1.5 w-1.5 rounded-full bg-white" />
       </div>
       <span className="font-mono text-2xl font-bold tracking-[0] text-white">
-        GHOST<span className="text-[#7a22ff]">API</span>
+        GHOST<span className="text-brand-accent">API</span>
       </span>
     </Link>
   );
@@ -263,11 +266,11 @@ function IconButton({
     <button
       type="button"
       aria-label={label}
-      className="relative hidden size-10 place-items-center rounded-lg border border-white/10 bg-[#070c18] text-white md:grid"
+      className="bg-app-panel-strong relative hidden size-10 place-items-center rounded-lg border border-white/10 text-white md:grid"
     >
       {children}
       {badge ? (
-        <span className="absolute -right-1.5 -top-1.5 grid size-5 place-items-center rounded-full bg-[#6a22ff] text-xs font-bold text-white">
+        <span className="bg-primary-active absolute -right-1.5 -top-1.5 grid size-5 place-items-center rounded-full text-xs font-bold text-white">
           {badge}
         </span>
       ) : null}

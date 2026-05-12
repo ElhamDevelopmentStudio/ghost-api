@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { RiArrowRightLine, RiMailLine } from '@remixicon/react';
+import { RiMailLine } from '@remixicon/react';
 
-import { Button, toast } from '@ghostapi/ui';
+import { toast } from '@ghostapi/ui';
 
 import { ApiError } from '@/lib/api-client';
 import {
   AuthCard,
   AuthField,
+  AuthSubmitButton,
+  getAuthErrorMessage,
   PasswordField,
   useAuth,
   useResendVerification,
@@ -38,7 +40,7 @@ export function LoginPage() {
         await resendVerificationLink();
         return;
       }
-      setError(errorMessage(err, 'Unable to sign in. Check your email and password.'));
+      setError(getAuthErrorMessage(err, 'Unable to sign in. Check your email and password.'));
     }
   }
 
@@ -51,7 +53,7 @@ export function LoginPage() {
         description: 'Check your email to finish setting up your account.',
       });
     } catch (err) {
-      setError(errorMessage(err, 'Unable to send a verification email.'));
+      setError(getAuthErrorMessage(err, 'Unable to send a verification email.'));
     }
   }
 
@@ -108,21 +110,10 @@ export function LoginPage() {
           </p>
         ) : null}
 
-        <Button
-          type="submit"
-          loading={isLoggingIn || resendVerification.isPending}
-          className="h-[58px] w-full bg-[linear-gradient(90deg,#6d33ff,#7b2cff,#681eff)] text-base shadow-[0_16px_40px_rgba(124,77,255,0.25)] hover:brightness-110"
-        >
+        <AuthSubmitButton type="submit" loading={isLoggingIn || resendVerification.isPending}>
           Sign in
-          <RiArrowRightLine className="ml-auto size-5" />
-        </Button>
+        </AuthSubmitButton>
       </form>
     </AuthCard>
   );
-}
-
-function errorMessage(error: unknown, fallback: string): string {
-  if (error instanceof ApiError) return error.message;
-  if (error instanceof Error) return error.message;
-  return fallback;
 }

@@ -2,7 +2,7 @@ import * as React from 'react';
 import { RiCloseLine } from '@remixicon/react';
 import { Dialog as DialogPrimitive } from 'radix-ui';
 
-import { cn } from '@ghostapi/ui/lib/utils';
+import { cn } from '../lib/utils';
 
 function Dialog(props: React.ComponentProps<typeof DialogPrimitive.Root>): React.JSX.Element {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />;

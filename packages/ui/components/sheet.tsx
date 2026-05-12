@@ -2,7 +2,7 @@ import * as React from 'react';
 import { RiCloseLine } from '@remixicon/react';
 import { Dialog as SheetPrimitive } from 'radix-ui';
 
-import { cn } from '@ghostapi/ui/lib/utils';
+import { cn } from '../lib/utils';
 
 function Sheet(props: React.ComponentProps<typeof SheetPrimitive.Root>): React.JSX.Element {
   return <SheetPrimitive.Root data-slot="sheet" {...props} />;
