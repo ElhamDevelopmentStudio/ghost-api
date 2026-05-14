@@ -1,0 +1,1848 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "GhostAPI Backend API",
+    "version": "0.1.0",
+    "description": "Cookie-based GhostAPI authentication and backend routes. Auth uses short-lived HttpOnly access cookies, rotating refresh cookies, database-backed sessions, and CSRF double-submit headers."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3001",
+      "description": "Local development"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "accessCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "ghostapi_access",
+        "description": "Short-lived HttpOnly access-token cookie."
+      },
+      "refreshCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "ghostapi_refresh",
+        "description": "Rotating HttpOnly refresh-token cookie backed by the sessions table."
+      },
+      "csrfHeader": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-csrf-token",
+        "description": "Double-submit CSRF token from GET /auth/csrf."
+      }
+    },
+    "schemas": {
+      "CsrfResponse": {
+        "type": "object",
+        "properties": {
+          "csrfToken": {
+            "type": "string",
+            "minLength": 32
+          }
+        },
+        "required": ["csrfToken"],
+        "description": "Send this value in the x-csrf-token header for mutating auth requests."
+      },
+      "RegisterResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [true]
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "name": {
+                "type": ["string", "null"]
+              },
+              "emailVerifiedAt": {
+                "type": ["string", "null"],
+                "format": "date-time"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": ["id", "email", "name", "emailVerifiedAt", "createdAt"]
+          }
+        },
+        "required": ["success", "user"]
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [false]
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": ["message"]
+          }
+        },
+        "required": ["success", "error"]
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 200
+          }
+        },
+        "required": ["email", "password"]
+      },
+      "ResendVerificationResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [true]
+          }
+        },
+        "required": ["success"]
+      },
+      "ResendVerificationRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          }
+        },
+        "required": ["email"]
+      },
+      "AuthResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [true]
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "name": {
+                "type": ["string", "null"]
+              },
+              "emailVerifiedAt": {
+                "type": ["string", "null"],
+                "format": "date-time"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": ["id", "email", "name", "emailVerifiedAt", "createdAt"]
+          },
+          "session": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "expiresAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "lastUsedAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": ["id", "expiresAt", "createdAt", "lastUsedAt"]
+          }
+        },
+        "required": ["success", "user", "session"]
+      },
+      "LoginRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "required": ["email", "password"]
+      },
+      "SuccessResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [true]
+          }
+        },
+        "required": ["success"]
+      },
+      "VerifyEmailRequest": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 32
+          }
+        },
+        "required": ["token"]
+      },
+      "LogoutAllResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [true]
+          },
+          "revokedSessions": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": ["success", "revokedSessions"]
+      },
+      "ForgotPasswordResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [true]
+          }
+        },
+        "required": ["success"]
+      },
+      "ForgotPasswordRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          }
+        },
+        "required": ["email"]
+      },
+      "ResetPasswordRequest": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 32
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 200
+          }
+        },
+        "required": ["token", "password"]
+      },
+      "ProjectListResponse": {
+        "type": "object",
+        "properties": {
+          "projects": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "slug": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": ["string", "null"]
+                },
+                "icon": {
+                  "type": ["string", "null"]
+                },
+                "role": {
+                  "type": "string",
+                  "enum": ["OWNER", "ADMIN", "EDITOR", "VIEWER"]
+                },
+                "visibility": {
+                  "type": "string",
+                  "enum": ["Private", "Team"]
+                },
+                "status": {
+                  "type": "string",
+                  "enum": ["Live", "Paused"]
+                },
+                "endpointCount": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "requestCount": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "environment": {
+                  "type": ["object", "null"],
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "baseUrl": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["name", "baseUrl"]
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "updatedAt": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "slug",
+                "description",
+                "icon",
+                "role",
+                "visibility",
+                "status",
+                "endpointCount",
+                "requestCount",
+                "environment",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          }
+        },
+        "required": ["projects"]
+      },
+      "ProjectResponse": {
+        "type": "object",
+        "properties": {
+          "project": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              },
+              "slug": {
+                "type": "string"
+              },
+              "description": {
+                "type": ["string", "null"]
+              },
+              "icon": {
+                "type": ["string", "null"]
+              },
+              "role": {
+                "type": "string",
+                "enum": ["OWNER", "ADMIN", "EDITOR", "VIEWER"]
+              },
+              "visibility": {
+                "type": "string",
+                "enum": ["Private", "Team"]
+              },
+              "status": {
+                "type": "string",
+                "enum": ["Live", "Paused"]
+              },
+              "endpointCount": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "requestCount": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "environment": {
+                "type": ["object", "null"],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "baseUrl": {
+                    "type": "string"
+                  }
+                },
+                "required": ["name", "baseUrl"]
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "slug",
+              "description",
+              "icon",
+              "role",
+              "visibility",
+              "status",
+              "endpointCount",
+              "requestCount",
+              "environment",
+              "createdAt",
+              "updatedAt"
+            ]
+          }
+        },
+        "required": ["project"]
+      },
+      "CreateProjectRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "slug": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[a-z0-9][a-z0-9-]*$"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "icon": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "imageAttachmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "baseUrl": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "environment": {
+            "type": "string",
+            "enum": ["Development", "Staging", "Production"],
+            "default": "Development"
+          }
+        },
+        "required": ["name"]
+      },
+      "CreateUploadResponse": {
+        "type": "object",
+        "properties": {
+          "attachment": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "purpose": {
+                "type": "string",
+                "enum": ["PROJECT_AVATAR", "USER_AVATAR", "WORKSPACE_ATTACHMENT"]
+              },
+              "status": {
+                "type": "string",
+                "enum": ["PENDING", "READY"]
+              },
+              "fileName": {
+                "type": "string"
+              },
+              "mimeType": {
+                "type": "string"
+              },
+              "sizeBytes": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "objectKey": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              },
+              "thumbnailUrl": {
+                "type": ["string", "null"]
+              }
+            },
+            "required": [
+              "id",
+              "purpose",
+              "status",
+              "fileName",
+              "mimeType",
+              "sizeBytes",
+              "objectKey",
+              "url",
+              "thumbnailUrl"
+            ]
+          },
+          "upload": {
+            "type": "object",
+            "properties": {
+              "method": {
+                "type": "string",
+                "enum": ["PUT"]
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              },
+              "headers": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "expiresInSeconds": {
+                "type": "integer",
+                "exclusiveMinimum": 0
+              }
+            },
+            "required": ["method", "url", "headers", "expiresInSeconds"]
+          }
+        },
+        "required": ["attachment", "upload"]
+      },
+      "RouteError": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          }
+        },
+        "required": ["error"]
+      },
+      "CreateUploadRequest": {
+        "type": "object",
+        "properties": {
+          "purpose": {
+            "type": "string",
+            "enum": ["project-avatar", "user-avatar", "workspace-attachment"]
+          },
+          "fileName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 180
+          },
+          "mimeType": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 8388608
+          }
+        },
+        "required": ["purpose", "fileName", "mimeType", "sizeBytes"]
+      },
+      "CompleteUploadResponse": {
+        "type": "object",
+        "properties": {
+          "attachment": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "purpose": {
+                "type": "string",
+                "enum": ["PROJECT_AVATAR", "USER_AVATAR", "WORKSPACE_ATTACHMENT"]
+              },
+              "status": {
+                "type": "string",
+                "enum": ["PENDING", "READY"]
+              },
+              "fileName": {
+                "type": "string"
+              },
+              "mimeType": {
+                "type": "string"
+              },
+              "sizeBytes": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "objectKey": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              },
+              "thumbnailUrl": {
+                "type": ["string", "null"]
+              }
+            },
+            "required": [
+              "id",
+              "purpose",
+              "status",
+              "fileName",
+              "mimeType",
+              "sizeBytes",
+              "objectKey",
+              "url",
+              "thumbnailUrl"
+            ]
+          }
+        },
+        "required": ["attachment"]
+      },
+      "ProjectDetailResponse": {
+        "type": "object",
+        "properties": {
+          "project": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              },
+              "slug": {
+                "type": "string"
+              },
+              "description": {
+                "type": ["string", "null"]
+              },
+              "icon": {
+                "type": ["string", "null"]
+              },
+              "role": {
+                "type": "string",
+                "enum": ["OWNER", "ADMIN", "EDITOR", "VIEWER"]
+              },
+              "visibility": {
+                "type": "string",
+                "enum": ["Private", "Team"]
+              },
+              "status": {
+                "type": "string",
+                "enum": ["Live", "Paused"]
+              },
+              "endpointCount": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "requestCount": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "environment": {
+                "type": ["object", "null"],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "baseUrl": {
+                    "type": "string"
+                  }
+                },
+                "required": ["name", "baseUrl"]
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "ownerId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "environments": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "baseUrl": {
+                      "type": "string"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  },
+                  "required": ["id", "name", "baseUrl", "createdAt", "updatedAt"]
+                }
+              },
+              "schemas": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "version": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "uploadedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  },
+                  "required": ["id", "version", "uploadedAt"]
+                }
+              },
+              "overview": {
+                "type": "object",
+                "properties": {
+                  "requestTrend": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "date": {
+                          "type": "string",
+                          "format": "date"
+                        },
+                        "label": {
+                          "type": "string"
+                        },
+                        "count": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": ["date", "label", "count"]
+                    }
+                  },
+                  "routeMethodBreakdown": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "label": {
+                          "type": "string"
+                        },
+                        "count": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": ["label", "count"]
+                    }
+                  },
+                  "statusBreakdown": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "label": {
+                          "type": "string"
+                        },
+                        "count": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": ["label", "count"]
+                    }
+                  },
+                  "averageDurationMs": {
+                    "type": ["integer", "null"],
+                    "minimum": 0
+                  },
+                  "recentRequests": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "method": {
+                          "type": "string"
+                        },
+                        "path": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "integer"
+                        },
+                        "durationMs": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      },
+                      "required": ["id", "method", "path", "status", "durationMs", "createdAt"]
+                    }
+                  },
+                  "sampleEndpoint": {
+                    "type": ["object", "null"],
+                    "properties": {
+                      "method": {
+                        "type": "string"
+                      },
+                      "path": {
+                        "type": "string"
+                      }
+                    },
+                    "required": ["method", "path"]
+                  }
+                },
+                "required": [
+                  "requestTrend",
+                  "routeMethodBreakdown",
+                  "statusBreakdown",
+                  "averageDurationMs",
+                  "recentRequests",
+                  "sampleEndpoint"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "slug",
+              "description",
+              "icon",
+              "role",
+              "visibility",
+              "status",
+              "endpointCount",
+              "requestCount",
+              "environment",
+              "createdAt",
+              "updatedAt",
+              "ownerId",
+              "environments",
+              "schemas",
+              "overview"
+            ]
+          }
+        },
+        "required": ["project"]
+      }
+    },
+    "parameters": {}
+  },
+  "paths": {
+    "/auth/csrf": {
+      "get": {
+        "tags": ["Authentication"],
+        "summary": "Issue a CSRF token",
+        "description": "Creates a readable CSRF cookie and returns the same token. Mutating auth requests must echo this value in the x-csrf-token header.",
+        "responses": {
+          "200": {
+            "description": "CSRF token issued.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CsrfResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Register a user and send an email verification link",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 32
+            },
+            "required": true,
+            "name": "x-csrf-token",
+            "in": "header"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created and verification email sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Email already registered.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Verification email delivery failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/resend-verification": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Send a fresh email verification link",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 32
+            },
+            "required": true,
+            "name": "x-csrf-token",
+            "in": "header"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResendVerificationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Returns success regardless of whether the account exists or is already verified.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResendVerificationResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Verification email delivery failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Create a session for valid credentials",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 32
+            },
+            "required": true,
+            "name": "x-csrf-token",
+            "in": "header"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Session, access cookie, and refresh cookie created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Email is not verified.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/verify-email": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Verify an email address with a valid verification token",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 32
+            },
+            "required": true,
+            "name": "x-csrf-token",
+            "in": "header"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyEmailRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Email address verified.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or expired verification token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Rotate the refresh token and issue a fresh access token",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 32
+            },
+            "required": true,
+            "name": "x-csrf-token",
+            "in": "header"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Session refreshed and cookies rotated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid refresh cookie.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "tags": ["Authentication"],
+        "summary": "Fetch the authenticated user and active session",
+        "responses": {
+          "200": {
+            "description": "Authenticated user and active session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired, or revoked session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Revoke the current session and clear auth cookies",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 32
+            },
+            "required": true,
+            "name": "x-csrf-token",
+            "in": "header"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current session revoked.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired, or revoked session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/logout-all": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Revoke all sessions for the current user",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 32
+            },
+            "required": true,
+            "name": "x-csrf-token",
+            "in": "header"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "All sessions for this user revoked.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogoutAllResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired, or revoked session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/forgot-password": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Send password reset instructions",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 32
+            },
+            "required": true,
+            "name": "x-csrf-token",
+            "in": "header"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Returns success regardless of whether the email exists. Sends reset instructions when the account exists.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForgotPasswordResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Password reset email delivery failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/reset-password": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Reset a password with a valid reset token",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 32
+            },
+            "required": true,
+            "name": "x-csrf-token",
+            "in": "header"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password updated and existing sessions revoked.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or expired reset token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": ["System"],
+        "summary": "Check backend and database health",
+        "responses": {
+          "200": {
+            "description": "Backend is healthy.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": ["ok"]
+                    },
+                    "checks": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": ["status", "checks"]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Backend is reachable but at least one dependency is degraded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": ["degraded"]
+                    },
+                    "checks": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": ["status", "checks"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/projects": {
+      "get": {
+        "tags": ["Projects"],
+        "summary": "List projects visible to the authenticated user",
+        "security": [
+          {
+            "accessCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Projects owned by or shared with the current user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid auth cookie.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [false]
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"]
+                    }
+                  },
+                  "required": ["success", "error"]
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Projects"],
+        "summary": "Create a project for the authenticated user",
+        "security": [
+          {
+            "accessCookie": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProjectRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Project created. Ownership is derived from the session user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid auth cookie.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [false]
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"]
+                    }
+                  },
+                  "required": ["success", "error"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/uploads": {
+      "post": {
+        "tags": ["Uploads"],
+        "summary": "Create a presigned upload for an attachment",
+        "security": [
+          {
+            "accessCookie": []
+          },
+          {
+            "csrfHeader": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUploadRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Presigned R2 PUT URL and pending attachment reference.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateUploadResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid upload metadata.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/uploads/{id}/complete": {
+      "post": {
+        "tags": ["Uploads"],
+        "summary": "Finalize an uploaded attachment and generate image thumbnails",
+        "security": [
+          {
+            "accessCookie": []
+          },
+          {
+            "csrfHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Attachment finalized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompleteUploadResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The uploaded R2 object could not be read or transformed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/projects/{id}": {
+      "get": {
+        "tags": ["Projects"],
+        "summary": "Fetch a project visible to the authenticated user",
+        "security": [
+          {
+            "accessCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Project detail with environments, recent schemas, and endpoint count.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectDetailResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project does not exist or is not visible to this user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/projects/{projectId}/schemas": {
+      "post": {
+        "tags": ["Schemas"],
+        "summary": "Upload and normalize an OpenAPI schema for a project",
+        "security": [
+          {
+            "accessCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "projectId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "content": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2000000
+                  }
+                },
+                "required": ["content"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Schema stored and endpoints replaced atomically.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "schemaId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "version": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0
+                    },
+                    "endpointCount": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": ["schemaId", "version", "endpointCount"]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Schema is not valid JSON or YAML.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Schema parsed but failed OpenAPI validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/RouteError"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "issues": {
+                          "type": "array",
+                          "items": {}
+                        }
+                      },
+                      "required": ["issues"]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/mock/{projectId}/{path}": {
+      "post": {
+        "tags": ["Mock Runtime"],
+        "summary": "Invoke a generated mock endpoint for a project",
+        "description": "The mock runtime accepts any HTTP method and delegates to the dynamic routes generated from the uploaded OpenAPI schema.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "projectId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Wildcard endpoint path."
+            },
+            "required": true,
+            "name": "path",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Generated or saved mock response body.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "Mock endpoint has auth simulation enabled and no bearer token was supplied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project or endpoint was not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "webhooks": {}
+}
