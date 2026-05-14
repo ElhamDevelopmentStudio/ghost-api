@@ -3,7 +3,6 @@ import type { ReactNode } from 'react';
 import { cn } from '@ghostapi/ui';
 
 import { AppSidebar } from '@/components/app-sidebar';
-import { APP_SHELL_WIDTH_CLASS, APP_SHELL_X_PADDING_CLASS } from '@/components/app-shell';
 import { AppTopbar, type AppTopbarProps } from '@/components/app-topbar';
 
 export function ProtectedPageFrame({
@@ -36,9 +35,7 @@ export function ProtectedPageContent({
   return (
     <main
       className={cn(
-        'relative mx-auto w-full pb-10 pt-8',
-        APP_SHELL_WIDTH_CLASS,
-        APP_SHELL_X_PADDING_CLASS,
+        'app-shell-container app-shell-x-padding relative mx-auto w-full pb-10 pt-8',
         className,
       )}
     >

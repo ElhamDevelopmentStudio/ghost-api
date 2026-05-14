@@ -53,7 +53,7 @@ describe('auth email delivery', () => {
 
     await sendVerificationEmail({
       to: 'dev@example.com',
-      name: 'Dev',
+      name: 'Dev <Admin>',
       verificationUrl: 'http://localhost:3002/verify-email/token',
     });
 
@@ -63,6 +63,28 @@ describe('auth email delivery', () => {
         from: 'GhostAPI <noreply@example.com>',
         to: 'dev@example.com',
         subject: 'Verify your GhostAPI email',
+        html: expect.stringContaining('Hi Dev &lt;Admin&gt;,'),
+        text: expect.stringContaining('Hi Dev <Admin>,'),
+      }),
+    );
+  });
+
+  it('sends password reset emails through Resend', async () => {
+    sendEmail.mockResolvedValue({ data: { id: 'email_456' }, error: null });
+
+    const { sendPasswordResetEmail } = await import('./auth.email.js');
+
+    await sendPasswordResetEmail({
+      to: 'dev@example.com',
+      name: null,
+      resetUrl: 'http://localhost:3002/reset-password/token',
+    });
+
+    expect(sendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        subject: 'Reset your GhostAPI password',
+        html: expect.stringContaining('If you did not request a password reset'),
+        text: expect.stringContaining('This link expires in 1 hour.'),
       }),
     );
   });

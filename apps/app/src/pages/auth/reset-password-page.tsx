@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
 import {
   AuthCard,
+  AuthNotice,
   AuthSubmitButton,
   getAuthErrorMessage,
   PasswordField,
@@ -54,9 +55,9 @@ export function ResetPasswordPage() {
     >
       <form onSubmit={handleSubmit} className="space-y-5">
         {!token ? (
-          <p className="border-destructive/40 bg-destructive/10 text-destructive-foreground rounded-md border px-4 py-3 text-sm">
+          <AuthNotice variant="error">
             This reset link is missing or invalid. Request a new password reset email.
-          </p>
+          </AuthNotice>
         ) : null}
 
         <div>
@@ -84,11 +85,7 @@ export function ResetPasswordPage() {
           required
         />
 
-        {error ? (
-          <p className="border-destructive/40 bg-destructive/10 text-destructive-foreground rounded-md border px-4 py-3 text-sm">
-            {error}
-          </p>
-        ) : null}
+        {error ? <AuthNotice variant="error">{error}</AuthNotice> : null}
 
         <AuthSubmitButton type="submit" disabled={!token} loading={resetPassword.isPending}>
           Reset password

@@ -1,6 +1,7 @@
 export { AuthProvider } from './components/auth-provider';
 export { AuthCard } from './components/auth-card';
 export { AuthField } from './components/auth-field';
+export { AuthNotice } from './components/auth-notice';
 export { AuthSubmitButton } from './components/auth-submit-button';
 export { PasswordField } from './components/password-field';
 export { PasswordStrength } from './components/password-strength';

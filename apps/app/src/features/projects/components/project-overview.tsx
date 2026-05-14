@@ -71,7 +71,7 @@ export function ProjectOverview({ project }: { project: ProjectDetail }) {
         />
       </section>
 
-      <section className="rounded-xl border border-white/10 bg-white/[0.025] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+      <section className="shadow-inset-faint rounded-xl border border-white/10 bg-white/[0.025] p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-3">

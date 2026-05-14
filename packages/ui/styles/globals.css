@@ -92,6 +92,14 @@
   --sidebar-hover: #161a21;
   --sidebar-active: #7c4dff;
   --sidebar-border: #161a21;
+  --sidebar-dropdown-surface: color-mix(in srgb, #090c16 70%, transparent);
+  --sidebar-dropdown-surface-blur: color-mix(in srgb, #090c16 58%, transparent);
+  --sidebar-nav-active: color-mix(in srgb, var(--primary-active) 32%, transparent);
+  --sidebar-nav-icon-active: var(--brand-action);
+  --sidebar-blob-surface: color-mix(in srgb, var(--primary-active) 34%, transparent);
+  --sidebar-blob-highlight: color-mix(in srgb, var(--primary-hover) 18%, transparent);
+  --sidebar-blob-accent: color-mix(in srgb, var(--chart-6) 12%, transparent);
+  --sidebar-blob-border: color-mix(in srgb, var(--primary-hover) 35%, transparent);
 
   /* ---- HTTP method accents (load-bearing for endpoint pills, log rows) - */
   --method-get: #22c55e;
@@ -122,6 +130,14 @@
   --shadow-project-search: 0 0 28px rgba(124, 58, 237, 0.16);
   --shadow-project-input-focus: 0 0 0 1px rgba(124, 58, 237, 0.08);
   --shadow-floating-ghost: 0 0 55px rgba(168, 85, 247, 0.68);
+  --shadow-sidebar-dropdown:
+    0 18px 55px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --shadow-sidebar-nav-active: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --shadow-sidebar-nav-icon-active: 0 0 24px rgba(var(--primary-rgb), 0.48);
+  --shadow-sidebar-avatar: 0 0 28px rgba(var(--primary-rgb), 0.36);
+  --shadow-sidebar-blob: 0 0 48px rgba(var(--primary-rgb), 0.42);
+  --shadow-inset-subtle: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --shadow-inset-faint: inset 0 1px 0 rgba(255, 255, 255, 0.03);
   --filter-glow-orb: drop-shadow(0 0 10px rgba(255, 255, 255, 0.8))
     drop-shadow(0 0 22px rgba(124, 77, 255, 1)) drop-shadow(0 0 48px rgba(124, 77, 255, 0.95));
   --filter-glow-orb-strong: drop-shadow(0 0 14px rgba(255, 255, 255, 0.95))
@@ -174,6 +190,28 @@
     radial-gradient(circle at 4% 0%, rgba(109, 40, 217, 0.24), transparent 48%), var(--app-panel);
   --project-card-aura-rose:
     radial-gradient(circle at 4% 0%, rgba(190, 24, 93, 0.2), transparent 48%), var(--app-panel);
+  --project-hero-aura:
+    radial-gradient(circle at 30% 50%, rgba(109, 40, 217, 0.24), transparent 38%),
+    radial-gradient(circle at 76% 18%, rgba(var(--primary-rgb), 0.1), transparent 28%);
+  --project-hero-requests: #8b5cf6;
+  --project-hero-requests-shadow: #7c3aed;
+  --project-hero-requests-fill: rgba(124, 58, 237, 0.22);
+  --project-hero-errors: #ec4899;
+  --project-hero-errors-shadow: #db2777;
+  --project-hero-errors-fill: rgba(236, 72, 153, 0.2);
+  --project-hero-latency: var(--warning);
+  --project-hero-latency-shadow: #d97706;
+  --project-hero-latency-fill: var(--warning-subtle);
+  --project-hero-ghost-fill-start: #a855f7;
+  --project-hero-ghost-fill-mid: #6d28d9;
+  --project-hero-ghost-fill-end: #312e81;
+  --project-hero-ghost-edge-start: #f5d0fe;
+  --project-hero-orbit-outer: #4c1d95;
+  --project-hero-orbit-inner: #5b21b6;
+  --project-hero-orbit-core: #2e1065;
+  --floating-ghost-orbit-border: color-mix(in srgb, var(--primary-hover) 25%, transparent);
+  --floating-ghost-pad-surface: color-mix(in srgb, var(--primary-active) 22%, transparent);
+  --floating-ghost-pad-border: color-mix(in srgb, var(--primary-hover) 35%, transparent);
   --floating-ghost-halo: radial-gradient(
     ellipse at center,
     rgba(105, 44, 255, 0.44),
@@ -247,6 +285,9 @@
 
   /* ---- Layout ---------------------------------------------------------- */
   --sidebar-width: 280px;
+  --app-shell-width: 1120px;
+  --app-shell-padding-x: 32px;
+  --app-shell-padding-x-md: 48px;
   --topbar-height: 72px;
 
   --container-sm: 768px;
@@ -293,6 +334,40 @@
   --color-primary-hover: var(--primary-hover);
   --color-primary-active: var(--primary-active);
   --color-primary-foreground: var(--primary-foreground);
+
+  /* Compatibility aliases for existing Tailwind palette utilities in app code.
+   * These keep classes like `text-purple-300` and `bg-white/10` themeable from
+   * this file instead of locking the apps to Tailwind's default colors. */
+  --color-white: var(--foreground);
+  --color-black: var(--background);
+  --color-zinc-100: var(--foreground);
+  --color-zinc-200: color-mix(in srgb, var(--foreground) 88%, var(--muted));
+  --color-zinc-300: var(--muted-foreground);
+  --color-zinc-400: color-mix(in srgb, var(--muted-foreground) 74%, var(--muted));
+  --color-zinc-500: var(--muted);
+  --color-purple-200: var(--primary-foreground);
+  --color-purple-300: var(--primary-hover);
+  --color-purple-400: var(--primary);
+  --color-purple-500: var(--primary);
+  --color-purple-600: var(--brand-action);
+  --color-purple-700: var(--primary-active);
+  --color-purple-950: color-mix(in srgb, var(--primary-active) 35%, var(--background));
+  --color-emerald-300: var(--success-foreground);
+  --color-emerald-400: var(--success);
+  --color-emerald-500: var(--success);
+  --color-green-900: color-mix(in srgb, var(--success) 28%, var(--background));
+  --color-yellow-300: var(--warning-foreground);
+  --color-yellow-400: var(--warning);
+  --color-yellow-500: var(--warning);
+  --color-amber-300: var(--warning-foreground);
+  --color-amber-400: var(--warning);
+  --color-amber-500: var(--warning);
+  --color-pink-300: color-mix(in srgb, var(--chart-6) 72%, var(--foreground));
+  --color-pink-400: var(--chart-6);
+  --color-pink-500: var(--chart-6);
+  --color-fuchsia-400: var(--chart-6);
+  --color-rose-900: color-mix(in srgb, var(--chart-6) 28%, var(--background));
+  --color-red-400: var(--destructive);
 
   /* Required by shadcn primitives (Button "secondary", Badge hover, etc.) */
   --color-secondary: var(--secondary);
@@ -363,6 +438,36 @@
   }
 }
 
+@keyframes ghostapi-sidebar-blob {
+  0%,
+  100% {
+    transform: translate(-74px, 32px) rotate(-8deg) scale(1);
+    border-radius: 63% 37% 70% 30% / 42% 52% 48% 58%;
+  }
+  28% {
+    transform: translate(-48px, 10px) rotate(7deg) scale(1.08, 0.94);
+    border-radius: 38% 62% 42% 58% / 65% 32% 68% 35%;
+  }
+  58% {
+    transform: translate(-88px, 0) rotate(-14deg) scale(0.92, 1.14);
+    border-radius: 72% 28% 55% 45% / 36% 69% 31% 64%;
+  }
+  78% {
+    transform: translate(-56px, 26px) rotate(10deg) scale(1.03, 1.02);
+    border-radius: 44% 56% 75% 25% / 55% 42% 58% 45%;
+  }
+}
+
+@keyframes ghostapi-subtle-bounce {
+  0%,
+  100% {
+    transform: translate(-50%, 0);
+  }
+  50% {
+    transform: translate(-50%, -7px);
+  }
+}
+
 @layer base {
   *,
   *::before,
@@ -426,6 +531,20 @@
     background: var(--app-canvas);
   }
 
+  .app-shell-container {
+    max-width: var(--app-shell-width);
+  }
+
+  .app-shell-x-padding {
+    padding-inline: var(--app-shell-padding-x);
+  }
+
+  @media (width >= 48rem) {
+    .app-shell-x-padding {
+      padding-inline: var(--app-shell-padding-x-md);
+    }
+  }
+
   .bg-auth-canvas {
     background: var(--auth-canvas);
   }
@@ -476,6 +595,38 @@
 
   .bg-brand-action {
     background: var(--brand-action);
+  }
+
+  .bg-sidebar-dropdown {
+    background: var(--sidebar-dropdown-surface);
+  }
+
+  .bg-sidebar-dropdown-blur {
+    background: var(--sidebar-dropdown-surface-blur);
+  }
+
+  .bg-sidebar-nav-active {
+    background: var(--sidebar-nav-active);
+  }
+
+  .bg-sidebar-nav-icon-active {
+    background: var(--sidebar-nav-icon-active);
+  }
+
+  .bg-sidebar-blob {
+    background: var(--sidebar-blob-surface);
+  }
+
+  .bg-sidebar-blob-highlight {
+    background: var(--sidebar-blob-highlight);
+  }
+
+  .bg-sidebar-blob-accent {
+    background: var(--sidebar-blob-accent);
+  }
+
+  .border-sidebar-blob {
+    border-color: var(--sidebar-blob-border);
   }
 
   .hover\:bg-brand-action-hover:hover {
@@ -553,6 +704,10 @@
     background: var(--project-card-aura-rose);
   }
 
+  .bg-project-hero-aura {
+    background: var(--project-hero-aura);
+  }
+
   .bg-floating-ghost-halo {
     background: var(--floating-ghost-halo);
   }
@@ -561,8 +716,56 @@
     background: var(--floating-ghost-body);
   }
 
+  .bg-floating-ghost-pad {
+    background: var(--floating-ghost-pad-surface);
+  }
+
+  .border-floating-ghost-orbit {
+    border-color: var(--floating-ghost-orbit-border);
+  }
+
+  .border-floating-ghost-pad {
+    border-color: var(--floating-ghost-pad-border);
+  }
+
   .shadow-floating-ghost {
     box-shadow: var(--shadow-floating-ghost);
+  }
+
+  .shadow-sidebar-dropdown {
+    box-shadow: var(--shadow-sidebar-dropdown);
+  }
+
+  .shadow-sidebar-nav-active {
+    box-shadow: var(--shadow-sidebar-nav-active);
+  }
+
+  .shadow-sidebar-nav-icon-active {
+    box-shadow: var(--shadow-sidebar-nav-icon-active);
+  }
+
+  .shadow-sidebar-avatar {
+    box-shadow: var(--shadow-sidebar-avatar);
+  }
+
+  .shadow-sidebar-blob {
+    box-shadow: var(--shadow-sidebar-blob);
+  }
+
+  .animate-sidebar-blob {
+    animation: ghostapi-sidebar-blob 10.5s ease-in-out infinite;
+  }
+
+  .animate-floating-ghost {
+    animation: ghostapi-subtle-bounce 4.8s ease-in-out infinite;
+  }
+
+  .shadow-inset-subtle {
+    box-shadow: var(--shadow-inset-subtle);
+  }
+
+  .shadow-inset-faint {
+    box-shadow: var(--shadow-inset-faint);
   }
 
   .filter-glow-orb {

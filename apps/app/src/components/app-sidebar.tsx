@@ -39,7 +39,7 @@ const MAIN_NAV = [
 ] as const;
 
 const dropdownSurfaceClass =
-  'border-white/14 bg-[#090c16]/70 text-white shadow-[0_18px_55px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl supports-[backdrop-filter]:bg-[#090c16]/58';
+  'border-white/14 bg-sidebar-dropdown text-white shadow-sidebar-dropdown backdrop-blur-xl supports-[backdrop-filter]:bg-sidebar-dropdown-blur';
 
 export function AppSidebar({ currentProject }: AppSidebarProps) {
   const projectsQuery = useQuery({
@@ -83,7 +83,7 @@ export function AppSidebar({ currentProject }: AppSidebarProps) {
                 cn(
                   'flex h-12 items-center gap-4 rounded-xl px-3 text-sm transition-colors',
                   isActive
-                    ? 'bg-purple-950/55 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]'
+                    ? 'bg-sidebar-nav-active shadow-sidebar-nav-active text-white'
                     : 'text-white/72 hover:bg-white/[0.04] hover:text-white',
                 )
               }
@@ -94,7 +94,7 @@ export function AppSidebar({ currentProject }: AppSidebarProps) {
                     className={cn(
                       'grid size-8 place-items-center rounded-full',
                       isActive
-                        ? 'bg-purple-600 text-white shadow-[0_0_24px_rgba(124,58,237,0.48)]'
+                        ? 'bg-sidebar-nav-icon-active shadow-sidebar-nav-icon-active text-white'
                         : 'text-white/76',
                     )}
                   >
@@ -201,7 +201,7 @@ function UserMenu({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button type="button" className="flex w-full items-center gap-3 text-left">
-          <span className="bg-brand-action grid size-11 shrink-0 place-items-center rounded-full text-sm font-semibold text-white shadow-[0_0_28px_rgba(100,24,255,0.36)]">
+          <span className="bg-brand-action shadow-sidebar-avatar grid size-11 shrink-0 place-items-center rounded-full text-sm font-semibold text-white">
             {initials}
           </span>
           <span className="min-w-0 flex-1">
@@ -244,32 +244,9 @@ function UserSkeleton() {
 function SidebarBlob() {
   return (
     <div aria-hidden className="pointer-events-none relative h-[150px] overflow-hidden">
-      <style>
-        {`@keyframes ghostapi-sidebar-blob {
-          0%, 100% {
-            transform: translate(-74px, 32px) rotate(-8deg) scale(1);
-            border-radius: 63% 37% 70% 30% / 42% 52% 48% 58%;
-          }
-          28% {
-            transform: translate(-48px, 10px) rotate(7deg) scale(1.08, 0.94);
-            border-radius: 38% 62% 42% 58% / 65% 32% 68% 35%;
-          }
-          58% {
-            transform: translate(-88px, 0) rotate(-14deg) scale(0.92, 1.14);
-            border-radius: 72% 28% 55% 45% / 36% 69% 31% 64%;
-          }
-          78% {
-            transform: translate(-56px, 26px) rotate(10deg) scale(1.03, 1.02);
-            border-radius: 44% 56% 75% 25% / 55% 42% 58% 45%;
-          }
-        }`}
-      </style>
-      <div
-        className="bg-purple-700/34 absolute bottom-[-44px] left-0 h-[150px] w-[172px] border border-purple-500/35 shadow-[0_0_48px_rgba(124,58,237,0.42)]"
-        style={{ animation: 'ghostapi-sidebar-blob 10.5s ease-in-out infinite' }}
-      >
-        <span className="bg-purple-500/18 absolute left-8 top-8 h-24 w-16 rounded-[55%_45%_68%_32%/42%_62%_38%_58%] blur-2xl" />
-        <span className="bg-fuchsia-400/12 absolute bottom-6 right-4 h-14 w-20 rounded-[35%_65%_48%_52%/63%_36%_64%_37%] blur-xl" />
+      <div className="bg-sidebar-blob border-sidebar-blob shadow-sidebar-blob animate-sidebar-blob absolute bottom-[-44px] left-0 h-[150px] w-[172px] border">
+        <span className="bg-sidebar-blob-highlight absolute left-8 top-8 h-24 w-16 rounded-[55%_45%_68%_32%/42%_62%_38%_58%] blur-2xl" />
+        <span className="bg-sidebar-blob-accent absolute bottom-6 right-4 h-14 w-20 rounded-[35%_65%_48%_52%/63%_36%_64%_37%] blur-xl" />
       </div>
     </div>
   );

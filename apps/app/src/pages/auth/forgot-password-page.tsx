@@ -5,6 +5,7 @@ import { RiMailLine } from '@remixicon/react';
 import {
   AuthCard,
   AuthField,
+  AuthNotice,
   AuthSubmitButton,
   getAuthErrorMessage,
   useForgotPassword,
@@ -57,16 +58,12 @@ export function ForgotPasswordPage() {
         />
 
         {submitted ? (
-          <div className="border-success/35 bg-success/10 text-success-foreground rounded-md border px-4 py-3 text-sm">
+          <AuthNotice variant="success">
             Check your inbox for password reset instructions.
-          </div>
+          </AuthNotice>
         ) : null}
 
-        {error ? (
-          <p className="border-destructive/40 bg-destructive/10 text-destructive-foreground rounded-md border px-4 py-3 text-sm">
-            {error}
-          </p>
-        ) : null}
+        {error ? <AuthNotice variant="error">{error}</AuthNotice> : null}
 
         <AuthSubmitButton type="submit" loading={forgotPassword.isPending}>
           Send reset link

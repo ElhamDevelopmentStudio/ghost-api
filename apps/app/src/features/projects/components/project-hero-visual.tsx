@@ -28,21 +28,21 @@ const sparklinePaths = {
 const tone = {
   requests: {
     label: 'text-purple-200',
-    stroke: '#8b5cf6',
-    shadow: '#7c3aed',
-    fill: 'rgba(124, 58, 237, 0.22)',
+    stroke: 'var(--project-hero-requests)',
+    shadow: 'var(--project-hero-requests-shadow)',
+    fill: 'var(--project-hero-requests-fill)',
   },
   errors: {
     label: 'text-pink-400',
-    stroke: '#ec4899',
-    shadow: '#db2777',
-    fill: 'rgba(236, 72, 153, 0.2)',
+    stroke: 'var(--project-hero-errors)',
+    shadow: 'var(--project-hero-errors-shadow)',
+    fill: 'var(--project-hero-errors-fill)',
   },
   latency: {
     label: 'text-amber-400',
-    stroke: '#f59e0b',
-    shadow: '#d97706',
-    fill: 'rgba(245, 158, 11, 0.2)',
+    stroke: 'var(--project-hero-latency)',
+    shadow: 'var(--project-hero-latency-shadow)',
+    fill: 'var(--project-hero-latency-fill)',
   },
 } as const;
 
@@ -55,7 +55,7 @@ export function ProjectHeroVisual({
 }: ProjectHeroVisualProps) {
   return (
     <div className="relative min-h-[360px] overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(109,40,217,0.24),transparent_38%),radial-gradient(circle_at_76%_18%,rgba(124,58,237,0.1),transparent_28%)]" />
+      <div className="bg-project-hero-aura absolute inset-0" />
       <svg
         aria-hidden="true"
         className="absolute inset-0 h-full w-full overflow-visible"
@@ -83,14 +83,14 @@ export function ProjectHeroVisual({
             </feMerge>
           </filter>
           <linearGradient id="project-hero-ghost-fill" x1="210" x2="322" y1="70" y2="228">
-            <stop stopColor="#a855f7" />
-            <stop offset="0.48" stopColor="#6d28d9" />
-            <stop offset="1" stopColor="#312e81" />
+            <stop stopColor="var(--project-hero-ghost-fill-start)" />
+            <stop offset="0.48" stopColor="var(--project-hero-ghost-fill-mid)" />
+            <stop offset="1" stopColor="var(--project-hero-ghost-fill-end)" />
           </linearGradient>
           <linearGradient id="project-hero-ghost-edge" x1="214" x2="318" y1="70" y2="226">
-            <stop stopColor="#f5d0fe" />
-            <stop offset="0.44" stopColor="#a855f7" />
-            <stop offset="1" stopColor="#7c3aed" />
+            <stop stopColor="var(--project-hero-ghost-edge-start)" />
+            <stop offset="0.44" stopColor="var(--project-hero-ghost-fill-start)" />
+            <stop offset="1" stopColor="var(--project-hero-requests-shadow)" />
           </linearGradient>
         </defs>
 
@@ -101,7 +101,7 @@ export function ProjectHeroVisual({
             rx="210"
             ry="52"
             fill="none"
-            stroke="#4c1d95"
+            stroke="var(--project-hero-orbit-outer)"
             strokeWidth="1.4"
           >
             <animate
@@ -124,7 +124,7 @@ export function ProjectHeroVisual({
             rx="155"
             ry="36"
             fill="none"
-            stroke="#5b21b6"
+            stroke="var(--project-hero-orbit-inner)"
             strokeWidth="1.15"
           >
             <animate
@@ -141,7 +141,15 @@ export function ProjectHeroVisual({
             />
             <animate attributeName="ry" dur="7.2s" repeatCount="indefinite" values="36;40;33;36" />
           </ellipse>
-          <ellipse cx="224" cy="222" rx="78" ry="23" fill="#2e1065" opacity="0.42" stroke="#6d28d9">
+          <ellipse
+            cx="224"
+            cy="222"
+            rx="78"
+            ry="23"
+            fill="var(--project-hero-orbit-core)"
+            opacity="0.42"
+            stroke="var(--project-hero-ghost-fill-mid)"
+          >
             <animate
               attributeName="cy"
               dur="5.8s"
@@ -151,7 +159,14 @@ export function ProjectHeroVisual({
             <animate attributeName="rx" dur="5.8s" repeatCount="indefinite" values="78;68;84;78" />
             <animate attributeName="ry" dur="5.8s" repeatCount="indefinite" values="23;19;25;23" />
           </ellipse>
-          <ellipse cx="224" cy="221" rx="115" ry="7" fill="#6d28d9" opacity="0.12">
+          <ellipse
+            cx="224"
+            cy="221"
+            rx="115"
+            ry="7"
+            fill="var(--project-hero-ghost-fill-mid)"
+            opacity="0.12"
+          >
             <animate
               attributeName="cy"
               dur="6.6s"
@@ -166,25 +181,25 @@ export function ProjectHeroVisual({
             />
           </ellipse>
           <OrbitParticle
-            color="#7c3aed"
+            color="var(--project-hero-requests-shadow)"
             delay="0s"
             duration="12s"
             path="M430 220 A210 52 0 1 1 10 220 A210 52 0 1 1 430 220"
           />
           <OrbitParticle
-            color="#8b5cf6"
+            color="var(--project-hero-requests)"
             delay="-3.4s"
             duration="10.5s"
             path="M379 220 A155 36 0 1 0 69 220 A155 36 0 1 0 379 220"
           />
           <OrbitParticle
-            color="#6d28d9"
+            color="var(--project-hero-ghost-fill-mid)"
             delay="-6.2s"
             duration="13.5s"
             path="M302 222 A78 23 0 1 1 146 222 A78 23 0 1 1 302 222"
           />
           <OrbitParticle
-            color="#a855f7"
+            color="var(--project-hero-ghost-fill-start)"
             delay="-8.1s"
             duration="11.5s"
             path="M339 221 A115 7 0 1 0 109 221 A115 7 0 1 0 339 221"

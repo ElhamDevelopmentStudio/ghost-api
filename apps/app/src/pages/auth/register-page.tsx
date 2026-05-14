@@ -7,6 +7,7 @@ import { Checkbox } from '@ghostapi/ui';
 import {
   AuthCard,
   AuthField,
+  AuthNotice,
   AuthSubmitButton,
   getAuthErrorMessage,
   PasswordField,
@@ -67,9 +68,9 @@ export function RegisterPage() {
           </>
         }
       >
-        <div className="border-success/35 bg-success/10 text-success-foreground rounded-md border px-4 py-3 text-sm">
+        <AuthNotice variant="success">
           Open the email and verify your address before signing in.
-        </div>
+        </AuthNotice>
       </AuthCard>
     );
   }
@@ -155,11 +156,7 @@ export function RegisterPage() {
           </span>
         </label>
 
-        {error ? (
-          <p className="border-destructive/40 bg-destructive/10 text-destructive-foreground rounded-md border px-4 py-3 text-sm">
-            {error}
-          </p>
-        ) : null}
+        {error ? <AuthNotice variant="error">{error}</AuthNotice> : null}
 
         <AuthSubmitButton type="submit" loading={isRegistering}>
           Create account

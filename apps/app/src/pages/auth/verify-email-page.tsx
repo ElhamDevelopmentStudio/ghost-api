@@ -1,7 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
-import { AuthCard, AuthSubmitButton, getAuthErrorMessage, useVerifyEmail } from '@/features/auth';
+import {
+  AuthCard,
+  AuthNotice,
+  AuthSubmitButton,
+  getAuthErrorMessage,
+  useVerifyEmail,
+} from '@/features/auth';
 
 export function VerifyEmailPage() {
   const navigate = useNavigate();
@@ -60,17 +66,13 @@ export function VerifyEmailPage() {
       ) : (
         <div className="space-y-5">
           {!token ? (
-            <p className="border-destructive/40 bg-destructive/10 text-destructive-foreground rounded-md border px-4 py-3 text-sm">
+            <AuthNotice variant="error">
               This verification link is missing or invalid. Request a new verification email from
               the sign-in page.
-            </p>
+            </AuthNotice>
           ) : null}
 
-          {error ? (
-            <p className="border-destructive/40 bg-destructive/10 text-destructive-foreground rounded-md border px-4 py-3 text-sm">
-              {error}
-            </p>
-          ) : null}
+          {error ? <AuthNotice variant="error">{error}</AuthNotice> : null}
 
           <AuthSubmitButton
             type="button"

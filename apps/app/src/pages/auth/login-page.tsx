@@ -8,6 +8,7 @@ import { ApiError } from '@/lib/api-client';
 import {
   AuthCard,
   AuthField,
+  AuthNotice,
   AuthSubmitButton,
   getAuthErrorMessage,
   PasswordField,
@@ -104,11 +105,7 @@ export function LoginPage() {
           </div>
         </div>
 
-        {error ? (
-          <p className="border-destructive/40 bg-destructive/10 text-destructive-foreground rounded-md border px-4 py-3 text-sm">
-            {error}
-          </p>
-        ) : null}
+        {error ? <AuthNotice variant="error">{error}</AuthNotice> : null}
 
         <AuthSubmitButton type="submit" loading={isLoggingIn || resendVerification.isPending}>
           Sign in

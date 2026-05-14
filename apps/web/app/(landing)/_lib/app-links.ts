@@ -1,4 +1,4 @@
-const DEFAULT_APP_URL = 'http://localhost:3002';
+import { publicEnv } from '../../env';
 
 export type AppLinks = {
   dashboard: string;
@@ -17,8 +17,7 @@ export function getAppLinks(): AppLinks {
 }
 
 function buildAppUrl(path: string): string {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || DEFAULT_APP_URL;
-  return new URL(path, withTrailingSlash(baseUrl)).toString();
+  return new URL(path, withTrailingSlash(publicEnv.NEXT_PUBLIC_APP_URL)).toString();
 }
 
 function withTrailingSlash(value: string): string {

@@ -9,8 +9,6 @@ import {
 
 import { Button, DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, cn } from '@ghostapi/ui';
 
-import { APP_SHELL_WIDTH_CLASS, APP_SHELL_X_PADDING_CLASS } from '@/components/app-shell';
-
 type AppTopbarProps = {
   search?: {
     value: string;
@@ -38,9 +36,7 @@ export function AppTopbar({
     <header className={cn('h-[92px]', bordered && 'border-white/8 border-b')}>
       <div
         className={cn(
-          'mx-auto flex h-full w-full items-center justify-between',
-          APP_SHELL_WIDTH_CLASS,
-          APP_SHELL_X_PADDING_CLASS,
+          'app-shell-container app-shell-x-padding mx-auto flex h-full w-full items-center justify-between',
         )}
       >
         <div className="ml-auto flex items-center gap-6">

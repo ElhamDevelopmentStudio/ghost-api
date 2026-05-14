@@ -75,7 +75,7 @@ function ProjectSummary({
   uptime: string;
 }) {
   return (
-    <dl className="bg-app-panel-soft/60 flex w-full max-w-[620px] flex-wrap items-center rounded-lg border border-white/10 px-1 py-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+    <dl className="bg-app-panel-soft/60 shadow-inset-subtle flex w-full max-w-[620px] flex-wrap items-center rounded-lg border border-white/10 px-1 py-1">
       <SummaryMetric icon={RiBox3Line} label="Projects" value={String(projects)} tone="purple" />
       <SummaryMetric icon={RiFlashlightLine} label="Requests" value={requests} tone="green" />
       <SummaryMetric icon={RiTimeLine} label="Uptime" value={uptime} tone="yellow" />
