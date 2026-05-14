@@ -1,5 +1,13 @@
 import { z } from 'zod';
 
+import { EndpointMockConfigSchema } from './mock-config.js';
+import {
+  HttpMethodSchema,
+  ParameterSchema,
+  RequestBodySchema,
+  ResponseSchema,
+} from './normalized-endpoint.js';
+
 export const projectRoleSchema = z.enum(['OWNER', 'ADMIN', 'EDITOR', 'VIEWER']);
 export type ProjectRole = z.infer<typeof projectRoleSchema>;
 
@@ -141,3 +149,42 @@ export const uploadProjectSchemaResponseSchema = z.object({
   endpointCount: z.number().int().nonnegative(),
 });
 export type UploadProjectSchemaResponse = z.infer<typeof uploadProjectSchemaResponseSchema>;
+
+export const projectEndpointSavedResponseSchema = z.object({
+  status: z.number().int().min(100).max(599),
+  body: z.unknown().nullable(),
+});
+export type ProjectEndpointSavedResponse = z.infer<typeof projectEndpointSavedResponseSchema>;
+
+export const projectEndpointSchema = z.object({
+  id: z.string().uuid(),
+  method: HttpMethodSchema,
+  path: z.string(),
+  group: z.string(),
+  parameters: z.array(ParameterSchema),
+  requestBody: RequestBodySchema.nullable(),
+  responses: z.array(ResponseSchema),
+  config: EndpointMockConfigSchema,
+  savedResponses: z.array(projectEndpointSavedResponseSchema),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+export type ProjectEndpoint = z.infer<typeof projectEndpointSchema>;
+
+export const listProjectEndpointsResponseSchema = z.object({
+  endpoints: z.array(projectEndpointSchema),
+});
+export type ListProjectEndpointsResponse = z.infer<typeof listProjectEndpointsResponseSchema>;
+
+export const projectEndpointResponseSchema = z.object({
+  endpoint: projectEndpointSchema,
+});
+export type ProjectEndpointResponse = z.infer<typeof projectEndpointResponseSchema>;
+
+export const updateEndpointConfigBodySchema = EndpointMockConfigSchema.partial();
+export type UpdateEndpointConfigInput = z.infer<typeof updateEndpointConfigBodySchema>;
+
+export const saveEndpointResponseBodySchema = z.object({
+  body: z.unknown().nullable(),
+});
+export type SaveEndpointResponseInput = z.infer<typeof saveEndpointResponseBodySchema>;

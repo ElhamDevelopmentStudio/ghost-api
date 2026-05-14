@@ -1,9 +1,19 @@
 import { zValidator } from '@hono/zod-validator';
-import { createProjectBodySchema } from '@ghostapi/types';
+import {
+  createProjectBodySchema,
+  saveEndpointResponseBodySchema,
+  updateEndpointConfigBodySchema,
+} from '@ghostapi/types';
 import { Hono } from 'hono';
+import { z } from 'zod';
 
 import { authContext, requireAuth, requireCsrf } from '../auth/index.js';
 import type { AppEnv } from '../../server/types.js';
+import {
+  listProjectEndpointsForUser,
+  saveProjectEndpointResponseForUser,
+  updateProjectEndpointConfigForUser,
+} from './project-endpoints.service.js';
 import {
   createProjectForUser,
   getProjectForUser,
@@ -15,6 +25,10 @@ import {
 export const projectsRouter = new Hono<AppEnv>();
 
 projectsRouter.use('*', requireAuth);
+
+const endpointStatusParamSchema = z.object({
+  status: z.coerce.number().int().min(100).max(599),
+});
 
 projectsRouter.get('/', async (c) => {
   const { userId } = authContext(c);
@@ -48,3 +62,49 @@ projectsRouter.get('/:id', async (c) => {
 
   return c.json({ project });
 });
+
+projectsRouter.get('/:projectId/endpoints', async (c) => {
+  const { userId } = authContext(c);
+  const endpoints = await listProjectEndpointsForUser(c.req.param('projectId'), userId);
+  if (!endpoints) return c.json({ error: 'Project not found' }, 404);
+
+  return c.json({ endpoints });
+});
+
+projectsRouter.patch(
+  '/:projectId/endpoints/:endpointId/config',
+  requireCsrf,
+  zValidator('json', updateEndpointConfigBodySchema),
+  async (c) => {
+    const { userId } = authContext(c);
+    const endpoint = await updateProjectEndpointConfigForUser({
+      projectId: c.req.param('projectId'),
+      endpointId: c.req.param('endpointId'),
+      userId,
+      input: c.req.valid('json'),
+    });
+
+    if (!endpoint) return c.json({ error: 'Endpoint not found' }, 404);
+    return c.json({ endpoint });
+  },
+);
+
+projectsRouter.put(
+  '/:projectId/endpoints/:endpointId/responses/:status',
+  requireCsrf,
+  zValidator('param', endpointStatusParamSchema),
+  zValidator('json', saveEndpointResponseBodySchema),
+  async (c) => {
+    const { userId } = authContext(c);
+    const endpoint = await saveProjectEndpointResponseForUser({
+      projectId: c.req.param('projectId'),
+      endpointId: c.req.param('endpointId'),
+      status: c.req.valid('param').status,
+      userId,
+      input: c.req.valid('json'),
+    });
+
+    if (!endpoint) return c.json({ error: 'Endpoint not found' }, 404);
+    return c.json({ endpoint });
+  },
+);

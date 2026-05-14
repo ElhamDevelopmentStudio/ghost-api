@@ -54,10 +54,13 @@ export function toMountInput(row: DbEndpoint): MountInput {
     errorChance: row.config?.errorChance ?? 0,
   };
 
+  const configuredSaved = row.config?.statusCode
+    ? row.responses.find((response) => response.status === row.config?.statusCode)
+    : undefined;
   const successSaved = row.responses.find(
     (response) => response.status >= 200 && response.status < 300,
   );
-  return { endpoint, config, savedBody: successSaved?.body, seed: row.id };
+  return { endpoint, config, savedBody: (configuredSaved ?? successSaved)?.body, seed: row.id };
 }
 
 function toObject<T extends object>(value: unknown): Partial<T> {

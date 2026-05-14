@@ -108,4 +108,27 @@ describe('toMountInput', () => {
       seed: 'endpoint-2',
     });
   });
+
+  it('uses the saved body that matches the configured status override', () => {
+    const row: DbEndpoint = {
+      id: 'endpoint-3',
+      method: 'GET',
+      path: '/users/{id}',
+      group: 'Users',
+      requestSchema: {},
+      responseSchema: {},
+      config: {
+        latencyMs: 0,
+        statusCode: 404,
+        authRequired: false,
+        errorChance: 0,
+      },
+      responses: [
+        { status: 200, body: { id: 'saved-user' } },
+        { status: 404, body: { error: 'Not found' } },
+      ],
+    };
+
+    expect(toMountInput(row).savedBody).toEqual({ error: 'Not found' });
+  });
 });
