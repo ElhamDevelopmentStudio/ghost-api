@@ -23,6 +23,7 @@ export function RequestEditor({
   responseBodyError,
   isSavingConfig,
   isSavingResponse,
+  isDeletingResponse,
   onTabChange,
   onParamsChange,
   onHeadersChange,
@@ -36,6 +37,8 @@ export function RequestEditor({
   onContentTypeChange,
   onResponseTextChange,
   onSaveResponse,
+  onDeleteResponse,
+  onUseResponseStatus,
 }: {
   endpoint: ProjectEndpoint | null;
   request: RequestDraft;
@@ -48,6 +51,7 @@ export function RequestEditor({
   responseBodyError: string | null;
   isSavingConfig: boolean;
   isSavingResponse: boolean;
+  isDeletingResponse: boolean;
   onTabChange: (tab: RequestTab) => void;
   onParamsChange: (params: ParamDraft[]) => void;
   onHeadersChange: (headers: HeaderDraft[]) => void;
@@ -61,6 +65,8 @@ export function RequestEditor({
   onContentTypeChange: (contentType: string) => void;
   onResponseTextChange: (value: string) => void;
   onSaveResponse: () => void;
+  onDeleteResponse: () => void;
+  onUseResponseStatus: () => void;
 }) {
   const enabledHeaders = effectiveHeaders({
     requestHeaders: request.headers,
@@ -122,12 +128,15 @@ export function RequestEditor({
             responseError={responseBodyError}
             isSavingConfig={isSavingConfig}
             isSavingResponse={isSavingResponse}
+            isDeletingResponse={isDeletingResponse}
             onConfigChange={onConfigChange}
             onSaveConfig={onSaveConfig}
             onStatusChange={onStatusChange}
             onContentTypeChange={onContentTypeChange}
             onResponseTextChange={onResponseTextChange}
             onSaveResponse={onSaveResponse}
+            onDeleteResponse={onDeleteResponse}
+            onUseResponseStatus={onUseResponseStatus}
           />
         ) : null}
       </div>

@@ -6,6 +6,7 @@ import { parseSchema, SchemaParseError, SchemaValidationError } from '@ghostapi/
 import { prisma } from '../db.js';
 import { logger } from '../logger.js';
 import { authContext, requireAuth, requireCsrf } from '../features/auth/index.js';
+import { invalidateProjectMockRuntime } from '../features/projects/mock-runtime-cache.js';
 import type { AppEnv } from '../server/types.js';
 
 export const schemasRouter = new Hono<AppEnv>();
@@ -90,6 +91,7 @@ schemasRouter.post(
 
       return { schema, endpointCount: normalized.endpoints.length };
     });
+    invalidateProjectMockRuntime(projectId);
 
     return c.json(
       {

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { NormalizedEndpoint } from '@ghostapi/types';
 import { buildMockRouter } from './index.js';
 
@@ -28,6 +28,10 @@ const endpoint: NormalizedEndpoint = {
 };
 
 describe('buildMockRouter', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('serves a generated 200 response', async () => {
     const app = buildMockRouter([
       {
@@ -78,6 +82,30 @@ describe('buildMockRouter', () => {
     ]);
     const res = await app.request('/users');
     expect(await res.json()).toEqual([{ id: 'x', email: 'a@b.c' }]);
+  });
+
+  it('waits for configured latency before serving a response', async () => {
+    vi.useFakeTimers();
+    const app = buildMockRouter([
+      {
+        endpoint,
+        config: { latencyMs: 500, statusCode: null, authRequired: false, errorChance: 0 },
+      },
+    ]);
+    let settled = false;
+
+    const response = Promise.resolve(app.request('/users')).then((res) => {
+      settled = true;
+      return res;
+    });
+
+    await vi.advanceTimersByTimeAsync(499);
+    expect(settled).toBe(false);
+
+    await vi.advanceTimersByTimeAsync(1);
+    const res = await response;
+    expect(settled).toBe(true);
+    expect(res.status).toBe(200);
   });
 
   it('mounts HEAD endpoints without a response body', async () => {

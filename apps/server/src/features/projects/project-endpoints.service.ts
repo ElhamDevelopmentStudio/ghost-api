@@ -13,6 +13,7 @@ import {
 import { z } from 'zod';
 
 import { prisma } from '../../db.js';
+import { invalidateProjectMockRuntime } from './mock-runtime-cache.js';
 
 const storedRequestSchema = z.object({
   parameters: z.array(ParameterSchema).optional(),
@@ -76,6 +77,7 @@ export async function updateProjectEndpointConfigForUser({
     },
   });
 
+  invalidateProjectMockRuntime(projectId);
   return getEndpointWithMockState(endpointId);
 }
 
@@ -115,6 +117,35 @@ export async function saveProjectEndpointResponseForUser({
     },
   });
 
+  invalidateProjectMockRuntime(projectId);
+  return getEndpointWithMockState(endpointId);
+}
+
+export async function deleteProjectEndpointResponseForUser({
+  projectId,
+  endpointId,
+  status,
+  contentType,
+  userId,
+}: {
+  projectId: string;
+  endpointId: string;
+  status: number;
+  contentType: string;
+  userId: string;
+}) {
+  const endpoint = await findEditableEndpoint(projectId, endpointId, userId);
+  if (!endpoint) return null;
+
+  await prisma.endpointResponse.deleteMany({
+    where: {
+      endpointId,
+      status,
+      contentType,
+    },
+  });
+
+  invalidateProjectMockRuntime(projectId);
   return getEndpointWithMockState(endpointId);
 }
 

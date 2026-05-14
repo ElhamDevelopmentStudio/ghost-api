@@ -12,6 +12,7 @@ import { z } from 'zod';
 import { authContext, requireAuth, requireCsrf } from '../auth/index.js';
 import type { AppEnv } from '../../server/types.js';
 import {
+  deleteProjectEndpointResponseForUser,
   listProjectEndpointsForUser,
   saveProjectEndpointResponseForUser,
   updateProjectEndpointConfigForUser,
@@ -34,6 +35,9 @@ projectsRouter.use('*', requireAuth);
 
 const endpointStatusParamSchema = z.object({
   status: z.coerce.number().int().min(100).max(599),
+});
+const endpointResponseQuerySchema = z.object({
+  contentType: z.string().min(1),
 });
 const projectActivityLogParamSchema = z.object({
   logId: z.string().uuid(),
@@ -171,6 +175,26 @@ projectsRouter.put(
       status: c.req.valid('param').status,
       userId,
       input: c.req.valid('json'),
+    });
+
+    if (!endpoint) return c.json({ error: 'Endpoint not found' }, 404);
+    return c.json({ endpoint });
+  },
+);
+
+projectsRouter.delete(
+  '/:projectId/endpoints/:endpointId/responses/:status',
+  requireCsrf,
+  zValidator('param', endpointStatusParamSchema),
+  zValidator('query', endpointResponseQuerySchema),
+  async (c) => {
+    const { userId } = authContext(c);
+    const endpoint = await deleteProjectEndpointResponseForUser({
+      projectId: c.req.param('projectId'),
+      endpointId: c.req.param('endpointId'),
+      status: c.req.valid('param').status,
+      contentType: c.req.valid('query').contentType,
+      userId,
     });
 
     if (!endpoint) return c.json({ error: 'Endpoint not found' }, 404);

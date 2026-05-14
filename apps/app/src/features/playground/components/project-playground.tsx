@@ -4,7 +4,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { HttpMethod, ProjectDetail, ProjectEndpoint } from '@ghostapi/types';
 import { toast } from '@ghostapi/ui';
 
-import { saveEndpointResponse, updateEndpointConfig } from '@/features/projects/api/projects-api';
+import {
+  deleteEndpointResponse,
+  saveEndpointResponse,
+  updateEndpointConfig,
+} from '@/features/projects/api/projects-api';
 import { env } from '@/lib/env';
 import { initialPlaygroundState, playgroundReducer } from '../state/playground-reducer';
 import { filterEndpoints } from '../utils/endpoint-list';
@@ -62,6 +66,8 @@ export function ProjectPlayground({
             endpoint.id === updatedEndpoint.id ? updatedEndpoint : endpoint,
           ) ?? current,
       );
+      dispatch({ type: 'mockEndpointUpdated', endpoint: updatedEndpoint });
+      await queryClient.invalidateQueries({ queryKey: ['projects', project.id, 'endpoints'] });
       toast.success('Mock settings saved');
     },
     onError: (error) => {
@@ -79,10 +85,31 @@ export function ProjectPlayground({
             endpoint.id === updatedEndpoint.id ? updatedEndpoint : endpoint,
           ) ?? current,
       );
+      dispatch({ type: 'mockEndpointUpdated', endpoint: updatedEndpoint });
+      await queryClient.invalidateQueries({ queryKey: ['projects', project.id, 'endpoints'] });
       toast.success('Response body saved');
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : 'Response body could not be saved');
+    },
+  });
+
+  const deleteResponseMutation = useMutation({
+    mutationFn: deleteEndpointResponse,
+    onSuccess: async (updatedEndpoint) => {
+      await queryClient.setQueryData<ProjectEndpoint[]>(
+        ['projects', project.id, 'endpoints'],
+        (current) =>
+          current?.map((endpoint) =>
+            endpoint.id === updatedEndpoint.id ? updatedEndpoint : endpoint,
+          ) ?? current,
+      );
+      dispatch({ type: 'mockEndpointUpdated', endpoint: updatedEndpoint });
+      await queryClient.invalidateQueries({ queryKey: ['projects', project.id, 'endpoints'] });
+      toast.success('Saved response removed');
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Saved response could not be removed');
     },
   });
 
@@ -180,6 +207,27 @@ export function ProjectPlayground({
     });
   }
 
+  function deleteResponseBody() {
+    if (!selectedEndpoint) return;
+    deleteResponseMutation.mutate({
+      projectId: project.id,
+      endpointId: selectedEndpoint.id,
+      status: state.mock.responseStatus,
+      contentType: state.mock.responseContentType,
+    });
+  }
+
+  function useResponseStatus() {
+    if (!selectedEndpoint || !state.mock.config) return;
+    const nextConfig = { ...state.mock.config, statusCode: state.mock.responseStatus };
+    dispatch({ type: 'configChanged', config: nextConfig });
+    configMutation.mutate({
+      projectId: project.id,
+      endpointId: selectedEndpoint.id,
+      config: nextConfig,
+    });
+  }
+
   return (
     <section className="grid h-screen min-h-0 overflow-hidden bg-[#02050a] text-white lg:grid-cols-[268px_minmax(0,1fr)]">
       <EndpointExplorer
@@ -241,6 +289,7 @@ export function ProjectPlayground({
                   responseBodyError={responseBodyError}
                   isSavingConfig={configMutation.isPending}
                   isSavingResponse={responseMutation.isPending}
+                  isDeletingResponse={deleteResponseMutation.isPending}
                   onTabChange={(tab) => dispatch({ type: 'requestTabChanged', tab })}
                   onParamsChange={(params) => {
                     if (selectedEndpoint) {
@@ -285,6 +334,8 @@ export function ProjectPlayground({
                     dispatch({ type: 'mockResponseTextChanged', value })
                   }
                   onSaveResponse={saveResponseBody}
+                  onDeleteResponse={deleteResponseBody}
+                  onUseResponseStatus={useResponseStatus}
                 />
 
                 <ResponsePanel

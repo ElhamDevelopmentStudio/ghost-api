@@ -39,6 +39,42 @@ describe('playgroundReducer request body media types', () => {
     );
     expect(jsonSelectedAgain.request.bodyText).toBe('{\n  "email": "edited@example.com"\n}');
   });
+
+  it('refreshes mock draft from an updated endpoint without changing the selected row', () => {
+    const selected = playgroundReducer(initialPlaygroundState, {
+      type: 'endpointSelected',
+      endpoint: endpoint(),
+      runtimeBase: 'http://localhost:3001/mock/project',
+    });
+    const updated = playgroundReducer(selected, {
+      type: 'mockEndpointUpdated',
+      endpoint: {
+        ...endpoint(),
+        config: {
+          authRequired: true,
+          latencyMs: 250,
+          statusCode: 422,
+          errorChance: 0.25,
+        },
+        savedResponses: [
+          {
+            status: 200,
+            contentType: 'application/json',
+            body: { ok: true },
+          },
+        ],
+      },
+    });
+
+    expect(updated.selectedEndpointId).toBe(selected.selectedEndpointId);
+    expect(updated.mock.config).toEqual({
+      authRequired: true,
+      latencyMs: 250,
+      statusCode: 422,
+      errorChance: 0.25,
+    });
+    expect(updated.mock.responseText).toBe('{\n  "ok": true\n}');
+  });
 });
 
 function endpoint(): ProjectEndpoint {

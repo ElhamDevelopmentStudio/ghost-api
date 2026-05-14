@@ -50,6 +50,7 @@ export type PlaygroundAction =
   | { type: 'authModeChanged'; mode: 'none' | 'bearer' }
   | { type: 'authTokenChanged'; token: string }
   | { type: 'configChanged'; config: EndpointMockConfig }
+  | { type: 'mockEndpointUpdated'; endpoint: ProjectEndpoint }
   | { type: 'mockStatusChanged'; endpoint: ProjectEndpoint; status: number }
   | { type: 'mockContentTypeChanged'; endpoint: ProjectEndpoint; contentType: string }
   | { type: 'mockResponseTextChanged'; value: string }
@@ -167,6 +168,20 @@ export function playgroundReducer(
       };
     case 'configChanged':
       return { ...state, mock: { ...state.mock, config: action.config } };
+    case 'mockEndpointUpdated':
+      if (action.endpoint.id !== state.selectedEndpointId) return state;
+      return {
+        ...state,
+        mock: {
+          ...state.mock,
+          config: action.endpoint.config,
+          responseText: savedResponseTextForStatus(
+            action.endpoint,
+            state.mock.responseStatus,
+            state.mock.responseContentType,
+          ),
+        },
+      };
     case 'mockStatusChanged': {
       const contentType = preferredResponseContentType(action.endpoint, action.status);
       return {

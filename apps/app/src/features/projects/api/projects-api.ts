@@ -162,3 +162,23 @@ export async function saveEndpointResponse(input: {
   });
   return response.endpoint;
 }
+
+export async function deleteEndpointResponse(input: {
+  projectId: string;
+  endpointId: string;
+  status: number;
+  contentType: string;
+}): Promise<ProjectEndpoint> {
+  const csrfToken = await getCsrfToken();
+  const params = new URLSearchParams({ contentType: input.contentType });
+  const response = await apiRequest<ProjectEndpointResponse>({
+    path: `/projects/${input.projectId}/endpoints/${input.endpointId}/responses/${
+      input.status
+    }?${params.toString()}`,
+    method: 'DELETE',
+    headers: {
+      [CSRF_HEADER]: csrfToken,
+    },
+  });
+  return response.endpoint;
+}
