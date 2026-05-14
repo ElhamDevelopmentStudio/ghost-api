@@ -1,5 +1,7 @@
 import { RiShieldKeyholeLine } from '@remixicon/react';
 
+import { PlaygroundSelect } from './playground-select';
+
 export function AuthEditor({
   mode,
   token,
@@ -26,14 +28,16 @@ export function AuthEditor({
           </p>
         </div>
       </div>
-      <select
+      <PlaygroundSelect
         value={mode}
-        onChange={(event) => onModeChange(event.target.value as 'none' | 'bearer')}
-        className="h-10 w-full rounded-md border border-white/10 bg-black/25 px-3 text-sm text-white outline-none"
-      >
-        <option value="none">No authentication</option>
-        <option value="bearer">Bearer token</option>
-      </select>
+        options={[
+          { label: 'No authentication', value: 'none' },
+          { label: 'Bearer token', value: 'bearer' },
+        ]}
+        ariaLabel="Authentication mode"
+        className="h-10 w-full"
+        onChange={(value) => onModeChange(value as 'none' | 'bearer')}
+      />
       {mode === 'bearer' ? (
         <input
           value={token}

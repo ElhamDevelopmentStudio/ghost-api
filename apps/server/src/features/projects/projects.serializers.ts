@@ -41,6 +41,15 @@ export type ProjectRequestLogRow = {
   createdAt: Date;
 };
 
+export type ProjectActivityLogRow = ProjectRequestLogRow & {
+  endpointId: string | null;
+  headers: unknown;
+  body: unknown;
+  responseHeaders: unknown;
+  responseContentType: string | null;
+  responseBody: unknown;
+};
+
 export type ProjectMethodCountRow = {
   method: string;
   _count: { _all: number };
@@ -144,6 +153,33 @@ export function serializeProjectOverviewMetrics({
     })),
     sampleEndpoint,
   };
+}
+
+export function serializeProjectActivityLog(row: ProjectActivityLogRow) {
+  return {
+    id: row.id,
+    endpointId: row.endpointId,
+    method: row.method,
+    path: row.path,
+    status: row.status,
+    durationMs: row.durationMs,
+    requestHeaders: stringRecord(row.headers),
+    requestBody: row.body ?? null,
+    responseHeaders: stringRecord(row.responseHeaders),
+    responseContentType: row.responseContentType,
+    responseBody: row.responseBody ?? null,
+    createdAt: row.createdAt.toISOString(),
+  };
+}
+
+function stringRecord(value: unknown): Record<string, string> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  return Object.fromEntries(
+    Object.entries(value).map(([key, item]) => [
+      key,
+      typeof item === 'string' ? item : String(item),
+    ]),
+  );
 }
 
 function buildSevenDayTrend(requests: ProjectRequestLogRow[]) {

@@ -44,7 +44,11 @@ const PROJECT_DETAIL_NAV = [
     icon: RiTerminalBoxLine,
     getTo: (projectId: string) => `/projects/${projectId}/playground`,
   },
-  { label: 'Activity', icon: RiFileList3Line, hash: '#activity' },
+  {
+    label: 'Activity',
+    icon: RiFileList3Line,
+    getTo: (projectId: string) => `/projects/${projectId}/activity`,
+  },
 ] as const;
 
 const dropdownSurfaceClass =
@@ -80,15 +84,8 @@ export function AppSidebar({ currentProject }: AppSidebarProps) {
         <div className="space-y-4">
           {currentProject
             ? PROJECT_DETAIL_NAV.map(({ label, icon: Icon, ...item }) => {
-                const to =
-                  'getTo' in item
-                    ? item.getTo(currentProject.id)
-                    : `/projects/${currentProject.id}${item.hash}`;
-                const isActive =
-                  'getTo' in item
-                    ? location.pathname === to
-                    : location.pathname === `/projects/${currentProject.id}` &&
-                      (item.hash ? location.hash === item.hash : location.hash === '');
+                const to = item.getTo(currentProject.id);
+                const isActive = location.pathname === to;
 
                 return (
                   <Link

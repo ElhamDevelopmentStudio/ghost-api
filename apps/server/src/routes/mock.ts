@@ -41,6 +41,12 @@ mockRouter.all('/:projectId/*', async (c) => {
               entry.requestBody === null || entry.requestBody === undefined
                 ? Prisma.JsonNull
                 : (entry.requestBody as Prisma.InputJsonValue),
+            responseHeaders: entry.responseHeaders as Prisma.InputJsonValue,
+            responseContentType: entry.responseContentType || null,
+            responseBody:
+              entry.responseBody === null || entry.responseBody === undefined
+                ? Prisma.JsonNull
+                : (entry.responseBody as Prisma.InputJsonValue),
           },
         })
         .catch((err) => logger.error({ err }, 'Failed to persist request log'));

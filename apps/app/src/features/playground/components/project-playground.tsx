@@ -253,6 +253,15 @@ export function ProjectPlayground({
                     }
                   }}
                   onHeadersChange={(headers) => dispatch({ type: 'headersChanged', headers })}
+                  onRequestContentTypeChange={(contentType) => {
+                    if (selectedEndpoint) {
+                      dispatch({
+                        type: 'requestContentTypeChanged',
+                        endpoint: selectedEndpoint,
+                        contentType,
+                      });
+                    }
+                  }}
                   onBodyChange={(bodyText) => dispatch({ type: 'bodyChanged', bodyText })}
                   onAuthModeChange={(mode) => dispatch({ type: 'authModeChanged', mode })}
                   onAuthTokenChange={(token) => dispatch({ type: 'authTokenChanged', token })}

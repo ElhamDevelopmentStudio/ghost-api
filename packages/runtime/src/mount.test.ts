@@ -213,8 +213,12 @@ describe('buildMockRouter', () => {
     await expect(json.json()).resolves.toEqual({ saved: true });
   });
 
-  it('logs non-JSON request bodies as text', async () => {
-    const requests: unknown[] = [];
+  it('logs non-JSON request bodies and response content type', async () => {
+    const entries: Array<{
+      requestBody: unknown;
+      responseContentType: string;
+      responseHeaders: Record<string, string>;
+    }> = [];
     const app = buildMockRouter(
       [
         {
@@ -229,7 +233,11 @@ describe('buildMockRouter', () => {
       ],
       {
         onLog: (entry) => {
-          requests.push(entry.requestBody);
+          entries.push({
+            requestBody: entry.requestBody,
+            responseContentType: entry.responseContentType,
+            responseHeaders: entry.responseHeaders,
+          });
         },
       },
     );
@@ -241,6 +249,12 @@ describe('buildMockRouter', () => {
     });
 
     expect(res.status).toBe(200);
-    expect(requests).toEqual(['hello world']);
+    expect(entries).toEqual([
+      expect.objectContaining({
+        requestBody: 'hello world',
+        responseContentType: expect.stringContaining('application/json'),
+        responseHeaders: expect.objectContaining({ 'content-type': expect.any(String) }),
+      }),
+    ]);
   });
 });

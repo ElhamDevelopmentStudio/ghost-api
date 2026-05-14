@@ -26,12 +26,14 @@ export function endpointRequestDraft(endpoint: ProjectEndpoint, runtimeBase: str
       enabled: parameter.required,
     }));
 
+  const bodyContentType = preferredRequestContentType(endpoint);
+  const bodyText = endpoint.requestBody ? sampleRequestBodyText(endpoint, bodyContentType) : '';
   const headers = endpoint.requestBody
     ? [
         {
           id: makeId(),
           key: 'Content-Type',
-          value: endpoint.requestBody.contentType,
+          value: bodyContentType,
           enabled: true,
         },
         ...headerParams,
@@ -43,9 +45,9 @@ export function endpointRequestDraft(endpoint: ProjectEndpoint, runtimeBase: str
     url: buildRequestUrl(runtimeBase, endpoint.path, params),
     params,
     headers,
-    bodyText: endpoint.requestBody?.schema
-      ? sampleBodyText(endpoint.requestBody.schema, endpoint.requestBody.contentType)
-      : '',
+    bodyContentType,
+    bodyText,
+    bodyByContentType: bodyContentType ? { [bodyContentType]: bodyText } : {},
     auth: {
       mode: endpoint.config.authRequired ? 'bearer' : 'none',
       token: '',
@@ -105,13 +107,20 @@ export async function executePlaygroundRequest({
     headers.set('Authorization', `Bearer ${request.auth.token.trim()}`);
   }
 
+  const requestBodyText =
+    canSendBody(request.method) && request.bodyText.trim() ? request.bodyText : '';
+  const requestHeaders = Array.from(headers.entries()).map(([key, value]) => ({ key, value }));
   const startedAt = performance.now();
   const response = await fetch(request.url, {
     method: request.method,
     headers,
-    body: canSendBody(request.method) && request.bodyText.trim() ? request.bodyText : undefined,
+    body: requestBodyText || undefined,
   });
   const text = await response.text();
+  const responseHeaders = Array.from(response.headers.entries()).map(([key, value]) => ({
+    key,
+    value,
+  }));
 
   return {
     status: response.status,
@@ -119,16 +128,69 @@ export async function executePlaygroundRequest({
     durationMs: Math.round(performance.now() - startedAt),
     sizeBytes: new Blob([text]).size,
     receivedAt: new Date().toISOString(),
-    headers: Array.from(response.headers.entries()).map(([key, value]) => ({ key, value })),
+    headers: responseHeaders,
     bodyText: text,
     parsedBody: parseJson(text),
     url: request.url,
     method: request.method,
+    requestHeaders,
+    requestBodyText,
+    requestContentType: headers.get('content-type') ?? '',
+    responseContentType: response.headers.get('content-type') ?? '',
   };
 }
 
 export function canSendBody(method: HttpMethod) {
   return method !== 'GET' && method !== 'HEAD';
+}
+
+export function requestContentTypesForEndpoint(endpoint: ProjectEndpoint) {
+  if (!endpoint.requestBody) return [];
+
+  const contentTypes = [
+    endpoint.requestBody.contentType,
+    ...(endpoint.requestBody.mediaTypes?.map((mediaType) => mediaType.contentType) ?? []),
+  ].filter(Boolean);
+
+  return Array.from(new Set(contentTypes));
+}
+
+export function preferredRequestContentType(endpoint: ProjectEndpoint) {
+  if (!endpoint.requestBody) return 'application/json';
+  const contentTypes = requestContentTypesForEndpoint(endpoint);
+  return (
+    contentTypes.find((contentType) => isJsonContentType(contentType)) ??
+    endpoint.requestBody.contentType ??
+    contentTypes[0] ??
+    'application/json'
+  );
+}
+
+export function requestSchemaForContentType(endpoint: ProjectEndpoint, contentType: string) {
+  if (!endpoint.requestBody) return undefined;
+  return (
+    endpoint.requestBody.mediaTypes?.find(
+      (mediaType) => mediaType.contentType.toLowerCase() === contentType.toLowerCase(),
+    )?.schema ?? endpoint.requestBody.schema
+  );
+}
+
+export function sampleRequestBodyText(endpoint: ProjectEndpoint, contentType: string) {
+  const schema = requestSchemaForContentType(endpoint, contentType);
+  if (!schema) return '';
+  return sampleBodyText(schema, contentType);
+}
+
+export function requestHeadersForContentType(headers: HeaderDraft[], contentType: string) {
+  let updated = false;
+  const nextHeaders = headers.map((header) => {
+    if (header.key.trim().toLowerCase() !== 'content-type') return header;
+    updated = true;
+    return { ...header, value: contentType, enabled: true };
+  });
+
+  if (updated) return nextHeaders;
+  return [{ id: makeId(), key: 'Content-Type', value: contentType, enabled: true }, ...nextHeaders];
 }
 
 function sampleBodyText(

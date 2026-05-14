@@ -8,6 +8,7 @@ import type { PlaygroundResponse, ResponseFormat, ResponseTab } from '../types';
 import { countMatches, formatBytes } from '../utils/format';
 import { formatResponseBody } from '../utils/json';
 import { JsonEditor } from './json-editor';
+import { PlaygroundSelect } from './playground-select';
 import { TabBar } from './tab-bar';
 
 export function ResponsePanel({
@@ -57,9 +58,9 @@ export function ResponsePanel({
             </span>
           ) : null}
         </div>
-        <select className="h-9 rounded-md border border-white/10 bg-black/25 px-3 text-sm text-white outline-none">
-          <option>{project.environments[0]?.name ?? 'Development'}</option>
-        </select>
+        <span className="rounded-md border border-white/10 bg-[#0d121b] px-3 py-2 text-sm text-white/70">
+          {project.environments[0]?.name ?? 'Development'}
+        </span>
       </div>
 
       <TabBar
@@ -73,14 +74,16 @@ export function ResponsePanel({
         {response && activeTab === 'Response' ? (
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-2">
-              <select
+              <PlaygroundSelect
                 value={format}
-                onChange={(event) => onFormatChange(event.target.value as ResponseFormat)}
-                className="h-9 rounded-md border border-white/10 bg-black/25 px-3 text-sm text-white outline-none"
-              >
-                <option value="pretty">Pretty</option>
-                <option value="raw">Raw</option>
-              </select>
+                options={[
+                  { label: 'Pretty', value: 'pretty' },
+                  { label: 'Raw', value: 'raw' },
+                ]}
+                ariaLabel="Response body format"
+                className="w-28"
+                onChange={(value) => onFormatChange(value as ResponseFormat)}
+              />
               <input
                 value={search}
                 onChange={(event) => onSearchChange(event.target.value)}
@@ -146,7 +149,16 @@ function TimelineViewer({ response }: { response: PlaygroundResponse }) {
   return (
     <div className="space-y-3 text-sm">
       <TimelineRow label="Request" value={`${response.method} ${response.url}`} />
+      {response.requestContentType ? (
+        <TimelineRow label="Request type" value={response.requestContentType} />
+      ) : null}
+      {response.requestBodyText ? (
+        <TimelineRow label="Request body" value={response.requestBodyText} />
+      ) : null}
       <TimelineRow label="Status" value={`${response.status} ${response.ok ? 'OK' : 'Error'}`} />
+      {response.responseContentType ? (
+        <TimelineRow label="Response type" value={response.responseContentType} />
+      ) : null}
       <TimelineRow label="Duration" value={`${response.durationMs}ms`} />
       <TimelineRow label="Received" value={new Date(response.receivedAt).toLocaleString()} />
       <TimelineRow label="Size" value={formatBytes(response.sizeBytes)} />

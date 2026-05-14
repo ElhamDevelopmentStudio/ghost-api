@@ -3,6 +3,7 @@ import type { EndpointMockConfig, ProjectEndpoint } from '@ghostapi/types';
 import { REQUEST_TABS } from '../constants';
 import type { HeaderDraft, ParamDraft, RequestDraft, RequestTab } from '../types';
 import { effectiveContentType, effectiveHeaders } from '../utils/headers';
+import { requestContentTypesForEndpoint } from '../utils/request';
 import { AuthEditor } from './auth-editor';
 import { BodyEditor } from './body-editor';
 import { HeadersEditor } from './headers-editor';
@@ -25,6 +26,7 @@ export function RequestEditor({
   onTabChange,
   onParamsChange,
   onHeadersChange,
+  onRequestContentTypeChange,
   onBodyChange,
   onAuthModeChange,
   onAuthTokenChange,
@@ -49,6 +51,7 @@ export function RequestEditor({
   onTabChange: (tab: RequestTab) => void;
   onParamsChange: (params: ParamDraft[]) => void;
   onHeadersChange: (headers: HeaderDraft[]) => void;
+  onRequestContentTypeChange: (contentType: string) => void;
   onBodyChange: (bodyText: string) => void;
   onAuthModeChange: (mode: 'none' | 'bearer') => void;
   onAuthTokenChange: (token: string) => void;
@@ -68,6 +71,7 @@ export function RequestEditor({
     sharedHeaders,
     fallback: endpoint?.requestBody?.contentType,
   });
+  const requestContentTypes = endpoint ? requestContentTypesForEndpoint(endpoint) : [];
 
   return (
     <section className="min-w-0 rounded-lg border border-white/10 bg-[#070b12]">
@@ -91,8 +95,11 @@ export function RequestEditor({
         {activeTab === 'Body' ? (
           <BodyEditor
             bodyText={request.bodyText}
-            contentType={contentType}
+            contentType={request.bodyContentType || contentType}
+            effectiveContentType={contentType}
+            contentTypeOptions={requestContentTypes}
             disabled={!endpoint?.requestBody}
+            onContentTypeChange={onRequestContentTypeChange}
             onChange={onBodyChange}
           />
         ) : null}

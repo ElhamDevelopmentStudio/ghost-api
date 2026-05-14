@@ -1,6 +1,7 @@
 import { zValidator } from '@hono/zod-validator';
 import {
   createProjectBodySchema,
+  projectActivityLogsQuerySchema,
   saveEndpointResponseBodySchema,
   updateEndpointConfigBodySchema,
 } from '@ghostapi/types';
@@ -17,6 +18,7 @@ import {
 import {
   createProjectForUser,
   getProjectForUser,
+  listProjectActivityLogsForUser,
   listProjectsForUser,
   ProjectImageAttachmentNotFoundError,
   ProjectSlugConflictError,
@@ -70,6 +72,22 @@ projectsRouter.get('/:projectId/endpoints', async (c) => {
 
   return c.json({ endpoints });
 });
+
+projectsRouter.get(
+  '/:projectId/activity',
+  zValidator('query', projectActivityLogsQuerySchema),
+  async (c) => {
+    const { userId } = authContext(c);
+    const result = await listProjectActivityLogsForUser({
+      projectId: c.req.param('projectId'),
+      userId,
+      ...c.req.valid('query'),
+    });
+    if (!result) return c.json({ error: 'Project not found' }, 404);
+
+    return c.json(result);
+  },
+);
 
 projectsRouter.patch(
   '/:projectId/endpoints/:endpointId/config',

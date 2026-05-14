@@ -1,6 +1,7 @@
 import type { ParamDraft } from '../types';
 import { makeId } from '../utils/ids';
 import { EditorHeader, EmptyEditorLine, RowToggle } from './editor-controls';
+import { PlaygroundSelect } from './playground-select';
 
 export function ParamsEditor({
   params,
@@ -34,23 +35,25 @@ export function ParamsEditor({
             key={param.id}
             className="grid gap-2 md:grid-cols-[78px_minmax(0,1fr)_minmax(0,1fr)_40px]"
           >
-            <select
+            <PlaygroundSelect
               value={param.location}
               disabled={param.required}
-              onChange={(event) =>
+              options={[
+                { label: 'Path', value: 'path' },
+                { label: 'Query', value: 'query' },
+              ]}
+              ariaLabel="Parameter location"
+              className="h-10 w-full px-2 text-xs"
+              onChange={(location) =>
                 onChange(
                   params.map((item) =>
                     item.id === param.id
-                      ? { ...item, location: event.target.value as ParamDraft['location'] }
+                      ? { ...item, location: location as ParamDraft['location'] }
                       : item,
                   ),
                 )
               }
-              className="h-10 rounded-md border border-white/10 bg-black/25 px-2 text-xs text-white outline-none disabled:opacity-50"
-            >
-              <option value="path">Path</option>
-              <option value="query">Query</option>
-            </select>
+            />
             <input
               value={param.name}
               disabled={param.required}

@@ -11,6 +11,7 @@ import { NotFoundPage } from '@/pages/not-found-page';
 import { LogsPage } from '@/pages/protected/activity-log-page';
 import { CreateProjectPage } from '@/pages/protected/create-project-page';
 import { PlaygroundPage } from '@/pages/protected/playground-page';
+import { ProjectActivityPage } from '@/pages/protected/project-activity-page';
 import { ProjectDetailPage } from '@/pages/protected/project-detail-page';
 import { ProjectsPage } from '@/pages/protected/projects-page';
 import { SettingsPage } from '@/pages/protected/settings-page';
@@ -44,6 +45,7 @@ export const router = createBrowserRouter([
       { path: 'projects', element: <ProjectsPage /> },
       { path: 'projects/new', element: <CreateProjectPage /> },
       { path: 'projects/:projectId', element: <ProjectDetailPage /> },
+      { path: 'projects/:projectId/activity', element: <ProjectActivityPage /> },
       { path: 'projects/:projectId/playground', element: <PlaygroundPage /> },
       {
         element: <AppLayout />,

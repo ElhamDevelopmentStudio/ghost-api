@@ -4,6 +4,7 @@ import type { CreateProjectParsed } from '@ghostapi/types';
 import { prisma } from '../../db.js';
 import { attachmentThumbnailUrl } from '../uploads/upload.urls.js';
 import {
+  serializeProjectActivityLog,
   serializeProject,
   serializeProjectDetail,
   serializeProjectOverviewMetrics,
@@ -180,6 +181,88 @@ export async function getProjectForUser(projectId: string, userId: string) {
   });
 
   return serializeProjectDetail(project, userId, overview);
+}
+
+export async function listProjectActivityLogsForUser({
+  projectId,
+  userId,
+  method,
+  statusClass,
+  search,
+  range,
+  cursor,
+  limit,
+}: {
+  projectId: string;
+  userId: string;
+  method?: string;
+  statusClass?: '2xx' | '3xx' | '4xx' | '5xx';
+  search?: string;
+  range?: '1h' | '24h' | '7d' | '30d';
+  cursor?: string;
+  limit: number;
+}) {
+  const canRead = await userCanReadProject(projectId, userId);
+  if (!canRead) return null;
+
+  const where: Prisma.RequestLogWhereInput = { projectId };
+  if (method) where.method = method;
+  if (statusClass) {
+    const start = Number(statusClass[0]) * 100;
+    where.status = { gte: start, lt: start + 100 };
+  }
+  if (search?.trim()) {
+    where.path = { contains: search.trim(), mode: 'insensitive' };
+  }
+  const createdAt = rangeStart(range);
+  if (createdAt) where.createdAt = { gte: createdAt };
+
+  const rows = await prisma.requestLog.findMany({
+    where,
+    orderBy: { createdAt: 'desc' },
+    take: limit + 1,
+    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+    select: {
+      id: true,
+      endpointId: true,
+      method: true,
+      path: true,
+      status: true,
+      durationMs: true,
+      headers: true,
+      body: true,
+      responseHeaders: true,
+      responseContentType: true,
+      responseBody: true,
+      createdAt: true,
+    },
+  });
+
+  const page = rows.slice(0, limit);
+  return {
+    logs: page.map(serializeProjectActivityLog),
+    nextCursor: rows.length > limit ? (page.at(-1)?.id ?? null) : null,
+  };
+}
+
+async function userCanReadProject(projectId: string, userId: string) {
+  const project = await prisma.project.findFirst({
+    where: {
+      id: projectId,
+      OR: [{ ownerId: userId }, { members: { some: { userId } } }],
+    },
+    select: { id: true },
+  });
+
+  return Boolean(project);
+}
+
+function rangeStart(range: '1h' | '24h' | '7d' | '30d' | undefined) {
+  if (!range) return null;
+  const date = new Date();
+  const hours = range === '1h' ? 1 : range === '24h' ? 24 : range === '7d' ? 24 * 7 : 24 * 30;
+  date.setHours(date.getHours() - hours);
+  return date;
 }
 
 function countRouteMethods(routeMethods: Array<{ method: string }>) {

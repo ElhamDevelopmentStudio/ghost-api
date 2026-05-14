@@ -25,6 +25,8 @@ export interface RequestLogEntry {
   durationMs: number;
   requestHeaders: Record<string, string>;
   requestBody: unknown;
+  responseHeaders: Record<string, string>;
+  responseContentType: string;
   responseBody: unknown;
   receivedAt: Date;
 }
@@ -222,6 +224,10 @@ async function finish(
   const requestBody = await readRequestBody(c.req.raw);
   const durationMs = Date.now() - start;
   const response = createResponse(c, body, status, contentType);
+  const responseHeaders: Record<string, string> = {};
+  response.headers.forEach((v, k) => {
+    responseHeaders[k] = v;
+  });
   if (onLog) {
     void onLog({
       endpointId: input.endpoint.id,
@@ -231,6 +237,8 @@ async function finish(
       durationMs,
       requestHeaders: headers,
       requestBody,
+      responseHeaders,
+      responseContentType: response.headers.get('content-type') ?? contentType ?? '',
       responseBody: body,
       receivedAt: new Date(),
     });

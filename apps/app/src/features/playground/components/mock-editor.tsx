@@ -5,6 +5,7 @@ import { clamp, uniqueNumbers } from '../utils/format';
 import { responseContentTypesForStatus } from '../utils/sample-value';
 import { JsonEditor } from './json-editor';
 import { EditorHeader } from './editor-controls';
+import { PlaygroundSelect } from './playground-select';
 
 export function MockEditor({
   endpoint,
@@ -114,29 +115,27 @@ export function MockEditor({
               Saved bodies are used by the runtime before generated mock data.
             </p>
           </div>
-          <div className="flex gap-2">
-            <select
-              value={responseStatus}
-              onChange={(event) => onStatusChange(Number(event.target.value))}
-              className="h-9 rounded-md border border-white/10 bg-black/25 px-3 text-sm text-white outline-none"
-            >
-              {statusOptions.map((status) => (
-                <option key={status} value={status}>
-                  {status}
-                </option>
-              ))}
-            </select>
-            <select
+          <div className="flex min-w-0 flex-wrap gap-2">
+            <PlaygroundSelect
+              value={String(responseStatus)}
+              options={statusOptions.map((status) => ({
+                label: String(status),
+                value: String(status),
+              }))}
+              ariaLabel="Saved response status"
+              className="w-24 shrink-0"
+              onChange={(value) => onStatusChange(Number(value))}
+            />
+            <PlaygroundSelect
               value={responseContentType}
-              onChange={(event) => onContentTypeChange(event.target.value)}
-              className="h-9 max-w-[220px] rounded-md border border-white/10 bg-black/25 px-3 text-sm text-white outline-none"
-            >
-              {contentTypeOptions.map((contentType) => (
-                <option key={contentType} value={contentType}>
-                  {contentType}
-                </option>
-              ))}
-            </select>
+              options={contentTypeOptions.map((contentType) => ({
+                label: contentType,
+                value: contentType,
+              }))}
+              ariaLabel="Saved response media type"
+              className="min-w-[12rem] max-w-[220px] font-mono"
+              onChange={onContentTypeChange}
+            />
             <Button
               type="button"
               size="sm"

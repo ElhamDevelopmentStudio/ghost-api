@@ -264,6 +264,9 @@ model RequestLog {
   durationMs Int      @map("duration_ms")
   headers    Json     @default("{}")
   body       Json?
+  responseHeaders     Json    @default("{}") @map("response_headers")
+  responseContentType String? @map("response_content_type")
+  responseBody        Json?   @map("response_body")
   createdAt  DateTime @default(now()) @map("created_at")
 
   project  Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)

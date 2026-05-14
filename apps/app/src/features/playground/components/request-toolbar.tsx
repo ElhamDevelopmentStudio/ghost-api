@@ -6,6 +6,7 @@ import { Button } from '@ghostapi/ui';
 import { HTTP_METHODS } from '../constants';
 import type { RequestDraft } from '../types';
 import { env } from '@/lib/env';
+import { PlaygroundSelect } from './playground-select';
 
 export function RequestToolbar({
   project,
@@ -69,19 +70,15 @@ export function RequestToolbar({
       </div>
 
       <div className="mt-5 grid overflow-hidden rounded-md border border-white/10 bg-[#080d14] md:grid-cols-[96px_minmax(0,1fr)_184px]">
-        <select
+        <PlaygroundSelect
           value={request.method}
-          onChange={(event) =>
-            onRequestChange({ ...request, method: event.target.value as RequestDraft['method'] })
+          options={HTTP_METHODS.map((method) => ({ label: method, value: method }))}
+          ariaLabel="HTTP method"
+          className="bg-violet-500/12 h-14 w-full rounded-none border-0 border-r border-white/10 px-4 font-semibold text-violet-200 focus-visible:ring-0"
+          onChange={(method) =>
+            onRequestChange({ ...request, method: method as RequestDraft['method'] })
           }
-          className="bg-violet-500/12 h-14 border-0 border-r border-white/10 px-4 text-sm font-semibold text-violet-200 outline-none"
-        >
-          {HTTP_METHODS.map((method) => (
-            <option key={method} value={method}>
-              {method}
-            </option>
-          ))}
-        </select>
+        />
         <input
           value={request.url}
           onChange={(event) => onRequestChange({ ...request, url: event.target.value })}

@@ -3,6 +3,8 @@ import {
   type CreateProjectInput,
   type EndpointMockConfig,
   type ListProjectsResponse,
+  type ProjectActivityLogsQuery,
+  type ProjectActivityLogsResponse,
   type ListProjectEndpointsResponse,
   type ProjectDetail,
   type ProjectDetailResponse,
@@ -24,6 +26,7 @@ export type {
   ProjectDetail,
   ProjectEndpoint,
   ProjectSummary,
+  ProjectActivityLogsQuery,
 };
 
 export async function listProjects(): Promise<ProjectSummary[]> {
@@ -70,6 +73,20 @@ export async function listProjectEndpoints(projectId: string): Promise<ProjectEn
     path: `/projects/${projectId}/endpoints`,
   });
   return response.endpoints;
+}
+
+export async function listProjectActivityLogs(
+  projectId: string,
+  filters: ProjectActivityLogsQuery,
+) {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(filters)) {
+    if (value !== undefined && value !== null && value !== '') params.set(key, String(value));
+  }
+  const response = await apiRequest<ProjectActivityLogsResponse>({
+    path: `/projects/${projectId}/activity${params.size ? `?${params.toString()}` : ''}`,
+  });
+  return response;
 }
 
 export async function updateEndpointConfig(input: {

@@ -30,7 +30,9 @@ export type RequestDraft = {
   url: string;
   params: ParamDraft[];
   headers: HeaderDraft[];
+  bodyContentType: string;
   bodyText: string;
+  bodyByContentType: Record<string, string>;
   auth: AuthDraft;
 };
 
@@ -45,6 +47,10 @@ export type PlaygroundResponse = {
   parsedBody: unknown;
   url: string;
   method: string;
+  requestHeaders: Array<{ key: string; value: string }>;
+  requestBodyText: string;
+  requestContentType: string;
+  responseContentType: string;
 };
 
 export type MockDraft = {

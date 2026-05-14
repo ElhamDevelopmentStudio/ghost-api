@@ -182,6 +182,38 @@ export const projectEndpointResponseSchema = z.object({
 });
 export type ProjectEndpointResponse = z.infer<typeof projectEndpointResponseSchema>;
 
+export const projectActivityLogSchema = z.object({
+  id: z.string().uuid(),
+  endpointId: z.string().uuid().nullable(),
+  method: z.string(),
+  path: z.string(),
+  status: z.number().int(),
+  durationMs: z.number().int().nonnegative(),
+  requestHeaders: z.record(z.string(), z.string()),
+  requestBody: z.unknown().nullable(),
+  responseHeaders: z.record(z.string(), z.string()),
+  responseContentType: z.string().nullable(),
+  responseBody: z.unknown().nullable(),
+  createdAt: z.string().datetime(),
+});
+export type ProjectActivityLog = z.infer<typeof projectActivityLogSchema>;
+
+export const projectActivityLogsQuerySchema = z.object({
+  method: z.string().optional(),
+  statusClass: z.enum(['2xx', '3xx', '4xx', '5xx']).optional(),
+  search: z.string().optional(),
+  range: z.enum(['1h', '24h', '7d', '30d']).optional(),
+  cursor: z.string().uuid().optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+});
+export type ProjectActivityLogsQuery = z.infer<typeof projectActivityLogsQuerySchema>;
+
+export const projectActivityLogsResponseSchema = z.object({
+  logs: z.array(projectActivityLogSchema),
+  nextCursor: z.string().uuid().nullable(),
+});
+export type ProjectActivityLogsResponse = z.infer<typeof projectActivityLogsResponseSchema>;
+
 export const updateEndpointConfigBodySchema = EndpointMockConfigSchema.partial();
 export type UpdateEndpointConfigInput = z.infer<typeof updateEndpointConfigBodySchema>;
 

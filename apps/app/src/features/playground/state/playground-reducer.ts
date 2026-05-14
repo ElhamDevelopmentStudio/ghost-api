@@ -9,7 +9,12 @@ import type {
   ResponseFormat,
   ResponseTab,
 } from '../types';
-import { buildRequestUrl, endpointRequestDraft } from '../utils/request';
+import {
+  buildRequestUrl,
+  endpointRequestDraft,
+  requestHeadersForContentType,
+  sampleRequestBodyText,
+} from '../utils/request';
 import { preferredResponseContentType, savedResponseTextForStatus } from '../utils/sample-value';
 
 export type PlaygroundState = {
@@ -39,6 +44,7 @@ export type PlaygroundAction =
   | { type: 'headersChanged'; headers: HeaderDraft[] }
   | { type: 'sharedHeadersChanged'; headers: HeaderDraft[] }
   | { type: 'sharedHeadersOpenChanged'; open: boolean }
+  | { type: 'requestContentTypeChanged'; endpoint: ProjectEndpoint; contentType: string }
   | { type: 'bodyChanged'; bodyText: string }
   | { type: 'bodyBeautified'; bodyText: string }
   | { type: 'authModeChanged'; mode: 'none' | 'bearer' }
@@ -65,7 +71,9 @@ export const initialPlaygroundState: PlaygroundState = {
     url: '',
     params: [],
     headers: [],
+    bodyContentType: 'application/json',
     bodyText: '',
+    bodyByContentType: {},
     auth: { mode: 'none', token: '' },
   },
   mock: {
@@ -115,9 +123,38 @@ export function playgroundReducer(
       return { ...state, sharedHeaders: action.headers };
     case 'sharedHeadersOpenChanged':
       return { ...state, sharedHeadersOpen: action.open };
+    case 'requestContentTypeChanged': {
+      const bodyText =
+        state.request.bodyByContentType[action.contentType] ??
+        sampleRequestBodyText(action.endpoint, action.contentType);
+      return {
+        ...state,
+        request: {
+          ...state.request,
+          headers: requestHeadersForContentType(state.request.headers, action.contentType),
+          bodyContentType: action.contentType,
+          bodyText,
+          bodyByContentType: {
+            ...state.request.bodyByContentType,
+            [state.request.bodyContentType]: state.request.bodyText,
+            [action.contentType]: bodyText,
+          },
+        },
+      };
+    }
     case 'bodyChanged':
     case 'bodyBeautified':
-      return { ...state, request: { ...state.request, bodyText: action.bodyText } };
+      return {
+        ...state,
+        request: {
+          ...state.request,
+          bodyText: action.bodyText,
+          bodyByContentType: {
+            ...state.request.bodyByContentType,
+            [state.request.bodyContentType]: action.bodyText,
+          },
+        },
+      };
     case 'authModeChanged':
       return {
         ...state,
