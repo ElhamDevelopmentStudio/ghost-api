@@ -37,6 +37,7 @@ export async function listProjectsForUser(userId: string) {
       slug: true,
       description: true,
       icon: true,
+      activityLogRetentionDays: true,
       ownerId: true,
       createdAt: true,
       updatedAt: true,
@@ -108,6 +109,7 @@ export async function getProjectForUser(projectId: string, userId: string) {
       slug: true,
       description: true,
       icon: true,
+      activityLogRetentionDays: true,
       ownerId: true,
       createdAt: true,
       updatedAt: true,
@@ -250,6 +252,44 @@ export async function getProjectActivityLogForUser({
   });
 
   return row ? serializeProjectActivityLog(row) : null;
+}
+
+export async function clearProjectActivityLogsForUser({
+  projectId,
+  userId,
+}: {
+  projectId: string;
+  userId: string;
+}) {
+  const canRead = await userCanReadProject(projectId, userId);
+  if (!canRead) return null;
+
+  const result = await prisma.requestLog.deleteMany({
+    where: { projectId },
+  });
+
+  return { deletedCount: result.count };
+}
+
+export async function updateProjectActivitySettingsForUser({
+  projectId,
+  userId,
+  activityLogRetentionDays,
+}: {
+  projectId: string;
+  userId: string;
+  activityLogRetentionDays: 0 | 1 | 7 | 30;
+}) {
+  const canRead = await userCanReadProject(projectId, userId);
+  if (!canRead) return null;
+
+  const project = await prisma.project.update({
+    where: { id: projectId },
+    data: { activityLogRetentionDays },
+    select: { activityLogRetentionDays: true },
+  });
+
+  return { activityLogRetentionDays: project.activityLogRetentionDays as 0 | 1 | 7 | 30 };
 }
 
 async function userCanReadProject(projectId: string, userId: string) {

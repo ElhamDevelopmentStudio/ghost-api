@@ -1,17 +1,25 @@
-import { useMemo } from 'react';
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { useMemo, useState } from 'react';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import {
-  RiCloseLine,
+  RiDeleteBinLine,
+  RiFileCopyLine,
   RiFileList3Line,
   RiFilter3Line,
   RiRefreshLine,
   RiSearchLine,
 } from '@remixicon/react';
 
-import type { ProjectActivityLog, ProjectDetail } from '@ghostapi/types';
+import type { ActivityLogRetentionDays, ProjectActivityLog, ProjectDetail } from '@ghostapi/types';
 import {
   Button,
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
   Sheet,
   SheetBody,
   SheetContent,
@@ -19,11 +27,14 @@ import {
   SheetTitle,
   Skeleton,
   cn,
+  toast,
 } from '@ghostapi/ui';
 
 import {
+  clearProjectActivityLogs,
   getProjectActivityLog,
   listProjectActivityLogs,
+  updateProjectActivitySettings,
 } from '@/features/projects/api/projects-api';
 import { PlaygroundSelect } from '@/features/playground/components/playground-select';
 
@@ -53,8 +64,17 @@ const RANGE_OPTIONS = [
   { label: '30 days', value: '30d' },
 ];
 
+const RETENTION_OPTIONS = [
+  { label: 'Logging off', value: '0' },
+  { label: 'Keep 1 day', value: '1' },
+  { label: 'Keep 7 days', value: '7' },
+  { label: 'Keep 30 days', value: '30' },
+];
+
 export function ProjectActivity({ project }: { project: ProjectDetail }) {
+  const queryClient = useQueryClient();
   const [params, setParams] = useSearchParams();
+  const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
   const selectedLogId = params.get('log');
   const filters = useMemo(
     () => ({
@@ -87,6 +107,39 @@ export function ProjectActivity({ project }: { project: ProjectDetail }) {
     retry: false,
   });
   const selectedLog = selectedFromPage ?? selectedLogQuery.data ?? null;
+  const clearLogsMutation = useMutation({
+    mutationFn: () => clearProjectActivityLogs(project.id),
+    onSuccess: async ({ deletedCount }) => {
+      setSelectedLogId(null);
+      setIsClearDialogOpen(false);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['projects'] }),
+        queryClient.invalidateQueries({ queryKey: ['projects', project.id] }),
+        queryClient.invalidateQueries({ queryKey: ['projects', project.id, 'activity'] }),
+      ]);
+      toast.success(
+        deletedCount === 1 ? '1 request log cleared' : `${deletedCount} request logs cleared`,
+      );
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Request logs could not be cleared');
+    },
+  });
+  const retentionMutation = useMutation({
+    mutationFn: (activityLogRetentionDays: ActivityLogRetentionDays) =>
+      updateProjectActivitySettings(project.id, { activityLogRetentionDays }),
+    onSuccess: async ({ activityLogRetentionDays }) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['projects'] }),
+        queryClient.invalidateQueries({ queryKey: ['projects', project.id] }),
+        queryClient.invalidateQueries({ queryKey: ['projects', project.id, 'activity'] }),
+      ]);
+      toast.success(retentionLabel(activityLogRetentionDays));
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Retention setting could not be saved');
+    },
+  });
 
   function setFilter(key: string, value: string) {
     setParams((current) => {
@@ -116,14 +169,35 @@ export function ProjectActivity({ project }: { project: ProjectDetail }) {
           </div>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white">Request logs</h1>
           <p className="mt-2 max-w-2xl text-sm text-white/55">
-            Inspect mock runtime traffic, payloads, headers, response types, and failures. Logs are
-            retained for 30 days and sensitive values are redacted before storage.
+            Inspect mock runtime traffic, payloads, headers, response types, and failures. Sensitive
+            values are redacted before storage.
           </p>
         </div>
-        <Button type="button" variant="secondary" onClick={() => void query.refetch()}>
-          <RiRefreshLine className="size-4" />
-          Refresh
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <PlaygroundSelect
+            value={String(project.activityLogRetentionDays)}
+            options={RETENTION_OPTIONS}
+            ariaLabel="Activity log retention"
+            className="h-10 w-[150px]"
+            disabled={retentionMutation.isPending}
+            onChange={(value) =>
+              retentionMutation.mutate(Number(value) as ActivityLogRetentionDays)
+            }
+          />
+          <Button type="button" variant="secondary" onClick={() => void query.refetch()}>
+            <RiRefreshLine className="size-4" />
+            Refresh
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            disabled={project.requestCount === 0 || clearLogsMutation.isPending}
+            onClick={() => setIsClearDialogOpen(true)}
+          >
+            <RiDeleteBinLine className="size-4" />
+            Clear logs
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-3 rounded-lg border border-white/10 bg-[#070b12] p-3 lg:grid-cols-[minmax(220px,1fr)_160px_150px_150px]">
@@ -200,13 +274,59 @@ export function ProjectActivity({ project }: { project: ProjectDetail }) {
       ) : null}
 
       <LogDetail
+        projectId={project.id}
         log={selectedLog}
         isOpen={Boolean(selectedLogId)}
         isLoading={Boolean(selectedLogId && selectedLogQuery.isLoading && !selectedFromPage)}
         isError={Boolean(selectedLogId && selectedLogQuery.isError)}
         onOpenChange={(open) => !open && setSelectedLogId(null)}
       />
+      <ClearLogsDialog
+        open={isClearDialogOpen}
+        isClearing={clearLogsMutation.isPending}
+        logCount={project.requestCount}
+        onOpenChange={setIsClearDialogOpen}
+        onConfirm={() => clearLogsMutation.mutate()}
+      />
     </section>
+  );
+}
+
+function ClearLogsDialog({
+  open,
+  isClearing,
+  logCount,
+  onOpenChange,
+  onConfirm,
+}: {
+  open: boolean;
+  isClearing: boolean;
+  logCount: number;
+  onOpenChange: (open: boolean) => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent size="sm">
+        <DialogHeader>
+          <DialogTitle>Clear Activity logs?</DialogTitle>
+          <DialogDescription>
+            This deletes the captured request logs for this project. Endpoint definitions and saved
+            mock responses are not affected.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button type="button" variant="secondary" disabled={isClearing}>
+              Cancel
+            </Button>
+          </DialogClose>
+          <Button type="button" variant="destructive" loading={isClearing} onClick={onConfirm}>
+            Clear {logCount === 1 ? '1 log' : 'logs'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -230,12 +350,14 @@ function StatusPill({ status }: { status: number }) {
 }
 
 function LogDetail({
+  projectId,
   log,
   isOpen,
   isLoading,
   isError,
   onOpenChange,
 }: {
+  projectId: string;
   log: ProjectActivityLog | null;
   isOpen: boolean;
   isLoading: boolean;
@@ -249,26 +371,12 @@ function LogDetail({
         className="w-full border-white/10 bg-[#050910] text-white sm:max-w-2xl"
       >
         <SheetHeader>
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <SheetTitle className="font-mono text-white">
-                {log ? `${log.method} ${log.path}` : 'Request'}
-              </SheetTitle>
-              {log ? (
-                <p className="mt-2 text-sm text-white/50">
-                  {new Date(log.createdAt).toLocaleString()}
-                </p>
-              ) : null}
-            </div>
-            <Button
-              type="button"
-              variant="tertiary"
-              size="icon"
-              onClick={() => onOpenChange(false)}
-            >
-              <RiCloseLine className="size-4" />
-            </Button>
-          </div>
+          <SheetTitle className="pr-10 font-mono text-white">
+            {log ? `${log.method} ${log.path}` : 'Request'}
+          </SheetTitle>
+          {log ? (
+            <p className="mt-2 text-sm text-white/50">{new Date(log.createdAt).toLocaleString()}</p>
+          ) : null}
         </SheetHeader>
         {isLoading ? (
           <SheetBody className="space-y-3">
@@ -287,6 +395,7 @@ function LogDetail({
         {log && !isLoading && !isError ? (
           <SheetBody className="space-y-4 overflow-y-auto">
             <DetailGrid log={log} />
+            <TextBlock title="cURL" value={buildCurlCommand(projectId, log)} />
             <JsonBlock title="Request headers" value={log.requestHeaders} />
             <JsonBlock title="Request body" value={log.requestBody} />
             <JsonBlock title="Response headers" value={log.responseHeaders} />
@@ -320,21 +429,53 @@ function DetailItem({ label, value }: { label: string; value: string }) {
 
 function JsonBlock({ title, value }: { title: string; value: unknown }) {
   const hasRedaction = containsRedactedValue(value);
+  const text = JSON.stringify(value ?? null, null, 2);
 
   return (
     <div className="rounded-md border border-white/10 bg-black/20">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-2">
         <span className="text-sm font-medium text-white">{title}</span>
-        {hasRedaction ? (
-          <span className="rounded border border-amber-300/20 bg-amber-300/10 px-2 py-0.5 text-xs text-amber-100">
-            Redacted
-          </span>
-        ) : null}
+        <div className="flex items-center gap-2">
+          {hasRedaction ? (
+            <span className="rounded border border-amber-300/20 bg-amber-300/10 px-2 py-0.5 text-xs text-amber-100">
+              Redacted
+            </span>
+          ) : null}
+          <CopyButton value={text} label={`Copy ${title}`} />
+        </div>
       </div>
-      <pre className="text-white/78 max-h-72 overflow-auto p-3 text-xs leading-6">
-        {JSON.stringify(value ?? null, null, 2)}
+      <pre className="text-white/78 max-h-72 overflow-auto p-3 text-xs leading-6">{text}</pre>
+    </div>
+  );
+}
+
+function TextBlock({ title, value }: { title: string; value: string }) {
+  return (
+    <div className="rounded-md border border-white/10 bg-black/20">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-2">
+        <span className="text-sm font-medium text-white">{title}</span>
+        <CopyButton value={value} label={`Copy ${title}`} />
+      </div>
+      <pre className="text-white/78 max-h-72 overflow-auto whitespace-pre-wrap p-3 text-xs leading-6">
+        {value}
       </pre>
     </div>
+  );
+}
+
+function CopyButton({ value, label }: { value: string; label: string }) {
+  return (
+    <Button
+      type="button"
+      variant="tertiary"
+      size="sm"
+      className="h-7 px-2 text-white/70 hover:text-white"
+      onClick={() => void copyText(value)}
+      aria-label={label}
+    >
+      <RiFileCopyLine className="size-4" />
+      Copy
+    </Button>
   );
 }
 
@@ -371,6 +512,76 @@ function ActivityError({ onRetry }: { onRetry: () => void }) {
 
 function normalizedParam(value: string | null) {
   return value && value !== 'all' ? value : undefined;
+}
+
+function retentionLabel(days: ActivityLogRetentionDays) {
+  if (days === 0) return 'Activity logging disabled';
+  if (days === 1) return 'Activity logs kept for 1 day';
+  return `Activity logs kept for ${days} days`;
+}
+
+function buildCurlCommand(projectId: string, log: ProjectActivityLog) {
+  const url = shellQuote(buildMockUrl(projectId, log));
+  const parts = ['curl', '-i', '-X', shellQuote(log.method.toUpperCase()), url];
+  for (const [key, value] of usefulCurlHeaders(log.requestHeaders)) {
+    parts.push('-H', shellQuote(`${key}: ${value}`));
+  }
+
+  const body = requestBodyText(log.requestBody);
+  if (body) parts.push('--data-raw', shellQuote(body));
+
+  return parts.join(' \\\n  ');
+}
+
+function buildMockUrl(projectId: string, log: ProjectActivityLog) {
+  const host = log.requestHeaders.host || 'localhost:3001';
+  const protocol =
+    log.requestHeaders['x-forwarded-proto'] || (host.includes('localhost') ? 'http' : 'https');
+  const path = log.path.startsWith('/mock/')
+    ? log.path
+    : `/mock/${projectId}${log.path.startsWith('/') ? log.path : `/${log.path}`}`;
+
+  return `${protocol}://${host}${path}`;
+}
+
+function usefulCurlHeaders(headers: Record<string, string>) {
+  return Object.entries(headers).filter(([key]) => {
+    const normalized = key.toLowerCase();
+    return ![
+      'host',
+      'connection',
+      'content-length',
+      'user-agent',
+      'origin',
+      'referer',
+      'accept-encoding',
+      'sec-fetch-dest',
+      'sec-fetch-mode',
+      'sec-fetch-site',
+      'sec-ch-ua',
+      'sec-ch-ua-mobile',
+      'sec-ch-ua-platform',
+    ].includes(normalized);
+  });
+}
+
+function requestBodyText(value: unknown) {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'string') return value;
+  return JSON.stringify(value);
+}
+
+function shellQuote(value: string) {
+  return `'${value.replace(/'/g, `'\\''`)}'`;
+}
+
+async function copyText(value: string) {
+  try {
+    await navigator.clipboard.writeText(value);
+    toast.success('Copied');
+  } catch {
+    toast.error('Clipboard is not available');
+  }
 }
 
 function containsRedactedValue(value: unknown): boolean {

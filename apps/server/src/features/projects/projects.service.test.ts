@@ -3,17 +3,23 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const prisma = {
   project: {
     findFirst: vi.fn(),
+    update: vi.fn(),
   },
   requestLog: {
     findMany: vi.fn(),
     findFirst: vi.fn(),
+    deleteMany: vi.fn(),
   },
 };
 
 vi.mock('../../db.js', () => ({ prisma }));
 
-const { getProjectActivityLogForUser, listProjectActivityLogsForUser } =
-  await import('./projects.service.js');
+const {
+  clearProjectActivityLogsForUser,
+  getProjectActivityLogForUser,
+  listProjectActivityLogsForUser,
+  updateProjectActivitySettingsForUser,
+} = await import('./projects.service.js');
 
 describe('listProjectActivityLogsForUser', () => {
   beforeEach(() => {
@@ -22,6 +28,8 @@ describe('listProjectActivityLogsForUser', () => {
     prisma.requestLog.findFirst.mockResolvedValue(
       activityRow('00000000-0000-4000-8000-000000000001', 404, '/auth/login'),
     );
+    prisma.requestLog.deleteMany.mockResolvedValue({ count: 3 });
+    prisma.project.update.mockResolvedValue({ activityLogRetentionDays: 7 });
     prisma.requestLog.findMany.mockResolvedValue([
       activityRow('00000000-0000-4000-8000-000000000001', 404, '/auth/login'),
       activityRow('00000000-0000-4000-8000-000000000002', 401, '/auth/logout'),
@@ -113,6 +121,58 @@ describe('listProjectActivityLogsForUser', () => {
       id: '00000000-0000-4000-8000-000000000001',
       requestHeaders: { authorization: 'Bearer token' },
     });
+  });
+
+  it('clears all activity logs inside the readable project', async () => {
+    const result = await clearProjectActivityLogsForUser({
+      projectId: '00000000-0000-4000-8000-000000000010',
+      userId: '00000000-0000-4000-8000-000000000011',
+    });
+
+    expect(prisma.requestLog.deleteMany).toHaveBeenCalledWith({
+      where: { projectId: '00000000-0000-4000-8000-000000000010' },
+    });
+    expect(result).toEqual({ deletedCount: 3 });
+  });
+
+  it('does not clear logs when the user cannot read the project', async () => {
+    prisma.project.findFirst.mockResolvedValue(null);
+
+    const result = await clearProjectActivityLogsForUser({
+      projectId: '00000000-0000-4000-8000-000000000010',
+      userId: '00000000-0000-4000-8000-000000000011',
+    });
+
+    expect(result).toBeNull();
+    expect(prisma.requestLog.deleteMany).not.toHaveBeenCalled();
+  });
+
+  it('updates activity log retention inside the readable project', async () => {
+    const result = await updateProjectActivitySettingsForUser({
+      projectId: '00000000-0000-4000-8000-000000000010',
+      userId: '00000000-0000-4000-8000-000000000011',
+      activityLogRetentionDays: 7,
+    });
+
+    expect(prisma.project.update).toHaveBeenCalledWith({
+      where: { id: '00000000-0000-4000-8000-000000000010' },
+      data: { activityLogRetentionDays: 7 },
+      select: { activityLogRetentionDays: true },
+    });
+    expect(result).toEqual({ activityLogRetentionDays: 7 });
+  });
+
+  it('does not update activity log retention when the user cannot read the project', async () => {
+    prisma.project.findFirst.mockResolvedValue(null);
+
+    const result = await updateProjectActivitySettingsForUser({
+      projectId: '00000000-0000-4000-8000-000000000010',
+      userId: '00000000-0000-4000-8000-000000000011',
+      activityLogRetentionDays: 0,
+    });
+
+    expect(result).toBeNull();
+    expect(prisma.project.update).not.toHaveBeenCalled();
   });
 });
 

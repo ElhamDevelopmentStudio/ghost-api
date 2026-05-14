@@ -17,6 +17,14 @@ export type ProjectVisibility = z.infer<typeof projectVisibilitySchema>;
 export const projectStatusSchema = z.enum(['Live', 'Paused']);
 export type ProjectStatus = z.infer<typeof projectStatusSchema>;
 
+export const activityLogRetentionDaysSchema = z.union([
+  z.literal(0),
+  z.literal(1),
+  z.literal(7),
+  z.literal(30),
+]);
+export type ActivityLogRetentionDays = z.infer<typeof activityLogRetentionDaysSchema>;
+
 export const projectEnvironmentNameSchema = z.enum(['Development', 'Staging', 'Production']);
 export type ProjectEnvironmentName = z.infer<typeof projectEnvironmentNameSchema>;
 
@@ -37,6 +45,7 @@ export const projectSummarySchema = z.object({
   status: projectStatusSchema,
   endpointCount: z.number().int().nonnegative(),
   requestCount: z.number().int().nonnegative(),
+  activityLogRetentionDays: activityLogRetentionDaysSchema,
   environment: projectEnvironmentSummarySchema.nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
@@ -218,6 +227,25 @@ export const projectActivityLogResponseSchema = z.object({
   log: projectActivityLogSchema,
 });
 export type ProjectActivityLogResponse = z.infer<typeof projectActivityLogResponseSchema>;
+
+export const clearProjectActivityLogsResponseSchema = z.object({
+  deletedCount: z.number().int().nonnegative(),
+});
+export type ClearProjectActivityLogsResponse = z.infer<
+  typeof clearProjectActivityLogsResponseSchema
+>;
+
+export const updateProjectActivitySettingsBodySchema = z.object({
+  activityLogRetentionDays: activityLogRetentionDaysSchema,
+});
+export type UpdateProjectActivitySettingsInput = z.infer<
+  typeof updateProjectActivitySettingsBodySchema
+>;
+
+export const projectActivitySettingsResponseSchema = z.object({
+  activityLogRetentionDays: activityLogRetentionDaysSchema,
+});
+export type ProjectActivitySettingsResponse = z.infer<typeof projectActivitySettingsResponseSchema>;
 
 export const updateEndpointConfigBodySchema = EndpointMockConfigSchema.partial();
 export type UpdateEndpointConfigInput = z.infer<typeof updateEndpointConfigBodySchema>;

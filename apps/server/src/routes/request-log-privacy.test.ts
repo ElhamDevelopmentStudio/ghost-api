@@ -61,8 +61,14 @@ describe('request log privacy', () => {
   it('computes the default retention cutoff', () => {
     const now = new Date('2026-05-15T00:00:00.000Z');
 
-    expect(requestLogRetentionCutoff(now).toISOString()).toBe('2026-04-15T00:00:00.000Z');
+    expect(requestLogRetentionCutoff(REQUEST_LOG_RETENTION_DAYS, now)?.toISOString()).toBe(
+      '2026-04-15T00:00:00.000Z',
+    );
     expect(REQUEST_LOG_RETENTION_DAYS).toBe(30);
+  });
+
+  it('does not compute a cutoff when retention is disabled', () => {
+    expect(requestLogRetentionCutoff(0, new Date('2026-05-15T00:00:00.000Z'))).toBeNull();
   });
 });
 

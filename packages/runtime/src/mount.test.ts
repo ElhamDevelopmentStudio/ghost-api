@@ -266,4 +266,17 @@ describe('buildMockRouter', () => {
       }),
     ]);
   });
+
+  it('does not expose a request log id when logging is disabled', async () => {
+    const app = buildMockRouter([
+      {
+        endpoint,
+        config: { latencyMs: 0, statusCode: null, authRequired: false, errorChance: 0 },
+      },
+    ]);
+
+    const res = await app.request('/users');
+
+    expect(res.headers.get('x-ghostapi-request-log-id')).toBeNull();
+  });
 });

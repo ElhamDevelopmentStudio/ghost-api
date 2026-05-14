@@ -1,5 +1,6 @@
 import {
   CSRF_HEADER,
+  type ClearProjectActivityLogsResponse,
   type CreateProjectInput,
   type EndpointMockConfig,
   type ListProjectsResponse,
@@ -11,10 +12,12 @@ import {
   type ProjectDetailResponse,
   type ProjectEndpoint,
   type ProjectEndpointResponse,
+  type ProjectActivitySettingsResponse,
   type ProjectResponse,
   type ProjectSummary,
   type SaveEndpointResponseInput,
   type UpdateEndpointConfigInput,
+  type UpdateProjectActivitySettingsInput,
   type UploadProjectSchemaResponse,
 } from '@ghostapi/types';
 
@@ -95,6 +98,34 @@ export async function getProjectActivityLog(projectId: string, logId: string) {
     path: `/projects/${projectId}/activity/${logId}`,
   });
   return response.log;
+}
+
+export async function clearProjectActivityLogs(
+  projectId: string,
+): Promise<ClearProjectActivityLogsResponse> {
+  const csrfToken = await getCsrfToken();
+  return apiRequest<ClearProjectActivityLogsResponse>({
+    path: `/projects/${projectId}/activity`,
+    method: 'DELETE',
+    headers: {
+      [CSRF_HEADER]: csrfToken,
+    },
+  });
+}
+
+export async function updateProjectActivitySettings(
+  projectId: string,
+  input: UpdateProjectActivitySettingsInput,
+): Promise<ProjectActivitySettingsResponse> {
+  const csrfToken = await getCsrfToken();
+  return apiRequest<ProjectActivitySettingsResponse>({
+    path: `/projects/${projectId}/activity/settings`,
+    method: 'PATCH',
+    body: input,
+    headers: {
+      [CSRF_HEADER]: csrfToken,
+    },
+  });
 }
 
 export async function updateEndpointConfig(input: {

@@ -3,6 +3,7 @@ import type { RequestLogEntry } from '@ghostapi/runtime';
 
 export const REDACTED_VALUE = '[redacted]';
 export const REQUEST_LOG_RETENTION_DAYS = 30;
+export const ACTIVITY_LOG_RETENTION_OPTIONS = [0, 1, 7, 30] as const;
 
 const SENSITIVE_HEADER_NAMES = new Set([
   'authorization',
@@ -33,9 +34,14 @@ export function sanitizeRequestLogEntry(entry: RequestLogEntry) {
   };
 }
 
-export function requestLogRetentionCutoff(now = new Date()) {
+export function normalizeActivityLogRetentionDays(value: number): 0 | 1 | 7 | 30 {
+  return value === 0 || value === 1 || value === 7 ? value : REQUEST_LOG_RETENTION_DAYS;
+}
+
+export function requestLogRetentionCutoff(days = REQUEST_LOG_RETENTION_DAYS, now = new Date()) {
+  if (days <= 0) return null;
   const cutoff = new Date(now);
-  cutoff.setDate(cutoff.getDate() - REQUEST_LOG_RETENTION_DAYS);
+  cutoff.setDate(cutoff.getDate() - days);
   return cutoff;
 }
 

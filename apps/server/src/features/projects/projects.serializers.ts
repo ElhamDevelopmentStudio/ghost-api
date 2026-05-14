@@ -13,6 +13,7 @@ export type ProjectSummaryRow = {
   slug: string;
   description: string | null;
   icon: string | null;
+  activityLogRetentionDays: number;
   ownerId: string;
   members: { role: ProjectRole }[];
   environments: { name: string; baseUrl: string }[];
@@ -72,10 +73,15 @@ export function serializeProject(project: ProjectSummaryRow, userId: string): Pr
     status: 'Live',
     endpointCount: project._count.endpoints,
     requestCount: project._count.requestLogs,
+    activityLogRetentionDays: toActivityLogRetentionDays(project.activityLogRetentionDays),
     environment: project.environments[0] ?? null,
     createdAt: project.createdAt.toISOString(),
     updatedAt: project.updatedAt.toISOString(),
   };
+}
+
+function toActivityLogRetentionDays(value: number): 0 | 1 | 7 | 30 {
+  return value === 0 || value === 1 || value === 7 ? value : 30;
 }
 
 export function serializeProjectDetail(

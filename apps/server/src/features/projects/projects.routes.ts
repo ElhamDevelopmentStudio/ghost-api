@@ -4,6 +4,7 @@ import {
   projectActivityLogsQuerySchema,
   saveEndpointResponseBodySchema,
   updateEndpointConfigBodySchema,
+  updateProjectActivitySettingsBodySchema,
 } from '@ghostapi/types';
 import { Hono } from 'hono';
 import { z } from 'zod';
@@ -16,6 +17,7 @@ import {
   updateProjectEndpointConfigForUser,
 } from './project-endpoints.service.js';
 import {
+  clearProjectActivityLogsForUser,
   createProjectForUser,
   getProjectActivityLogForUser,
   getProjectForUser,
@@ -23,6 +25,7 @@ import {
   listProjectsForUser,
   ProjectImageAttachmentNotFoundError,
   ProjectSlugConflictError,
+  updateProjectActivitySettingsForUser,
 } from './projects.service.js';
 
 export const projectsRouter = new Hono<AppEnv>();
@@ -106,6 +109,34 @@ projectsRouter.get(
     if (!log) return c.json({ error: 'Request log not found' }, 404);
 
     return c.json({ log });
+  },
+);
+
+projectsRouter.delete('/:projectId/activity', requireCsrf, async (c) => {
+  const { userId } = authContext(c);
+  const result = await clearProjectActivityLogsForUser({
+    projectId: c.req.param('projectId'),
+    userId,
+  });
+  if (!result) return c.json({ error: 'Project not found' }, 404);
+
+  return c.json(result);
+});
+
+projectsRouter.patch(
+  '/:projectId/activity/settings',
+  requireCsrf,
+  zValidator('json', updateProjectActivitySettingsBodySchema),
+  async (c) => {
+    const { userId } = authContext(c);
+    const result = await updateProjectActivitySettingsForUser({
+      projectId: c.req.param('projectId'),
+      userId,
+      activityLogRetentionDays: c.req.valid('json').activityLogRetentionDays,
+    });
+    if (!result) return c.json({ error: 'Project not found' }, 404);
+
+    return c.json(result);
   },
 );
 
