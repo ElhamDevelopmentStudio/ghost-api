@@ -20,7 +20,7 @@ export interface DbEndpoint {
     authRequired: boolean;
     errorChance: number;
   } | null;
-  responses: { status: number; body: unknown }[];
+  responses: { status: number; contentType?: string | null; body: unknown }[];
 }
 
 interface StoredRequestSchema {
@@ -60,7 +60,17 @@ export function toMountInput(row: DbEndpoint): MountInput {
   const successSaved = row.responses.find(
     (response) => response.status >= 200 && response.status < 300,
   );
-  return { endpoint, config, savedBody: (configuredSaved ?? successSaved)?.body, seed: row.id };
+  return {
+    endpoint,
+    config,
+    savedBody: (configuredSaved ?? successSaved)?.body,
+    savedResponses: row.responses.map((response) => ({
+      status: response.status,
+      contentType: response.contentType || 'application/json',
+      body: response.body,
+    })),
+    seed: row.id,
+  };
 }
 
 function toObject<T extends object>(value: unknown): Partial<T> {

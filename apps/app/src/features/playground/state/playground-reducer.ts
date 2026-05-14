@@ -10,7 +10,7 @@ import type {
   ResponseTab,
 } from '../types';
 import { buildRequestUrl, endpointRequestDraft } from '../utils/request';
-import { savedResponseTextForStatus } from '../utils/sample-value';
+import { preferredResponseContentType, savedResponseTextForStatus } from '../utils/sample-value';
 
 export type PlaygroundState = {
   search: string;
@@ -45,6 +45,7 @@ export type PlaygroundAction =
   | { type: 'authTokenChanged'; token: string }
   | { type: 'configChanged'; config: EndpointMockConfig }
   | { type: 'mockStatusChanged'; endpoint: ProjectEndpoint; status: number }
+  | { type: 'mockContentTypeChanged'; endpoint: ProjectEndpoint; contentType: string }
   | { type: 'mockResponseTextChanged'; value: string }
   | { type: 'requestStarted' }
   | { type: 'requestSucceeded'; response: PlaygroundResponse }
@@ -70,6 +71,7 @@ export const initialPlaygroundState: PlaygroundState = {
   mock: {
     config: null,
     responseStatus: 200,
+    responseContentType: 'application/json',
     responseText: '',
   },
   sharedHeaders: [],
@@ -128,13 +130,29 @@ export function playgroundReducer(
       };
     case 'configChanged':
       return { ...state, mock: { ...state.mock, config: action.config } };
-    case 'mockStatusChanged':
+    case 'mockStatusChanged': {
+      const contentType = preferredResponseContentType(action.endpoint, action.status);
       return {
         ...state,
         mock: {
           ...state.mock,
           responseStatus: action.status,
-          responseText: savedResponseTextForStatus(action.endpoint, action.status),
+          responseContentType: contentType,
+          responseText: savedResponseTextForStatus(action.endpoint, action.status, contentType),
+        },
+      };
+    }
+    case 'mockContentTypeChanged':
+      return {
+        ...state,
+        mock: {
+          ...state.mock,
+          responseContentType: action.contentType,
+          responseText: savedResponseTextForStatus(
+            action.endpoint,
+            state.mock.responseStatus,
+            action.contentType,
+          ),
         },
       };
     case 'mockResponseTextChanged':
@@ -168,6 +186,7 @@ function endpointState(
     endpoint.savedResponses[0]?.status ??
     endpoint.responses[0]?.status ??
     200;
+  const contentType = preferredResponseContentType(endpoint, preferredResponse);
 
   return {
     ...state,
@@ -176,7 +195,8 @@ function endpointState(
     mock: {
       config: endpoint.config,
       responseStatus: preferredResponse,
-      responseText: savedResponseTextForStatus(endpoint, preferredResponse),
+      responseContentType: contentType,
+      responseText: savedResponseTextForStatus(endpoint, preferredResponse, contentType),
     },
     response: null,
     requestError: null,

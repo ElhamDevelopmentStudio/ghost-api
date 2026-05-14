@@ -1,6 +1,6 @@
 import type { HttpMethod, ProjectEndpoint } from '@ghostapi/types';
 import type { HeaderDraft, ParamDraft, RequestDraft } from '../types';
-import { effectiveHeaders } from './headers';
+import { effectiveHeaders, isJsonContentType } from './headers';
 import { makeId } from './ids';
 import { parseJson } from './json';
 import { sampleValue } from './sample-value';
@@ -44,7 +44,7 @@ export function endpointRequestDraft(endpoint: ProjectEndpoint, runtimeBase: str
     params,
     headers,
     bodyText: endpoint.requestBody?.schema
-      ? JSON.stringify(sampleValue(endpoint.requestBody.schema, 'body'), null, 2)
+      ? sampleBodyText(endpoint.requestBody.schema, endpoint.requestBody.contentType)
       : '',
     auth: {
       mode: endpoint.config.authRequired ? 'bearer' : 'none',
@@ -66,8 +66,19 @@ export function buildRequestUrl(base: string, path: string, params: ParamDraft[]
   return url.toString();
 }
 
-export function validateJsonBody(body: string, method: HttpMethod, hasBody: boolean) {
+export function validateRequestBody({
+  body,
+  method,
+  hasBody,
+  contentType,
+}: {
+  body: string;
+  method: HttpMethod;
+  hasBody: boolean;
+  contentType: string;
+}) {
   if (!hasBody || !canSendBody(method) || !body.trim()) return null;
+  if (!isJsonContentType(contentType)) return null;
   try {
     JSON.parse(body);
     return null;
@@ -118,4 +129,21 @@ export async function executePlaygroundRequest({
 
 export function canSendBody(method: HttpMethod) {
   return method !== 'GET' && method !== 'HEAD';
+}
+
+function sampleBodyText(
+  schema: NonNullable<ProjectEndpoint['requestBody']>['schema'],
+  contentType: string,
+) {
+  const value = sampleValue(schema, 'body');
+  if (isJsonContentType(contentType)) return JSON.stringify(value, null, 2);
+  if (contentType.toLowerCase().includes('application/x-www-form-urlencoded')) {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      return new URLSearchParams(
+        Object.entries(value).map(([key, item]) => [key, String(item ?? '')]),
+      ).toString();
+    }
+    return String(value ?? '');
+  }
+  return typeof value === 'string' ? value : JSON.stringify(value);
 }

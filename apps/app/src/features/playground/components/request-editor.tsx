@@ -2,7 +2,7 @@ import type { EndpointMockConfig, ProjectEndpoint } from '@ghostapi/types';
 
 import { REQUEST_TABS } from '../constants';
 import type { HeaderDraft, ParamDraft, RequestDraft, RequestTab } from '../types';
-import { effectiveHeaders } from '../utils/headers';
+import { effectiveContentType, effectiveHeaders } from '../utils/headers';
 import { AuthEditor } from './auth-editor';
 import { BodyEditor } from './body-editor';
 import { HeadersEditor } from './headers-editor';
@@ -17,6 +17,7 @@ export function RequestEditor({
   activeTab,
   config,
   responseStatus,
+  responseContentType,
   savedResponseText,
   responseBodyError,
   isSavingConfig,
@@ -30,6 +31,7 @@ export function RequestEditor({
   onConfigChange,
   onSaveConfig,
   onStatusChange,
+  onContentTypeChange,
   onResponseTextChange,
   onSaveResponse,
 }: {
@@ -39,6 +41,7 @@ export function RequestEditor({
   activeTab: RequestTab;
   config: EndpointMockConfig | null;
   responseStatus: number;
+  responseContentType: string;
   savedResponseText: string;
   responseBodyError: string | null;
   isSavingConfig: boolean;
@@ -52,12 +55,18 @@ export function RequestEditor({
   onConfigChange: (config: EndpointMockConfig) => void;
   onSaveConfig: () => void;
   onStatusChange: (status: number) => void;
+  onContentTypeChange: (contentType: string) => void;
   onResponseTextChange: (value: string) => void;
   onSaveResponse: () => void;
 }) {
   const enabledHeaders = effectiveHeaders({
     requestHeaders: request.headers,
     sharedHeaders,
+  });
+  const contentType = effectiveContentType({
+    requestHeaders: request.headers,
+    sharedHeaders,
+    fallback: endpoint?.requestBody?.contentType,
   });
 
   return (
@@ -82,6 +91,7 @@ export function RequestEditor({
         {activeTab === 'Body' ? (
           <BodyEditor
             bodyText={request.bodyText}
+            contentType={contentType}
             disabled={!endpoint?.requestBody}
             onChange={onBodyChange}
           />
@@ -100,6 +110,7 @@ export function RequestEditor({
             endpoint={endpoint}
             config={config}
             responseStatus={responseStatus}
+            responseContentType={responseContentType}
             responseText={savedResponseText}
             responseError={responseBodyError}
             isSavingConfig={isSavingConfig}
@@ -107,6 +118,7 @@ export function RequestEditor({
             onConfigChange={onConfigChange}
             onSaveConfig={onSaveConfig}
             onStatusChange={onStatusChange}
+            onContentTypeChange={onContentTypeChange}
             onResponseTextChange={onResponseTextChange}
             onSaveResponse={onSaveResponse}
           />

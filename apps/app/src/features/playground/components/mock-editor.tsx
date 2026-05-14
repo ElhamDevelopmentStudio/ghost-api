@@ -2,6 +2,7 @@ import type { EndpointMockConfig, ProjectEndpoint } from '@ghostapi/types';
 import { Button } from '@ghostapi/ui';
 
 import { clamp, uniqueNumbers } from '../utils/format';
+import { responseContentTypesForStatus } from '../utils/sample-value';
 import { JsonEditor } from './json-editor';
 import { EditorHeader } from './editor-controls';
 
@@ -9,6 +10,7 @@ export function MockEditor({
   endpoint,
   config,
   responseStatus,
+  responseContentType,
   responseText,
   responseError,
   isSavingConfig,
@@ -16,12 +18,14 @@ export function MockEditor({
   onConfigChange,
   onSaveConfig,
   onStatusChange,
+  onContentTypeChange,
   onResponseTextChange,
   onSaveResponse,
 }: {
   endpoint: ProjectEndpoint;
   config: EndpointMockConfig;
   responseStatus: number;
+  responseContentType: string;
   responseText: string;
   responseError: string | null;
   isSavingConfig: boolean;
@@ -29,6 +33,7 @@ export function MockEditor({
   onConfigChange: (config: EndpointMockConfig) => void;
   onSaveConfig: () => void;
   onStatusChange: (status: number) => void;
+  onContentTypeChange: (contentType: string) => void;
   onResponseTextChange: (value: string) => void;
   onSaveResponse: () => void;
 }) {
@@ -37,6 +42,7 @@ export function MockEditor({
     ...endpoint.savedResponses.map((item) => item.status),
     responseStatus,
   ]);
+  const contentTypeOptions = responseContentTypesForStatus(endpoint, responseStatus);
 
   return (
     <div className="grid gap-5 xl:grid-cols-[340px_minmax(0,1fr)]">
@@ -117,6 +123,17 @@ export function MockEditor({
               {statusOptions.map((status) => (
                 <option key={status} value={status}>
                   {status}
+                </option>
+              ))}
+            </select>
+            <select
+              value={responseContentType}
+              onChange={(event) => onContentTypeChange(event.target.value)}
+              className="h-9 max-w-[220px] rounded-md border border-white/10 bg-black/25 px-3 text-sm text-white outline-none"
+            >
+              {contentTypeOptions.map((contentType) => (
+                <option key={contentType} value={contentType}>
+                  {contentType}
                 </option>
               ))}
             </select>

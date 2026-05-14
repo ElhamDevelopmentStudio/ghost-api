@@ -50,6 +50,7 @@ export type PlaygroundResponse = {
 export type MockDraft = {
   config: EndpointMockConfig | null;
   responseStatus: number;
+  responseContentType: string;
   responseText: string;
 };
 

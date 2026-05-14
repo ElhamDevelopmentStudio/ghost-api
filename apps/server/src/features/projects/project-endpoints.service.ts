@@ -35,7 +35,7 @@ export async function listProjectEndpointsForUser(projectId: string, userId: str
 
   const endpoints = await prisma.endpoint.findMany({
     where: { projectId },
-    include: { config: true, responses: { orderBy: { status: 'asc' } } },
+    include: { config: true, responses: { orderBy: [{ status: 'asc' }, { contentType: 'asc' }] } },
     orderBy: [{ group: 'asc' }, { path: 'asc' }, { method: 'asc' }],
   });
 
@@ -96,13 +96,21 @@ export async function saveProjectEndpointResponseForUser({
   if (!endpoint) return null;
 
   await prisma.endpointResponse.upsert({
-    where: { endpointId_status: { endpointId, status } },
+    where: {
+      endpointId_status_contentType: {
+        endpointId,
+        status,
+        contentType: input.contentType,
+      },
+    },
     create: {
       endpointId,
       status,
+      contentType: input.contentType,
       body: toJsonInput(input.body),
     },
     update: {
+      contentType: input.contentType,
       body: toJsonInput(input.body),
     },
   });
@@ -134,14 +142,14 @@ async function findEditableEndpoint(projectId: string, endpointId: string, userI
         ],
       },
     },
-    include: { config: true, responses: { orderBy: { status: 'asc' } } },
+    include: { config: true, responses: { orderBy: [{ status: 'asc' }, { contentType: 'asc' }] } },
   });
 }
 
 async function getEndpointWithMockState(endpointId: string) {
   const endpoint = await prisma.endpoint.findUnique({
     where: { id: endpointId },
-    include: { config: true, responses: { orderBy: { status: 'asc' } } },
+    include: { config: true, responses: { orderBy: [{ status: 'asc' }, { contentType: 'asc' }] } },
   });
 
   return endpoint ? serializeProjectEndpoint(endpoint) : null;
@@ -166,6 +174,7 @@ function serializeProjectEndpoint(endpoint: EndpointWithMockState): ProjectEndpo
     config: defaultConfig(endpoint.config),
     savedResponses: endpoint.responses.map((response) => ({
       status: response.status,
+      contentType: response.contentType,
       body: response.body,
     })),
     createdAt: endpoint.createdAt.toISOString(),

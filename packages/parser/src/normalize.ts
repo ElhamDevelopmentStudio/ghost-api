@@ -2,6 +2,7 @@ import type { OpenAPIV3 } from 'openapi-types';
 import type {
   FieldSchema,
   HttpMethod,
+  MediaTypeDefinition,
   NormalizedEndpoint,
   NormalizedSchema,
   Parameter,
@@ -96,12 +97,17 @@ function toParameter(p: OpenAPIV3.ParameterObject): Parameter {
 }
 
 function toRequestBody(body: OpenAPIV3.RequestBodyObject): RequestBody {
-  const [contentType, media] = Object.entries(body.content ?? {})[0] ?? ['application/json', {}];
+  const mediaTypes = toMediaTypes(body.content);
+  const primary = preferredMediaType(mediaTypes) ?? {
+    contentType: 'application/json',
+    schema: { type: 'unknown' } satisfies FieldSchema,
+  };
   return {
-    contentType,
+    contentType: primary.contentType,
     required: Boolean(body.required),
     description: body.description,
-    schema: toFieldSchema((media.schema ?? {}) as OpenAPIV3.SchemaObject),
+    schema: primary.schema ?? { type: 'unknown' },
+    mediaTypes,
   };
 }
 
@@ -112,18 +118,38 @@ function toResponses(responses: OpenAPIV3.ResponsesObject | undefined): Response
     const status = parseStatus(statusKey);
     if (status === null) continue;
     const r = response as OpenAPIV3.ResponseObject;
-    const [contentType, media] = Object.entries(r.content ?? {})[0] ?? [
-      'application/json',
-      undefined,
-    ];
+    const mediaTypes = toMediaTypes(r.content);
+    const primary = preferredMediaType(mediaTypes);
     out.push({
       status,
-      contentType,
+      contentType: primary?.contentType ?? 'application/json',
       description: r.description,
-      schema: media?.schema ? toFieldSchema(media.schema as OpenAPIV3.SchemaObject) : undefined,
+      schema: primary?.schema,
+      mediaTypes,
     });
   }
   return out;
+}
+
+function toMediaTypes(
+  content: OpenAPIV3.RequestBodyObject['content'] | OpenAPIV3.ResponseObject['content'] = {},
+): MediaTypeDefinition[] {
+  return Object.entries(content).map(([contentType, media]) => ({
+    contentType,
+    schema: media.schema ? toFieldSchema(media.schema as OpenAPIV3.SchemaObject) : undefined,
+  }));
+}
+
+function preferredMediaType(mediaTypes: MediaTypeDefinition[]): MediaTypeDefinition | undefined {
+  return (
+    mediaTypes.find((media) => isJsonMediaType(media.contentType)) ??
+    mediaTypes.find((media) => media.schema) ??
+    mediaTypes[0]
+  );
+}
+
+function isJsonMediaType(contentType: string): boolean {
+  return /\bjson\b|\+json\b/i.test(contentType);
 }
 
 function parseStatus(key: string): number | null {

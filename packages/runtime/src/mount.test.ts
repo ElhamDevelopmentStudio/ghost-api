@@ -133,4 +133,114 @@ describe('buildMockRouter', () => {
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toEqual({ methods: ['GET', 'GET', 'GET'] });
   });
+
+  it('honors Accept when a response has multiple media types', async () => {
+    const app = buildMockRouter([
+      {
+        endpoint: {
+          ...endpoint,
+          responses: [
+            {
+              status: 200,
+              contentType: 'application/json',
+              schema: {
+                type: 'object',
+                properties: { ok: { type: 'boolean', example: true } },
+              },
+              mediaTypes: [
+                {
+                  contentType: 'text/plain',
+                  schema: { type: 'string', example: 'plain response' },
+                },
+                {
+                  contentType: 'application/json',
+                  schema: {
+                    type: 'object',
+                    properties: { ok: { type: 'boolean', example: true } },
+                  },
+                },
+              ],
+            },
+          ],
+        },
+        config: { latencyMs: 0, statusCode: null, authRequired: false, errorChance: 0 },
+      },
+    ]);
+
+    const plain = await app.request('/users', { headers: { Accept: 'text/plain' } });
+    expect(plain.headers.get('content-type')).toContain('text/plain');
+    await expect(plain.text()).resolves.toBe('plain response');
+
+    const json = await app.request('/users', { headers: { Accept: 'application/json' } });
+    expect(json.headers.get('content-type')).toContain('application/json');
+    await expect(json.json()).resolves.toEqual({ ok: true });
+  });
+
+  it('uses the saved body matching negotiated media type', async () => {
+    const app = buildMockRouter([
+      {
+        endpoint: {
+          ...endpoint,
+          responses: [
+            {
+              status: 200,
+              contentType: 'application/json',
+              schema: { type: 'object', properties: { generated: { type: 'boolean' } } },
+              mediaTypes: [
+                { contentType: 'text/plain', schema: { type: 'string' } },
+                {
+                  contentType: 'application/json',
+                  schema: { type: 'object', properties: { generated: { type: 'boolean' } } },
+                },
+              ],
+            },
+          ],
+        },
+        config: { latencyMs: 0, statusCode: null, authRequired: false, errorChance: 0 },
+        savedResponses: [
+          { status: 200, contentType: 'application/json', body: { saved: true } },
+          { status: 200, contentType: 'text/plain', body: 'saved text' },
+        ],
+      },
+    ]);
+
+    const plain = await app.request('/users', { headers: { Accept: 'text/plain' } });
+    expect(plain.headers.get('content-type')).toContain('text/plain');
+    await expect(plain.text()).resolves.toBe('saved text');
+
+    const json = await app.request('/users', { headers: { Accept: 'application/json' } });
+    expect(json.headers.get('content-type')).toContain('application/json');
+    await expect(json.json()).resolves.toEqual({ saved: true });
+  });
+
+  it('logs non-JSON request bodies as text', async () => {
+    const requests: unknown[] = [];
+    const app = buildMockRouter(
+      [
+        {
+          endpoint: {
+            ...endpoint,
+            id: 'POST /messages',
+            method: 'POST',
+            path: '/messages',
+          },
+          config: { latencyMs: 0, statusCode: null, authRequired: false, errorChance: 0 },
+        },
+      ],
+      {
+        onLog: (entry) => {
+          requests.push(entry.requestBody);
+        },
+      },
+    );
+
+    const res = await app.request('/messages', {
+      method: 'POST',
+      headers: { 'content-type': 'text/plain' },
+      body: 'hello world',
+    });
+
+    expect(res.status).toBe(200);
+    expect(requests).toEqual(['hello world']);
+  });
 });

@@ -8,8 +8,9 @@ import { saveEndpointResponse, updateEndpointConfig } from '@/features/projects/
 import { env } from '@/lib/env';
 import { initialPlaygroundState, playgroundReducer } from '../state/playground-reducer';
 import { filterEndpoints } from '../utils/endpoint-list';
+import { effectiveContentType, isJsonContentType } from '../utils/headers';
 import { parseEditableJson, validateJsonText } from '../utils/json';
-import { executePlaygroundRequest, validateJsonBody } from '../utils/request';
+import { executePlaygroundRequest, validateRequestBody } from '../utils/request';
 import {
   loadSharedHeaders,
   normalizeSharedHeaders,
@@ -105,16 +106,23 @@ export function ProjectPlayground({
     }
   }, [endpoints, runtimeBase, state.selectedEndpointId]);
 
-  const responseBodyError = validateJsonText(state.mock.responseText);
+  const responseBodyError = isJsonContentType(state.mock.responseContentType)
+    ? validateJsonText(state.mock.responseText)
+    : null;
 
   async function sendRequest() {
     if (!selectedEndpoint) return;
 
-    const bodyError = validateJsonBody(
-      state.request.bodyText,
-      state.request.method,
-      Boolean(selectedEndpoint.requestBody),
-    );
+    const bodyError = validateRequestBody({
+      body: state.request.bodyText,
+      method: state.request.method,
+      hasBody: Boolean(selectedEndpoint.requestBody),
+      contentType: effectiveContentType({
+        requestHeaders: state.request.headers,
+        sharedHeaders: state.sharedHeaders,
+        fallback: selectedEndpoint.requestBody?.contentType,
+      }),
+    });
     if (bodyError) {
       dispatch({ type: 'requestValidationFailed', message: bodyError });
       return;
@@ -161,14 +169,14 @@ export function ProjectPlayground({
 
   function saveResponseBody() {
     if (!selectedEndpoint) return;
-    const parsed = parseEditableJson(state.mock.responseText);
+    const parsed = parseEditableBody(state.mock.responseText, state.mock.responseContentType);
     if (!parsed.ok) return;
 
     responseMutation.mutate({
       projectId: project.id,
       endpointId: selectedEndpoint.id,
       status: state.mock.responseStatus,
-      response: { body: parsed.value },
+      response: { contentType: state.mock.responseContentType, body: parsed.value },
     });
   }
 
@@ -228,6 +236,7 @@ export function ProjectPlayground({
                   activeTab={state.requestTab}
                   config={state.mock.config}
                   responseStatus={state.mock.responseStatus}
+                  responseContentType={state.mock.responseContentType}
                   savedResponseText={state.mock.responseText}
                   responseBodyError={responseBodyError}
                   isSavingConfig={configMutation.isPending}
@@ -252,6 +261,15 @@ export function ProjectPlayground({
                   onStatusChange={(status) => {
                     if (selectedEndpoint) {
                       dispatch({ type: 'mockStatusChanged', endpoint: selectedEndpoint, status });
+                    }
+                  }}
+                  onContentTypeChange={(contentType) => {
+                    if (selectedEndpoint) {
+                      dispatch({
+                        type: 'mockContentTypeChanged',
+                        endpoint: selectedEndpoint,
+                        contentType,
+                      });
                     }
                   }}
                   onResponseTextChange={(value) =>
@@ -285,4 +303,12 @@ export function ProjectPlayground({
       />
     </section>
   );
+}
+
+function parseEditableBody(
+  value: string,
+  contentType: string,
+): { ok: true; value: unknown } | { ok: false } {
+  if (!isJsonContentType(contentType)) return { ok: true, value };
+  return parseEditableJson(value);
 }

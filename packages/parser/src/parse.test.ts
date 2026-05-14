@@ -75,4 +75,62 @@ describe('parseSchema', () => {
     expect(out.title).toBe('JSON API');
     expect(out.endpoints[0]?.path).toBe('/ping');
   });
+
+  it('preserves multiple request and response media types while preferring JSON defaults', async () => {
+    const out = await parseSchema(`
+openapi: 3.0.3
+info:
+  title: Media API
+  version: 1.0.0
+paths:
+  /messages:
+    post:
+      requestBody:
+        content:
+          text/plain:
+            schema:
+              type: string
+              example: hello
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: hello
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: accepted
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+`);
+
+    const endpoint = out.endpoints[0];
+    expect(endpoint).toBeDefined();
+
+    expect(endpoint?.requestBody).toBeDefined();
+    expect(endpoint?.requestBody?.contentType).toBe('application/json');
+    expect(endpoint?.requestBody?.schema.type).toBe('object');
+    expect(endpoint?.requestBody?.mediaTypes?.map((media) => media.contentType)).toEqual([
+      'text/plain',
+      'application/json',
+    ]);
+
+    expect(endpoint?.responses[0]?.contentType).toBe('application/json');
+    expect(endpoint?.responses[0]?.schema?.type).toBe('object');
+    expect(endpoint?.responses[0]?.mediaTypes?.map((media) => media.contentType)).toEqual([
+      'text/plain',
+      'application/json',
+    ]);
+  });
 });

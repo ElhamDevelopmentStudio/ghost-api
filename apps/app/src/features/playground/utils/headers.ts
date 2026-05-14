@@ -28,6 +28,25 @@ export function effectiveHeaders({
   ];
 }
 
+export function effectiveContentType({
+  requestHeaders,
+  sharedHeaders,
+  fallback,
+}: {
+  requestHeaders: HeaderDraft[];
+  sharedHeaders: HeaderDraft[];
+  fallback?: string | null;
+}) {
+  const header = effectiveHeaders({ requestHeaders, sharedHeaders }).find(
+    (item) => headerKey(item.key) === 'content-type',
+  );
+  return header?.value.trim() || fallback || 'application/json';
+}
+
+export function isJsonContentType(contentType: string): boolean {
+  return /\bjson\b|\+json\b/i.test(contentType);
+}
+
 function activeSharedHeaderKeys(sharedHeaders: HeaderDraft[]) {
   return new Set(
     normalizeSharedHeaders(sharedHeaders)

@@ -152,6 +152,7 @@ export type UploadProjectSchemaResponse = z.infer<typeof uploadProjectSchemaResp
 
 export const projectEndpointSavedResponseSchema = z.object({
   status: z.number().int().min(100).max(599),
+  contentType: z.string().default('application/json'),
   body: z.unknown().nullable(),
 });
 export type ProjectEndpointSavedResponse = z.infer<typeof projectEndpointSavedResponseSchema>;
@@ -185,6 +186,7 @@ export const updateEndpointConfigBodySchema = EndpointMockConfigSchema.partial()
 export type UpdateEndpointConfigInput = z.infer<typeof updateEndpointConfigBodySchema>;
 
 export const saveEndpointResponseBodySchema = z.object({
+  contentType: z.string().min(1).default('application/json'),
   body: z.unknown().nullable(),
 });
 export type SaveEndpointResponseInput = z.infer<typeof saveEndpointResponseBodySchema>;

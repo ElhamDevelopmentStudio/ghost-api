@@ -1,4 +1,5 @@
-import type { FieldSchema, ProjectEndpoint } from '@ghostapi/types';
+import type { FieldSchema, ProjectEndpoint, ResponseDefinition } from '@ghostapi/types';
+import { isJsonContentType } from './headers';
 
 export function sampleValue(schema: FieldSchema, name: string): unknown {
   if (schema.example !== undefined) return schema.example;
@@ -29,14 +30,57 @@ export function sampleValue(schema: FieldSchema, name: string): unknown {
   }
 }
 
-export function savedResponseTextForStatus(endpoint: ProjectEndpoint, status: number) {
-  const saved = endpoint.savedResponses.find((response) => response.status === status);
-  if (saved) return JSON.stringify(saved.body, null, 2);
+export function savedResponseTextForStatus(
+  endpoint: ProjectEndpoint,
+  status: number,
+  contentType: string,
+) {
+  const saved = endpoint.savedResponses.find(
+    (response) =>
+      response.status === status &&
+      response.contentType.toLowerCase() === contentType.toLowerCase(),
+  );
+  if (saved) return bodyText(saved.body, contentType);
 
   const response =
     endpoint.responses.find((item) => item.status === status) ?? endpoint.responses[0];
-  if (response?.schema) return JSON.stringify(sampleValue(response.schema, 'response'), null, 2);
-  return '{}';
+  const media = responseMediaTypes(response).find(
+    (item) => item.contentType.toLowerCase() === contentType.toLowerCase(),
+  );
+  if (media?.schema) return bodyText(sampleValue(media.schema, 'response'), contentType);
+  return isJsonContentType(contentType) ? '{}' : '';
+}
+
+export function responseContentTypesForStatus(endpoint: ProjectEndpoint, status: number) {
+  const fromSchema = endpoint.responses
+    .filter((response) => response.status === status)
+    .flatMap(responseMediaTypes)
+    .map((media) => media.contentType);
+  const fromSaved = endpoint.savedResponses
+    .filter((response) => response.status === status)
+    .map((response) => response.contentType);
+  return uniqueStrings([...fromSchema, ...fromSaved, 'application/json']);
+}
+
+export function preferredResponseContentType(endpoint: ProjectEndpoint, status: number) {
+  const options = responseContentTypesForStatus(endpoint, status);
+  return options.find(isJsonContentType) ?? options[0] ?? 'application/json';
+}
+
+function responseMediaTypes(response: ResponseDefinition | undefined) {
+  if (!response) return [];
+  return response.mediaTypes?.length
+    ? response.mediaTypes
+    : [{ contentType: response.contentType, schema: response.schema }];
+}
+
+function uniqueStrings(values: string[]) {
+  return Array.from(new Set(values.filter(Boolean)));
+}
+
+function bodyText(body: unknown, contentType: string) {
+  if (isJsonContentType(contentType)) return JSON.stringify(body, null, 2);
+  return typeof body === 'string' ? body : JSON.stringify(body);
 }
 
 function sampleString(schema: FieldSchema, name: string) {

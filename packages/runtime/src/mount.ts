@@ -11,6 +11,8 @@ export interface MountInput {
   config: EndpointMockConfig;
   /** Optional pre-saved response body to return verbatim. */
   savedBody?: unknown;
+  /** Saved response bodies keyed by status and media type. */
+  savedResponses?: Array<{ status: number; contentType: string; body: unknown }>;
   /** Stable seed for deterministic generation. Defaults to endpoint id. */
   seed?: string;
 }
@@ -89,6 +91,7 @@ async function handle(
       c,
       401,
       responseBody(endpoint, { error: 'Unauthorized' }),
+      'application/json',
       opts.onLog,
       input,
       start,
@@ -97,7 +100,15 @@ async function handle(
 
   if (config.errorChance > 0 && opts.random() < config.errorChance) {
     const status = pickErrorStatus(opts.random);
-    return finish(c, status, responseBody(endpoint, errorBody(status)), opts.onLog, input, start);
+    return finish(
+      c,
+      status,
+      responseBody(endpoint, errorBody(status)),
+      'application/json',
+      opts.onLog,
+      input,
+      start,
+    );
   }
 
   if (config.latencyMs > 0) {
@@ -105,17 +116,28 @@ async function handle(
   }
 
   const response = pickResponse(endpoint, config.statusCode);
+  const mediaType = pickMediaType(response, c.req.header('accept'));
   const status = response?.status ?? config.statusCode ?? 200;
+  const savedResponse = pickSavedResponse(
+    input.savedResponses,
+    status,
+    mediaType,
+    c.req.header('accept'),
+  );
+  const hasKeyedSavedResponses = Boolean(input.savedResponses?.length);
+  const contentType = savedResponse?.contentType ?? mediaType?.contentType;
   const body = responseBody(
     endpoint,
-    savedBody !== undefined
-      ? savedBody
-      : response?.schema
-        ? generateMockValue(response.schema, { seed: seed ?? endpoint.id })
-        : null,
+    savedResponse
+      ? savedResponse.body
+      : savedBody !== undefined && !hasKeyedSavedResponses
+        ? savedBody
+        : mediaType?.schema
+          ? generateMockValue(mediaType.schema, { seed: seed ?? endpoint.id })
+          : null,
   );
 
-  return finish(c, status, body, opts.onLog, input, start);
+  return finish(c, status, body, contentType, opts.onLog, input, start);
 }
 
 function responseBody(endpoint: NormalizedEndpoint, body: unknown): unknown {
@@ -152,10 +174,43 @@ function pickResponse(
   return endpoint.responses.find((r) => r.status >= 200 && r.status < 300) ?? endpoint.responses[0];
 }
 
+function pickSavedResponse(
+  savedResponses: MountInput['savedResponses'] = [],
+  status: number,
+  mediaType: { contentType: string } | undefined,
+  acceptHeader: string | undefined,
+) {
+  const statusMatches = savedResponses.filter((response) => response.status === status);
+  if (!statusMatches.length) return undefined;
+
+  if (mediaType) {
+    const exact = statusMatches.find(
+      (response) => response.contentType.toLowerCase() === mediaType.contentType.toLowerCase(),
+    );
+    if (exact) return exact;
+  }
+
+  if (acceptHeader) {
+    const accepted = acceptHeader
+      .split(',')
+      .map((item) => item.split(';')[0]?.trim().toLowerCase())
+      .filter((item): item is string => Boolean(item));
+    const acceptedMatch = statusMatches.find((response) =>
+      accepted.some((acceptedType) => mediaTypeMatches(acceptedType, response.contentType)),
+    );
+    if (acceptedMatch) return acceptedMatch;
+  }
+
+  return (
+    statusMatches.find((response) => isJsonMediaType(response.contentType)) ?? statusMatches[0]
+  );
+}
+
 async function finish(
   c: Context,
   status: number,
   body: unknown,
+  contentType: string | undefined,
   onLog: BuildOptions['onLog'],
   input: MountInput,
   start: number,
@@ -164,14 +219,9 @@ async function finish(
   c.req.raw.headers.forEach((v, k) => {
     headers[k] = v;
   });
-  let requestBody: unknown = null;
-  try {
-    if (c.req.raw.body) requestBody = await c.req.json();
-  } catch {
-    requestBody = null;
-  }
+  const requestBody = await readRequestBody(c.req.raw);
   const durationMs = Date.now() - start;
-  const response = body === null ? c.body(null, status as 200) : c.json(body, status as 200);
+  const response = createResponse(c, body, status, contentType);
   if (onLog) {
     void onLog({
       endpointId: input.endpoint.id,
@@ -186,6 +236,87 @@ async function finish(
     });
   }
   return response;
+}
+
+function pickMediaType(response: ResponseDefinition | undefined, acceptHeader: string | undefined) {
+  if (!response) return undefined;
+  const mediaTypes = response.mediaTypes?.length
+    ? response.mediaTypes
+    : [{ contentType: response.contentType, schema: response.schema }];
+  if (!acceptHeader) return preferredRuntimeMediaType(mediaTypes);
+
+  const accepted = acceptHeader
+    .split(',')
+    .map((item) => item.split(';')[0]?.trim().toLowerCase())
+    .filter((item): item is string => Boolean(item));
+  return (
+    mediaTypes.find((media) =>
+      accepted.some((acceptedType) => mediaTypeMatches(acceptedType, media.contentType)),
+    ) ?? preferredRuntimeMediaType(mediaTypes)
+  );
+}
+
+function preferredRuntimeMediaType<T extends { contentType: string; schema?: unknown }>(
+  mediaTypes: T[],
+): T | undefined {
+  return (
+    mediaTypes.find((media) => isJsonMediaType(media.contentType)) ??
+    mediaTypes.find((media) => media.schema) ??
+    mediaTypes[0]
+  );
+}
+
+function mediaTypeMatches(accepted: string, offered: string): boolean {
+  const normalizedOffered = offered.toLowerCase();
+  if (accepted === '*/*') return true;
+  if (accepted.endsWith('/*')) return normalizedOffered.startsWith(`${accepted.slice(0, -1)}`);
+  return accepted === normalizedOffered;
+}
+
+async function readRequestBody(request: Request): Promise<unknown> {
+  if (!request.body) return null;
+
+  const contentType = request.headers.get('content-type') ?? '';
+  try {
+    if (isJsonMediaType(contentType)) return await request.json();
+    return await request.text();
+  } catch {
+    return null;
+  }
+}
+
+function createResponse(
+  c: Context,
+  body: unknown,
+  status: number,
+  contentType = 'application/json',
+): Response {
+  if (body === null) return c.body(null, status as 200);
+  if (isJsonMediaType(contentType)) return c.json(body, status as 200);
+  return c.body(serializeBody(body, contentType), status as 200, { 'Content-Type': contentType });
+}
+
+function serializeBody(body: unknown, contentType: string): string {
+  if (typeof body === 'string') return body;
+  if (isFormUrlEncodedMediaType(contentType) && isRecord(body)) {
+    const params = Object.entries(body).map(
+      ([key, value]) => [key, String(value ?? '')] as [string, string],
+    );
+    return new URLSearchParams(params).toString();
+  }
+  return JSON.stringify(body);
+}
+
+function isJsonMediaType(contentType: string): boolean {
+  return /\bjson\b|\+json\b/i.test(contentType);
+}
+
+function isFormUrlEncodedMediaType(contentType: string): boolean {
+  return contentType.toLowerCase().includes('application/x-www-form-urlencoded');
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
 function defaultAuthCheck(c: Context): boolean {

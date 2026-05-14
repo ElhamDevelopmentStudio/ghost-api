@@ -35,8 +35,8 @@ describe('toMountInput', () => {
         errorChance: 0.25,
       },
       responses: [
-        { status: 404, body: { error: 'Missing' } },
-        { status: 200, body: { id: 'saved-user' } },
+        { status: 404, contentType: 'application/json', body: { error: 'Missing' } },
+        { status: 200, contentType: 'application/json', body: { id: 'saved-user' } },
       ],
     };
 
@@ -71,6 +71,10 @@ describe('toMountInput', () => {
         errorChance: 0.25,
       },
       savedBody: { id: 'saved-user' },
+      savedResponses: [
+        { status: 404, contentType: 'application/json', body: { error: 'Missing' } },
+        { status: 200, contentType: 'application/json', body: { id: 'saved-user' } },
+      ],
       seed: 'endpoint-1',
     });
   });
@@ -105,6 +109,7 @@ describe('toMountInput', () => {
         errorChance: 0,
       },
       savedBody: undefined,
+      savedResponses: [],
       seed: 'endpoint-2',
     });
   });
@@ -124,8 +129,8 @@ describe('toMountInput', () => {
         errorChance: 0,
       },
       responses: [
-        { status: 200, body: { id: 'saved-user' } },
-        { status: 404, body: { error: 'Not found' } },
+        { status: 200, contentType: 'application/json', body: { id: 'saved-user' } },
+        { status: 404, contentType: 'application/json', body: { error: 'Not found' } },
       ],
     };
 

@@ -49,6 +49,12 @@ export interface FieldSchema {
   hints?: Record<string, unknown>;
 }
 
+export const MediaTypeSchema = z.object({
+  contentType: z.string(),
+  schema: FieldSchemaSchema.optional(),
+});
+export type MediaTypeDefinition = z.infer<typeof MediaTypeSchema>;
+
 export const ParameterSchema = z.object({
   name: z.string(),
   in: ParameterLocationSchema,
@@ -61,6 +67,7 @@ export type Parameter = z.infer<typeof ParameterSchema>;
 export const RequestBodySchema = z.object({
   contentType: z.string().default('application/json'),
   schema: FieldSchemaSchema,
+  mediaTypes: z.array(MediaTypeSchema).optional(),
   required: z.boolean().default(false),
   description: z.string().optional(),
 });
@@ -70,6 +77,7 @@ export const ResponseSchema = z.object({
   status: z.number().int().min(100).max(599),
   contentType: z.string().default('application/json'),
   schema: FieldSchemaSchema.optional(),
+  mediaTypes: z.array(MediaTypeSchema).optional(),
   description: z.string().optional(),
 });
 export type ResponseDefinition = z.infer<typeof ResponseSchema>;
