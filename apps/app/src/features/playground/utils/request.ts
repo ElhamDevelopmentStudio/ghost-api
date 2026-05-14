@@ -1,5 +1,6 @@
 import type { HttpMethod, ProjectEndpoint } from '@ghostapi/types';
 import type { HeaderDraft, ParamDraft, RequestDraft } from '../types';
+import { effectiveHeaders } from './headers';
 import { makeId } from './ids';
 import { parseJson } from './json';
 import { sampleValue } from './sample-value';
@@ -83,10 +84,10 @@ export async function executePlaygroundRequest({
   sharedHeaders: HeaderDraft[];
 }) {
   const headers = new Headers();
-  for (const header of sharedHeaders.filter((item) => item.enabled && item.key.trim())) {
-    headers.set(header.key.trim(), header.value);
-  }
-  for (const header of request.headers.filter((item) => item.enabled && item.key.trim())) {
+  for (const header of effectiveHeaders({
+    requestHeaders: request.headers,
+    sharedHeaders,
+  })) {
     headers.set(header.key.trim(), header.value);
   }
   if (request.auth.mode === 'bearer' && request.auth.token.trim()) {

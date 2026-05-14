@@ -1,6 +1,6 @@
 import type { HeaderDraft } from '../types';
+import { visibleRequestHeaders, visibleSharedHeaders } from '../utils/headers';
 import { makeId } from '../utils/ids';
-import { normalizeSharedHeaders } from '../utils/shared-headers-storage';
 import { EditorHeader, RemoveButton, RowToggle } from './editor-controls';
 
 export function HeadersEditor({
@@ -12,13 +12,12 @@ export function HeadersEditor({
   sharedHeaders: HeaderDraft[];
   onChange: (headers: HeaderDraft[]) => void;
 }) {
-  const visibleSharedHeaders = normalizeSharedHeaders(sharedHeaders).filter((header) =>
-    header.key.trim(),
-  );
+  const inheritedHeaders = visibleSharedHeaders(sharedHeaders);
+  const requestHeaders = visibleRequestHeaders(headers, sharedHeaders);
 
   return (
     <div className="space-y-5">
-      {visibleSharedHeaders.length ? (
+      {inheritedHeaders.length ? (
         <section className="space-y-3">
           <div>
             <p className="text-sm font-medium text-white">Shared headers</p>
@@ -27,7 +26,7 @@ export function HeadersEditor({
             </p>
           </div>
           <div className="space-y-2">
-            {visibleSharedHeaders.map((header) => (
+            {inheritedHeaders.map((header) => (
               <div
                 key={header.id}
                 className="grid gap-2 rounded-md border border-violet-400/20 bg-violet-500/[0.07] p-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_90px]"
@@ -55,8 +54,8 @@ export function HeadersEditor({
             onChange([...headers, { id: makeId(), key: '', value: '', enabled: true }])
           }
         />
-        {headers.length ? (
-          headers.map((header) => (
+        {requestHeaders.length ? (
+          requestHeaders.map((header) => (
             <div
               key={header.id}
               className="grid gap-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_40px_40px]"

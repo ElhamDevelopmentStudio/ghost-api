@@ -2,6 +2,7 @@ import type { EndpointMockConfig, ProjectEndpoint } from '@ghostapi/types';
 
 import { REQUEST_TABS } from '../constants';
 import type { HeaderDraft, ParamDraft, RequestDraft, RequestTab } from '../types';
+import { effectiveHeaders } from '../utils/headers';
 import { AuthEditor } from './auth-editor';
 import { BodyEditor } from './body-editor';
 import { HeadersEditor } from './headers-editor';
@@ -54,9 +55,10 @@ export function RequestEditor({
   onResponseTextChange: (value: string) => void;
   onSaveResponse: () => void;
 }) {
-  const enabledHeaders = [...sharedHeaders, ...request.headers].filter(
-    (header) => header.enabled && header.key.trim(),
-  );
+  const enabledHeaders = effectiveHeaders({
+    requestHeaders: request.headers,
+    sharedHeaders,
+  });
 
   return (
     <section className="min-w-0 rounded-lg border border-white/10 bg-[#070b12]">
