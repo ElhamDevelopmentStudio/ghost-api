@@ -137,6 +137,7 @@ export async function executePlaygroundRequest({
     requestBodyText,
     requestContentType: headers.get('content-type') ?? '',
     responseContentType: response.headers.get('content-type') ?? '',
+    activityLogId: response.headers.get('x-ghostapi-request-log-id'),
   };
 }
 

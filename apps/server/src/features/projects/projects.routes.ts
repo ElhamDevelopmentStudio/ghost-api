@@ -17,6 +17,7 @@ import {
 } from './project-endpoints.service.js';
 import {
   createProjectForUser,
+  getProjectActivityLogForUser,
   getProjectForUser,
   listProjectActivityLogsForUser,
   listProjectsForUser,
@@ -30,6 +31,9 @@ projectsRouter.use('*', requireAuth);
 
 const endpointStatusParamSchema = z.object({
   status: z.coerce.number().int().min(100).max(599),
+});
+const projectActivityLogParamSchema = z.object({
+  logId: z.string().uuid(),
 });
 
 projectsRouter.get('/', async (c) => {
@@ -86,6 +90,22 @@ projectsRouter.get(
     if (!result) return c.json({ error: 'Project not found' }, 404);
 
     return c.json(result);
+  },
+);
+
+projectsRouter.get(
+  '/:projectId/activity/:logId',
+  zValidator('param', projectActivityLogParamSchema),
+  async (c) => {
+    const { userId } = authContext(c);
+    const log = await getProjectActivityLogForUser({
+      projectId: c.req.param('projectId'),
+      userId,
+      logId: c.req.valid('param').logId,
+    });
+    if (!log) return c.json({ error: 'Request log not found' }, 404);
+
+    return c.json({ log });
   },
 );
 

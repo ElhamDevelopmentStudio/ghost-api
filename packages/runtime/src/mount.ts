@@ -18,6 +18,7 @@ export interface MountInput {
 }
 
 export interface RequestLogEntry {
+  id: string;
   endpointId: string;
   method: string;
   path: string;
@@ -223,13 +224,16 @@ async function finish(
   });
   const requestBody = await readRequestBody(c.req.raw);
   const durationMs = Date.now() - start;
+  const requestLogId = crypto.randomUUID();
   const response = createResponse(c, body, status, contentType);
+  response.headers.set('x-ghostapi-request-log-id', requestLogId);
   const responseHeaders: Record<string, string> = {};
   response.headers.forEach((v, k) => {
     responseHeaders[k] = v;
   });
   if (onLog) {
-    void onLog({
+    await onLog({
+      id: requestLogId,
       endpointId: input.endpoint.id,
       method: input.endpoint.method,
       path: input.endpoint.path,

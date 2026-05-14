@@ -214,6 +214,11 @@ export const projectActivityLogsResponseSchema = z.object({
 });
 export type ProjectActivityLogsResponse = z.infer<typeof projectActivityLogsResponseSchema>;
 
+export const projectActivityLogResponseSchema = z.object({
+  log: projectActivityLogSchema,
+});
+export type ProjectActivityLogResponse = z.infer<typeof projectActivityLogResponseSchema>;
+
 export const updateEndpointConfigBodySchema = EndpointMockConfigSchema.partial();
 export type UpdateEndpointConfigInput = z.infer<typeof updateEndpointConfigBodySchema>;
 

@@ -68,7 +68,11 @@ describe('executePlaygroundRequest', () => {
         calls.push({ input, init });
         return new Response(JSON.stringify({ ok: true }), {
           status: 201,
-          headers: { 'content-type': 'application/json; charset=utf-8', 'x-runtime': 'mock' },
+          headers: {
+            'content-type': 'application/json; charset=utf-8',
+            'x-runtime': 'mock',
+            'x-ghostapi-request-log-id': '00000000-0000-4000-8000-000000000123',
+          },
         });
       }),
     );
@@ -94,6 +98,7 @@ describe('executePlaygroundRequest', () => {
     expect(response.requestBodyText).toBe('{"email":"user@example.com"}');
     expect(response.requestContentType).toBe('application/json');
     expect(response.responseContentType).toBe('application/json; charset=utf-8');
+    expect(response.activityLogId).toBe('00000000-0000-4000-8000-000000000123');
     expect(response.headers).toEqual(expect.arrayContaining([{ key: 'x-runtime', value: 'mock' }]));
   });
 

@@ -1,4 +1,5 @@
-import { RiFileCopyLine, RiPlayLine } from '@remixicon/react';
+import { Link } from 'react-router-dom';
+import { RiFileCopyLine, RiFileList3Line, RiPlayLine } from '@remixicon/react';
 
 import type { ProjectDetail } from '@ghostapi/types';
 import { Button, cn, toast } from '@ghostapi/ui';
@@ -99,6 +100,14 @@ export function ResponsePanel({
                 <RiFileCopyLine className="size-4" />
                 Copy
               </Button>
+              {response.activityLogId ? (
+                <Button type="button" size="sm" variant="secondary" asChild>
+                  <Link to={`/projects/${project.id}/activity?log=${response.activityLogId}`}>
+                    <RiFileList3Line className="size-4" />
+                    View log
+                  </Link>
+                </Button>
+              ) : null}
               {responseMatches !== null ? (
                 <span className="text-white/48 text-xs">{responseMatches} matches</span>
               ) : null}

@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import {
   RiCloseLine,
@@ -21,7 +21,10 @@ import {
   cn,
 } from '@ghostapi/ui';
 
-import { listProjectActivityLogs } from '@/features/projects/api/projects-api';
+import {
+  getProjectActivityLog,
+  listProjectActivityLogs,
+} from '@/features/projects/api/projects-api';
 import { PlaygroundSelect } from '@/features/playground/components/playground-select';
 
 const METHOD_OPTIONS = [
@@ -52,7 +55,7 @@ const RANGE_OPTIONS = [
 
 export function ProjectActivity({ project }: { project: ProjectDetail }) {
   const [params, setParams] = useSearchParams();
-  const [selectedLog, setSelectedLog] = useState<ProjectActivityLog | null>(null);
+  const selectedLogId = params.get('log');
   const filters = useMemo(
     () => ({
       method: normalizedParam(params.get('method')),
@@ -76,12 +79,29 @@ export function ProjectActivity({ project }: { project: ProjectDetail }) {
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
   });
   const logs = query.data?.pages.flatMap((page) => page.logs) ?? [];
+  const selectedFromPage = logs.find((log) => log.id === selectedLogId) ?? null;
+  const selectedLogQuery = useQuery({
+    queryKey: ['projects', project.id, 'activity', selectedLogId],
+    queryFn: () => getProjectActivityLog(project.id, selectedLogId ?? ''),
+    enabled: Boolean(selectedLogId && !selectedFromPage),
+    retry: false,
+  });
+  const selectedLog = selectedFromPage ?? selectedLogQuery.data ?? null;
 
   function setFilter(key: string, value: string) {
     setParams((current) => {
       const next = new URLSearchParams(current);
       if (!value || value === 'all') next.delete(key);
       else next.set(key, value);
+      return next;
+    });
+  }
+
+  function setSelectedLogId(logId: string | null) {
+    setParams((current) => {
+      const next = new URLSearchParams(current);
+      if (logId) next.set('log', logId);
+      else next.delete('log');
       return next;
     });
   }
@@ -96,7 +116,8 @@ export function ProjectActivity({ project }: { project: ProjectDetail }) {
           </div>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white">Request logs</h1>
           <p className="mt-2 max-w-2xl text-sm text-white/55">
-            Inspect mock runtime traffic, payloads, headers, response types, and failures.
+            Inspect mock runtime traffic, payloads, headers, response types, and failures. Logs are
+            retained for 30 days and sensitive values are redacted before storage.
           </p>
         </div>
         <Button type="button" variant="secondary" onClick={() => void query.refetch()}>
@@ -148,7 +169,7 @@ export function ProjectActivity({ project }: { project: ProjectDetail }) {
               <button
                 key={log.id}
                 type="button"
-                onClick={() => setSelectedLog(log)}
+                onClick={() => setSelectedLogId(log.id)}
                 className="grid w-full gap-3 border-b border-white/10 px-4 py-3 text-left transition last:border-b-0 hover:bg-white/[0.035] md:grid-cols-[92px_minmax(0,1fr)_92px_96px_160px]"
               >
                 <span className="font-mono text-sm font-semibold text-cyan-100">{log.method}</span>
@@ -178,7 +199,13 @@ export function ProjectActivity({ project }: { project: ProjectDetail }) {
         </div>
       ) : null}
 
-      <LogDetail log={selectedLog} onOpenChange={(open) => !open && setSelectedLog(null)} />
+      <LogDetail
+        log={selectedLog}
+        isOpen={Boolean(selectedLogId)}
+        isLoading={Boolean(selectedLogId && selectedLogQuery.isLoading && !selectedFromPage)}
+        isError={Boolean(selectedLogId && selectedLogQuery.isError)}
+        onOpenChange={(open) => !open && setSelectedLogId(null)}
+      />
     </section>
   );
 }
@@ -204,13 +231,19 @@ function StatusPill({ status }: { status: number }) {
 
 function LogDetail({
   log,
+  isOpen,
+  isLoading,
+  isError,
   onOpenChange,
 }: {
   log: ProjectActivityLog | null;
+  isOpen: boolean;
+  isLoading: boolean;
+  isError: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
   return (
-    <Sheet open={Boolean(log)} onOpenChange={onOpenChange}>
+    <Sheet open={isOpen} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
         className="w-full border-white/10 bg-[#050910] text-white sm:max-w-2xl"
@@ -237,7 +270,21 @@ function LogDetail({
             </Button>
           </div>
         </SheetHeader>
-        {log ? (
+        {isLoading ? (
+          <SheetBody className="space-y-3">
+            <Skeleton className="h-20 rounded-md bg-white/[0.06]" />
+            <Skeleton className="h-40 rounded-md bg-white/[0.06]" />
+            <Skeleton className="h-40 rounded-md bg-white/[0.06]" />
+          </SheetBody>
+        ) : null}
+        {isError ? (
+          <SheetBody>
+            <div className="rounded-md border border-red-400/20 bg-red-500/10 px-4 py-6 text-sm text-red-100">
+              This request log could not be loaded. It may have been deleted.
+            </div>
+          </SheetBody>
+        ) : null}
+        {log && !isLoading && !isError ? (
           <SheetBody className="space-y-4 overflow-y-auto">
             <DetailGrid log={log} />
             <JsonBlock title="Request headers" value={log.requestHeaders} />
@@ -272,10 +319,17 @@ function DetailItem({ label, value }: { label: string; value: string }) {
 }
 
 function JsonBlock({ title, value }: { title: string; value: unknown }) {
+  const hasRedaction = containsRedactedValue(value);
+
   return (
     <div className="rounded-md border border-white/10 bg-black/20">
-      <div className="border-b border-white/10 px-3 py-2 text-sm font-medium text-white">
-        {title}
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-2">
+        <span className="text-sm font-medium text-white">{title}</span>
+        {hasRedaction ? (
+          <span className="rounded border border-amber-300/20 bg-amber-300/10 px-2 py-0.5 text-xs text-amber-100">
+            Redacted
+          </span>
+        ) : null}
       </div>
       <pre className="text-white/78 max-h-72 overflow-auto p-3 text-xs leading-6">
         {JSON.stringify(value ?? null, null, 2)}
@@ -317,4 +371,11 @@ function ActivityError({ onRetry }: { onRetry: () => void }) {
 
 function normalizedParam(value: string | null) {
   return value && value !== 'all' ? value : undefined;
+}
+
+function containsRedactedValue(value: unknown): boolean {
+  if (value === '[redacted]') return true;
+  if (Array.isArray(value)) return value.some(containsRedactedValue);
+  if (!value || typeof value !== 'object') return false;
+  return Object.values(value).some(containsRedactedValue);
 }

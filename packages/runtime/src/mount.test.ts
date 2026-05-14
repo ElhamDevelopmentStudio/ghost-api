@@ -215,6 +215,7 @@ describe('buildMockRouter', () => {
 
   it('logs non-JSON request bodies and response content type', async () => {
     const entries: Array<{
+      id: string;
       requestBody: unknown;
       responseContentType: string;
       responseHeaders: Record<string, string>;
@@ -234,6 +235,7 @@ describe('buildMockRouter', () => {
       {
         onLog: (entry) => {
           entries.push({
+            id: entry.id,
             requestBody: entry.requestBody,
             responseContentType: entry.responseContentType,
             responseHeaders: entry.responseHeaders,
@@ -249,11 +251,18 @@ describe('buildMockRouter', () => {
     });
 
     expect(res.status).toBe(200);
+    expect(res.headers.get('x-ghostapi-request-log-id')).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+    );
     expect(entries).toEqual([
       expect.objectContaining({
+        id: res.headers.get('x-ghostapi-request-log-id'),
         requestBody: 'hello world',
         responseContentType: expect.stringContaining('application/json'),
-        responseHeaders: expect.objectContaining({ 'content-type': expect.any(String) }),
+        responseHeaders: expect.objectContaining({
+          'content-type': expect.any(String),
+          'x-ghostapi-request-log-id': expect.any(String),
+        }),
       }),
     ]);
   });

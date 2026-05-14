@@ -222,20 +222,7 @@ export async function listProjectActivityLogsForUser({
     orderBy: { createdAt: 'desc' },
     take: limit + 1,
     ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-    select: {
-      id: true,
-      endpointId: true,
-      method: true,
-      path: true,
-      status: true,
-      durationMs: true,
-      headers: true,
-      body: true,
-      responseHeaders: true,
-      responseContentType: true,
-      responseBody: true,
-      createdAt: true,
-    },
+    select: activityLogSelect,
   });
 
   const page = rows.slice(0, limit);
@@ -243,6 +230,26 @@ export async function listProjectActivityLogsForUser({
     logs: page.map(serializeProjectActivityLog),
     nextCursor: rows.length > limit ? (page.at(-1)?.id ?? null) : null,
   };
+}
+
+export async function getProjectActivityLogForUser({
+  projectId,
+  userId,
+  logId,
+}: {
+  projectId: string;
+  userId: string;
+  logId: string;
+}) {
+  const canRead = await userCanReadProject(projectId, userId);
+  if (!canRead) return null;
+
+  const row = await prisma.requestLog.findFirst({
+    where: { id: logId, projectId },
+    select: activityLogSelect,
+  });
+
+  return row ? serializeProjectActivityLog(row) : null;
 }
 
 async function userCanReadProject(projectId: string, userId: string) {
@@ -256,6 +263,21 @@ async function userCanReadProject(projectId: string, userId: string) {
 
   return Boolean(project);
 }
+
+const activityLogSelect = {
+  id: true,
+  endpointId: true,
+  method: true,
+  path: true,
+  status: true,
+  durationMs: true,
+  headers: true,
+  body: true,
+  responseHeaders: true,
+  responseContentType: true,
+  responseBody: true,
+  createdAt: true,
+} satisfies Prisma.RequestLogSelect;
 
 function rangeStart(range: '1h' | '24h' | '7d' | '30d' | undefined) {
   if (!range) return null;

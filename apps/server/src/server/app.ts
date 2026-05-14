@@ -27,6 +27,7 @@ export function createApp() {
       },
       credentials: true,
       allowHeaders: ['Content-Type', 'Accept', 'Authorization', 'X-CSRF-Token'],
+      exposeHeaders: ['X-GhostAPI-Request-Log-Id'],
       allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     }),
   );

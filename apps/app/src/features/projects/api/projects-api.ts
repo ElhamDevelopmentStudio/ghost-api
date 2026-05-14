@@ -4,6 +4,7 @@ import {
   type EndpointMockConfig,
   type ListProjectsResponse,
   type ProjectActivityLogsQuery,
+  type ProjectActivityLogResponse,
   type ProjectActivityLogsResponse,
   type ListProjectEndpointsResponse,
   type ProjectDetail,
@@ -87,6 +88,13 @@ export async function listProjectActivityLogs(
     path: `/projects/${projectId}/activity${params.size ? `?${params.toString()}` : ''}`,
   });
   return response;
+}
+
+export async function getProjectActivityLog(projectId: string, logId: string) {
+  const response = await apiRequest<ProjectActivityLogResponse>({
+    path: `/projects/${projectId}/activity/${logId}`,
+  });
+  return response.log;
 }
 
 export async function updateEndpointConfig(input: {

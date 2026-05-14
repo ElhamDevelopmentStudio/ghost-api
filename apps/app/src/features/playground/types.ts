@@ -51,6 +51,7 @@ export type PlaygroundResponse = {
   requestBodyText: string;
   requestContentType: string;
   responseContentType: string;
+  activityLogId: string | null;
 };
 
 export type MockDraft = {

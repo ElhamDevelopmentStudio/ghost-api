@@ -6,17 +6,22 @@ const prisma = {
   },
   requestLog: {
     findMany: vi.fn(),
+    findFirst: vi.fn(),
   },
 };
 
 vi.mock('../../db.js', () => ({ prisma }));
 
-const { listProjectActivityLogsForUser } = await import('./projects.service.js');
+const { getProjectActivityLogForUser, listProjectActivityLogsForUser } =
+  await import('./projects.service.js');
 
 describe('listProjectActivityLogsForUser', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     prisma.project.findFirst.mockResolvedValue({ id: 'project-id' });
+    prisma.requestLog.findFirst.mockResolvedValue(
+      activityRow('00000000-0000-4000-8000-000000000001', 404, '/auth/login'),
+    );
     prisma.requestLog.findMany.mockResolvedValue([
       activityRow('00000000-0000-4000-8000-000000000001', 404, '/auth/login'),
       activityRow('00000000-0000-4000-8000-000000000002', 401, '/auth/logout'),
@@ -87,6 +92,27 @@ describe('listProjectActivityLogsForUser', () => {
 
     expect(result).toBeNull();
     expect(prisma.requestLog.findMany).not.toHaveBeenCalled();
+  });
+
+  it('loads one activity log by id inside the readable project', async () => {
+    const result = await getProjectActivityLogForUser({
+      projectId: '00000000-0000-4000-8000-000000000010',
+      userId: '00000000-0000-4000-8000-000000000011',
+      logId: '00000000-0000-4000-8000-000000000001',
+    });
+
+    expect(prisma.requestLog.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          id: '00000000-0000-4000-8000-000000000001',
+          projectId: '00000000-0000-4000-8000-000000000010',
+        },
+      }),
+    );
+    expect(result).toMatchObject({
+      id: '00000000-0000-4000-8000-000000000001',
+      requestHeaders: { authorization: 'Bearer token' },
+    });
   });
 });
 

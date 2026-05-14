@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
-import { Prisma } from '@prisma/client';
 import { buildMockRouter, type MountInput } from '@ghostapi/runtime';
 import { prisma } from '../db.js';
 import { logger } from '../logger.js';
 import { toMountInput, type DbEndpoint } from './mock.mount-input.js';
+import { requestLogRetentionCutoff, sanitizeRequestLogEntry } from './request-log-privacy.js';
 
 /**
  * Mounts `/mock/:projectId/*` — the public mock-API surface area for each
@@ -26,30 +26,34 @@ mockRouter.all('/:projectId/*', async (c) => {
   }
 
   const router = buildMockRouter(inputs, {
-    onLog: (entry) => {
-      void prisma.requestLog
+    onLog: async (entry) => {
+      const safeLog = sanitizeRequestLogEntry(entry);
+      await prisma.requestLog
         .create({
           data: {
+            id: safeLog.id,
             projectId,
-            endpointId: entry.endpointId,
-            method: entry.method,
-            path: entry.path,
-            status: entry.status,
-            durationMs: entry.durationMs,
-            headers: entry.requestHeaders as Prisma.InputJsonValue,
-            body:
-              entry.requestBody === null || entry.requestBody === undefined
-                ? Prisma.JsonNull
-                : (entry.requestBody as Prisma.InputJsonValue),
-            responseHeaders: entry.responseHeaders as Prisma.InputJsonValue,
-            responseContentType: entry.responseContentType || null,
-            responseBody:
-              entry.responseBody === null || entry.responseBody === undefined
-                ? Prisma.JsonNull
-                : (entry.responseBody as Prisma.InputJsonValue),
+            endpointId: safeLog.endpointId,
+            method: safeLog.method,
+            path: safeLog.path,
+            status: safeLog.status,
+            durationMs: safeLog.durationMs,
+            headers: safeLog.headers,
+            body: safeLog.body,
+            responseHeaders: safeLog.responseHeaders,
+            responseContentType: safeLog.responseContentType,
+            responseBody: safeLog.responseBody,
           },
         })
         .catch((err) => logger.error({ err }, 'Failed to persist request log'));
+      await prisma.requestLog
+        .deleteMany({
+          where: {
+            projectId,
+            createdAt: { lt: requestLogRetentionCutoff() },
+          },
+        })
+        .catch((err) => logger.error({ err }, 'Failed to prune request logs'));
     },
   });
 
