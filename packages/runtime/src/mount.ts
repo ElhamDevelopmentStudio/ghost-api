@@ -44,29 +44,34 @@ export interface BuildOptions {
  */
 export function buildMockRouter(inputs: MountInput[], opts: BuildOptions = {}): Hono {
   const router = new Hono();
+  const headRouter = new Hono();
+  const headInputs: MountInput[] = [];
   const isAuthorized = opts.isAuthorized ?? defaultAuthCheck;
   const random = opts.random ?? Math.random;
 
   for (const input of inputs) {
     const honoPath = toHonoPath(input.endpoint.path);
-    const method = input.endpoint.method.toLowerCase() as
-      | 'get'
-      | 'post'
-      | 'put'
-      | 'patch'
-      | 'delete';
-    if (
-      method === 'get' ||
-      method === 'post' ||
-      method === 'put' ||
-      method === 'patch' ||
-      method === 'delete'
-    ) {
-      router[method](honoPath, async (c) =>
-        handle(c, input, { isAuthorized, random, onLog: opts.onLog }),
-      );
+    const handler = async (c: Context) =>
+      handle(c, input, { isAuthorized, random, onLog: opts.onLog });
+
+    if (input.endpoint.method === 'HEAD') {
+      headInputs.push(input);
+      headRouter.get(honoPath, handler);
+    } else {
+      router.on(input.endpoint.method, honoPath, handler);
     }
   }
+
+  const fetch = router.fetch.bind(router);
+  router.fetch = async (request, ...rest) => {
+    if (request.method !== 'HEAD' || !matchesHeadInput(headInputs, request)) {
+      return fetch(request, ...rest);
+    }
+
+    const headRequest = new Request(request, { method: 'GET' });
+    const response = await headRouter.fetch(headRequest, ...rest);
+    return new Response(null, response);
+  };
 
   return router;
 }
@@ -80,12 +85,19 @@ async function handle(
   const { endpoint, config, savedBody, seed } = input;
 
   if (config.authRequired && !opts.isAuthorized(c)) {
-    return finish(c, 401, { error: 'Unauthorized' }, opts.onLog, input, start);
+    return finish(
+      c,
+      401,
+      responseBody(endpoint, { error: 'Unauthorized' }),
+      opts.onLog,
+      input,
+      start,
+    );
   }
 
   if (config.errorChance > 0 && opts.random() < config.errorChance) {
     const status = pickErrorStatus(opts.random);
-    return finish(c, status, errorBody(status), opts.onLog, input, start);
+    return finish(c, status, responseBody(endpoint, errorBody(status)), opts.onLog, input, start);
   }
 
   if (config.latencyMs > 0) {
@@ -94,14 +106,40 @@ async function handle(
 
   const response = pickResponse(endpoint, config.statusCode);
   const status = response?.status ?? config.statusCode ?? 200;
-  const body =
+  const body = responseBody(
+    endpoint,
     savedBody !== undefined
       ? savedBody
       : response?.schema
         ? generateMockValue(response.schema, { seed: seed ?? endpoint.id })
-        : null;
+        : null,
+  );
 
   return finish(c, status, body, opts.onLog, input, start);
+}
+
+function responseBody(endpoint: NormalizedEndpoint, body: unknown): unknown {
+  return endpoint.method === 'HEAD' ? null : body;
+}
+
+function matchesHeadInput(inputs: MountInput[], request: Request): boolean {
+  const pathname = new URL(request.url).pathname;
+  return inputs.some((input) => matchesOpenApiPath(input.endpoint.path, pathname));
+}
+
+function matchesOpenApiPath(openapiPath: string, pathname: string): boolean {
+  const routeSegments = pathSegments(openapiPath);
+  const requestSegments = pathSegments(pathname);
+  if (routeSegments.length !== requestSegments.length) return false;
+
+  return routeSegments.every((segment, index) => {
+    if (segment.startsWith('{') && segment.endsWith('}')) return true;
+    return segment === requestSegments[index];
+  });
+}
+
+function pathSegments(path: string): string[] {
+  return path.split('/').filter(Boolean);
 }
 
 function pickResponse(

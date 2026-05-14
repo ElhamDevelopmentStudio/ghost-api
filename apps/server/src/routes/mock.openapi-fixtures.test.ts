@@ -17,6 +17,17 @@ components:
       scheme: bearer
 paths:
   /books/{bookId}:
+    head:
+      tags: [catalog]
+      parameters:
+        - name: bookId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Book exists
     get:
       tags: [catalog]
       security:
@@ -70,6 +81,21 @@ paths:
                     type: string
                     enum: [BOOK_NOT_FOUND]
   /orders:
+    options:
+      tags: [orders]
+      responses:
+        '200':
+          description: Supported order methods
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  methods:
+                    type: array
+                    items:
+                      type: string
+                      enum: [POST]
     post:
       tags: [orders]
       parameters:
@@ -113,7 +139,10 @@ describe('OpenAPI fixture coverage for mock routes', () => {
 
     expect(normalized.title).toBe('Bookstore Fixture API');
     expect(normalized.servers).toEqual(['https://books.example.test']);
-    expect(normalized.endpoints).toHaveLength(2);
+    expect(normalized.endpoints).toHaveLength(4);
+
+    const headBook = endpoint(normalized.endpoints, 'HEAD', '/books/{bookId}');
+    expect(headBook.responses[0]?.status).toBe(204);
 
     const getBook = endpoint(normalized.endpoints, 'GET', '/books/{bookId}');
     expect(getBook.group).toBe('catalog');
@@ -134,6 +163,9 @@ describe('OpenAPI fixture coverage for mock routes', () => {
       required: true,
     });
     expect(createOrder.responses[0]?.status).toBe(201);
+
+    const orderOptions = endpoint(normalized.endpoints, 'OPTIONS', '/orders');
+    expect(orderOptions.responses[0]?.schema?.properties?.methods?.items?.enum).toEqual(['POST']);
   });
 
   it('builds working mock routes from the fixture without relying on api.json', async () => {
@@ -166,6 +198,14 @@ describe('OpenAPI fixture coverage for mock routes', () => {
       price: 24.5,
     });
 
+    const headBook = await app.request('/books/book_123', { method: 'HEAD' });
+    expect(headBook.status).toBe(204);
+    await expect(headBook.text()).resolves.toBe('');
+
+    const orderOptions = await app.request('/orders', { method: 'OPTIONS' });
+    expect(orderOptions.status).toBe(200);
+    await expect(orderOptions.json()).resolves.toEqual({ methods: ['POST', 'POST', 'POST'] });
+
     const createOrder = await app.request('/orders', {
       method: 'POST',
       headers: {
@@ -180,7 +220,7 @@ describe('OpenAPI fixture coverage for mock routes', () => {
       status: 'created',
     });
 
-    expect(logs).toHaveLength(3);
+    expect(logs).toHaveLength(5);
     expect(logs[0]).toMatchObject({
       method: 'GET',
       path: '/books/{bookId}',
@@ -193,6 +233,17 @@ describe('OpenAPI fixture coverage for mock routes', () => {
     });
     expect(logs[1]?.requestHeaders.authorization).toBe('Bearer fixture-token');
     expect(logs[2]).toMatchObject({
+      method: 'HEAD',
+      path: '/books/{bookId}',
+      status: 204,
+      responseBody: null,
+    });
+    expect(logs[3]).toMatchObject({
+      method: 'OPTIONS',
+      path: '/orders',
+      status: 200,
+    });
+    expect(logs[4]).toMatchObject({
       method: 'POST',
       path: '/orders',
       status: 201,
