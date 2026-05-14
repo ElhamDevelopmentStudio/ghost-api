@@ -33,14 +33,17 @@ const MAIN_NAV = [
     icon: RiHome5Line,
     getTo: (projectId?: string) => (projectId ? `/projects/${projectId}` : '/projects'),
   },
-  { label: 'Playground', icon: RiTerminalBoxLine, getTo: () => '/workspace' },
   { label: 'Logs', icon: RiFileList3Line, getTo: () => '/logs' },
   { label: 'Settings', icon: RiSettings3Line, getTo: () => '/settings' },
 ] as const;
 
 const PROJECT_DETAIL_NAV = [
-  { label: 'Overview', icon: RiHome5Line, hash: '' },
-  { label: 'Runtime', icon: RiTerminalBoxLine, hash: '#runtime' },
+  { label: 'Overview', icon: RiHome5Line, getTo: (projectId: string) => `/projects/${projectId}` },
+  {
+    label: 'Playground',
+    icon: RiTerminalBoxLine,
+    getTo: (projectId: string) => `/projects/${projectId}/playground`,
+  },
   { label: 'Activity', icon: RiFileList3Line, hash: '#activity' },
 ] as const;
 
@@ -76,11 +79,16 @@ export function AppSidebar({ currentProject }: AppSidebarProps) {
         <div className="text-white/46 mb-4 text-xs uppercase tracking-[0.12em]">Main</div>
         <div className="space-y-4">
           {currentProject
-            ? PROJECT_DETAIL_NAV.map(({ label, icon: Icon, hash }) => {
-                const to = `/projects/${currentProject.id}${hash}`;
+            ? PROJECT_DETAIL_NAV.map(({ label, icon: Icon, ...item }) => {
+                const to =
+                  'getTo' in item
+                    ? item.getTo(currentProject.id)
+                    : `/projects/${currentProject.id}${item.hash}`;
                 const isActive =
-                  location.pathname === `/projects/${currentProject.id}` &&
-                  (hash ? location.hash === hash : location.hash === '');
+                  'getTo' in item
+                    ? location.pathname === to
+                    : location.pathname === `/projects/${currentProject.id}` &&
+                      (item.hash ? location.hash === item.hash : location.hash === '');
 
                 return (
                   <Link
