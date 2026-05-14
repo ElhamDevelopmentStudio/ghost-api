@@ -190,25 +190,16 @@
     radial-gradient(circle at 4% 0%, rgba(109, 40, 217, 0.24), transparent 48%), var(--app-panel);
   --project-card-aura-rose:
     radial-gradient(circle at 4% 0%, rgba(190, 24, 93, 0.2), transparent 48%), var(--app-panel);
-  --project-hero-aura:
-    radial-gradient(circle at 30% 50%, rgba(109, 40, 217, 0.24), transparent 38%),
-    radial-gradient(circle at 76% 18%, rgba(var(--primary-rgb), 0.1), transparent 28%);
-  --project-hero-requests: #8b5cf6;
-  --project-hero-requests-shadow: #7c3aed;
-  --project-hero-requests-fill: rgba(124, 58, 237, 0.22);
-  --project-hero-errors: #ec4899;
-  --project-hero-errors-shadow: #db2777;
-  --project-hero-errors-fill: rgba(236, 72, 153, 0.2);
-  --project-hero-latency: var(--warning);
-  --project-hero-latency-shadow: #d97706;
-  --project-hero-latency-fill: var(--warning-subtle);
-  --project-hero-ghost-fill-start: #a855f7;
-  --project-hero-ghost-fill-mid: #6d28d9;
-  --project-hero-ghost-fill-end: #312e81;
-  --project-hero-ghost-edge-start: #f5d0fe;
-  --project-hero-orbit-outer: #4c1d95;
-  --project-hero-orbit-inner: #5b21b6;
-  --project-hero-orbit-core: #2e1065;
+  --project-overview-sheet:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent 34%), var(--app-canvas);
+  --project-overview-command:
+    linear-gradient(180deg, rgba(10, 16, 28, 0.98), rgba(3, 7, 14, 0.98)),
+    linear-gradient(135deg, rgba(103, 232, 249, 0.08), transparent 34%);
+  --project-overview-grid:
+    linear-gradient(rgba(148, 163, 184, 0.038) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.038) 1px, transparent 1px),
+    radial-gradient(ellipse at 16% 20%, rgba(103, 232, 249, 0.08), transparent 42%);
+  --project-chart-bar: linear-gradient(180deg, var(--chart-2), var(--primary-hover));
   --floating-ghost-orbit-border: color-mix(in srgb, var(--primary-hover) 25%, transparent);
   --floating-ghost-pad-surface: color-mix(in srgb, var(--primary-active) 22%, transparent);
   --floating-ghost-pad-border: color-mix(in srgb, var(--primary-hover) 35%, transparent);
@@ -704,8 +695,24 @@
     background: var(--project-card-aura-rose);
   }
 
-  .bg-project-hero-aura {
-    background: var(--project-hero-aura);
+  .project-overview-sheet {
+    background: var(--project-overview-sheet);
+  }
+
+  .project-overview-command {
+    background: var(--project-overview-command);
+  }
+
+  .project-overview-grid {
+    background-image: var(--project-overview-grid);
+    background-size:
+      42px 42px,
+      42px 42px,
+      auto;
+  }
+
+  .bg-project-chart-bar {
+    background: var(--project-chart-bar);
   }
 
   .bg-floating-ghost-halo {

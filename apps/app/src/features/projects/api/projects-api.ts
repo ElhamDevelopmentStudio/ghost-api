@@ -6,6 +6,7 @@ import {
   type ProjectDetailResponse,
   type ProjectResponse,
   type ProjectSummary,
+  type UploadProjectSchemaResponse,
 } from '@ghostapi/types';
 
 import { getCsrfToken } from '@/features/auth/api/auth-api';
@@ -35,4 +36,19 @@ export async function createProject(input: CreateProjectInput): Promise<ProjectS
   });
 
   return response.project;
+}
+
+export async function uploadProjectSchema(input: {
+  projectId: string;
+  content: string;
+}): Promise<UploadProjectSchemaResponse> {
+  const csrfToken = await getCsrfToken();
+  return apiRequest<UploadProjectSchemaResponse>({
+    path: `/projects/${input.projectId}/schemas`,
+    method: 'POST',
+    body: { content: input.content },
+    headers: {
+      [CSRF_HEADER]: csrfToken,
+    },
+  });
 }

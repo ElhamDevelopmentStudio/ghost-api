@@ -1,6 +1,7 @@
 import type {
   ProjectDetail,
   ProjectEnvironment,
+  ProjectOverviewMetrics,
   ProjectRole,
   ProjectSchemaVersion,
   ProjectSummary,
@@ -31,6 +32,25 @@ export type ProjectDetailRow = Omit<ProjectSummaryRow, 'environments'> & {
   schemas: Array<{ id: string; version: number; uploadedAt: Date }>;
 };
 
+export type ProjectRequestLogRow = {
+  id: string;
+  method: string;
+  path: string;
+  status: number;
+  durationMs: number;
+  createdAt: Date;
+};
+
+export type ProjectMethodCountRow = {
+  method: string;
+  _count: { _all: number };
+};
+
+export type ProjectSampleEndpointRow = {
+  method: string;
+  path: string;
+};
+
 export function serializeProject(project: ProjectSummaryRow, userId: string): ProjectSummary {
   return {
     id: project.id,
@@ -49,7 +69,11 @@ export function serializeProject(project: ProjectSummaryRow, userId: string): Pr
   };
 }
 
-export function serializeProjectDetail(project: ProjectDetailRow, userId: string): ProjectDetail {
+export function serializeProjectDetail(
+  project: ProjectDetailRow,
+  userId: string,
+  overview: ProjectOverviewMetrics,
+): ProjectDetail {
   const summary = serializeProject(
     {
       ...project,
@@ -77,5 +101,81 @@ export function serializeProjectDetail(project: ProjectDetailRow, userId: string
     ownerId: project.ownerId,
     environments,
     schemas,
+    overview,
   };
+}
+
+export function serializeProjectOverviewMetrics({
+  recentRequests,
+  windowRequests,
+  routeMethodCounts,
+  sampleEndpoint,
+}: {
+  recentRequests: ProjectRequestLogRow[];
+  windowRequests: ProjectRequestLogRow[];
+  routeMethodCounts: ProjectMethodCountRow[];
+  sampleEndpoint: ProjectSampleEndpointRow | null;
+}): ProjectOverviewMetrics {
+  const requestTrend = buildSevenDayTrend(windowRequests);
+  const statusBreakdown = buildStatusBreakdown(windowRequests);
+  const averageDurationMs =
+    windowRequests.length > 0
+      ? Math.round(
+          windowRequests.reduce((sum, request) => sum + request.durationMs, 0) /
+            windowRequests.length,
+        )
+      : null;
+
+  return {
+    requestTrend,
+    routeMethodBreakdown: routeMethodCounts.map((row) => ({
+      label: row.method,
+      count: row._count._all,
+    })),
+    statusBreakdown,
+    averageDurationMs,
+    recentRequests: recentRequests.map((request) => ({
+      id: request.id,
+      method: request.method,
+      path: request.path,
+      status: request.status,
+      durationMs: request.durationMs,
+      createdAt: request.createdAt.toISOString(),
+    })),
+    sampleEndpoint,
+  };
+}
+
+function buildSevenDayTrend(requests: ProjectRequestLogRow[]) {
+  const days = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date();
+    date.setUTCHours(0, 0, 0, 0);
+    date.setUTCDate(date.getUTCDate() - (6 - index));
+    return date;
+  });
+
+  return days.map((date) => {
+    const key = date.toISOString().slice(0, 10);
+    return {
+      date: key,
+      label: date.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' }),
+      count: requests.filter((request) => request.createdAt.toISOString().startsWith(key)).length,
+    };
+  });
+}
+
+function buildStatusBreakdown(requests: ProjectRequestLogRow[]) {
+  const success = { label: '2xx', count: 0 };
+  const redirect = { label: '3xx', count: 0 };
+  const clientError = { label: '4xx', count: 0 };
+  const serverError = { label: '5xx', count: 0 };
+
+  for (const request of requests) {
+    if (request.status >= 200 && request.status < 300) success.count += 1;
+    else if (request.status >= 300 && request.status < 400) redirect.count += 1;
+    else if (request.status >= 400 && request.status < 500) clientError.count += 1;
+    else if (request.status >= 500) serverError.count += 1;
+  }
+
+  return [success, redirect, clientError, serverError];
 }

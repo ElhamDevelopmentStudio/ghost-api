@@ -8,6 +8,8 @@ import {
   projectResponseSchema as sharedProjectResponseSchema,
   createUploadResponseSchema as sharedCreateUploadResponseSchema,
   completeUploadResponseSchema as sharedCompleteUploadResponseSchema,
+  uploadProjectSchemaBodySchema as sharedUploadProjectSchemaBodySchema,
+  uploadProjectSchemaResponseSchema as sharedUploadProjectSchemaResponseSchema,
 } from '@ghostapi/types';
 
 import type { AppEnv } from '../server/types.js';
@@ -28,6 +30,12 @@ const createUploadBodySchema = sharedCreateUploadBodySchema.openapi('CreateUploa
 const createUploadResponseSchema = sharedCreateUploadResponseSchema.openapi('CreateUploadResponse');
 const completeUploadResponseSchema =
   sharedCompleteUploadResponseSchema.openapi('CompleteUploadResponse');
+const uploadProjectSchemaBodySchema = sharedUploadProjectSchemaBodySchema.openapi(
+  'UploadProjectSchemaRequest',
+);
+const uploadProjectSchemaResponseSchema = sharedUploadProjectSchemaResponseSchema.openapi(
+  'UploadProjectSchemaResponse',
+);
 
 export function registerBackendOpenApi(app: OpenAPIHono<AppEnv>): void {
   app.openAPIRegistry.registerPath({
@@ -174,16 +182,14 @@ export function registerBackendOpenApi(app: OpenAPIHono<AppEnv>): void {
     path: '/projects/{projectId}/schemas',
     tags: ['Schemas'],
     summary: 'Upload and normalize an OpenAPI schema for a project',
-    security: [{ accessCookie: [] }],
+    security: [{ accessCookie: [] }, { csrfHeader: [] }],
     request: {
       params: z.object({ projectId: z.string().uuid() }),
       body: {
         required: true,
         content: {
           'application/json': {
-            schema: z.object({
-              content: z.string().min(1).max(2_000_000),
-            }),
+            schema: uploadProjectSchemaBodySchema,
           },
         },
       },
@@ -193,11 +199,7 @@ export function registerBackendOpenApi(app: OpenAPIHono<AppEnv>): void {
         description: 'Schema stored and endpoints replaced atomically.',
         content: {
           'application/json': {
-            schema: z.object({
-              schemaId: z.string().uuid(),
-              version: z.number().int().positive(),
-              endpointCount: z.number().int().min(0),
-            }),
+            schema: uploadProjectSchemaResponseSchema,
           },
         },
       },

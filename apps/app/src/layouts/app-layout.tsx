@@ -9,7 +9,7 @@ import { AppTopbar } from '@/components/app-topbar';
  */
 export function AppLayout() {
   return (
-    <div className="bg-background text-foreground flex min-h-screen">
+    <div className="bg-background text-foreground flex h-screen overflow-hidden">
       <AppSidebar />
       <div className="bg-app-canvas min-w-0 flex-1 overflow-y-auto text-white">
         <AppTopbar />

@@ -3,7 +3,11 @@ import type { CreateProjectParsed } from '@ghostapi/types';
 
 import { prisma } from '../../db.js';
 import { attachmentThumbnailUrl } from '../uploads/upload.urls.js';
-import { serializeProject, serializeProjectDetail } from './projects.serializers.js';
+import {
+  serializeProject,
+  serializeProjectDetail,
+  serializeProjectOverviewMetrics,
+} from './projects.serializers.js';
 import { slugifyProjectName } from './projects.utils.js';
 
 export class ProjectImageAttachmentNotFoundError extends Error {
@@ -123,7 +127,71 @@ export async function getProjectForUser(projectId: string, userId: string) {
   if (!project) return null;
   if (project.ownerId !== userId && project.members.length === 0) return null;
 
-  return serializeProjectDetail(project, userId);
+  const overviewWindowStart = new Date();
+  overviewWindowStart.setUTCHours(0, 0, 0, 0);
+  overviewWindowStart.setUTCDate(overviewWindowStart.getUTCDate() - 6);
+
+  const [recentRequests, windowRequests, routeMethods, sampleEndpoint] = await prisma.$transaction([
+    prisma.requestLog.findMany({
+      where: { projectId },
+      orderBy: { createdAt: 'desc' },
+      take: 8,
+      select: {
+        id: true,
+        method: true,
+        path: true,
+        status: true,
+        durationMs: true,
+        createdAt: true,
+      },
+    }),
+    prisma.requestLog.findMany({
+      where: {
+        projectId,
+        createdAt: { gte: overviewWindowStart },
+      },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        method: true,
+        path: true,
+        status: true,
+        durationMs: true,
+        createdAt: true,
+      },
+    }),
+    prisma.endpoint.findMany({
+      where: { projectId },
+      orderBy: { method: 'asc' },
+      select: { method: true },
+    }),
+    prisma.endpoint.findFirst({
+      where: { projectId, method: 'GET' },
+      orderBy: { path: 'asc' },
+      select: { method: true, path: true },
+    }),
+  ]);
+
+  const overview = serializeProjectOverviewMetrics({
+    recentRequests,
+    windowRequests,
+    routeMethodCounts: countRouteMethods(routeMethods),
+    sampleEndpoint,
+  });
+
+  return serializeProjectDetail(project, userId, overview);
+}
+
+function countRouteMethods(routeMethods: Array<{ method: string }>) {
+  const counts = new Map<string, number>();
+  for (const route of routeMethods) {
+    counts.set(route.method, (counts.get(route.method) ?? 0) + 1);
+  }
+
+  return Array.from(counts.entries()).map(([method, count]) => ({
+    method,
+    _count: { _all: count },
+  }));
 }
 
 async function uniqueProjectSlug(value: string): Promise<string> {

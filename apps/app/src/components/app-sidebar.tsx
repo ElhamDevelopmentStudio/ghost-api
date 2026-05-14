@@ -1,4 +1,4 @@
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   RiArrowDownSLine,
@@ -38,10 +38,17 @@ const MAIN_NAV = [
   { label: 'Settings', icon: RiSettings3Line, getTo: () => '/settings' },
 ] as const;
 
+const PROJECT_DETAIL_NAV = [
+  { label: 'Overview', icon: RiHome5Line, hash: '' },
+  { label: 'Runtime', icon: RiTerminalBoxLine, hash: '#runtime' },
+  { label: 'Activity', icon: RiFileList3Line, hash: '#activity' },
+] as const;
+
 const dropdownSurfaceClass =
-  'border-white/14 bg-sidebar-dropdown text-white shadow-sidebar-dropdown backdrop-blur-xl supports-[backdrop-filter]:bg-sidebar-dropdown-blur';
+  'border-white/16 bg-sidebar-dropdown text-white shadow-sidebar-dropdown backdrop-blur-2xl supports-[backdrop-filter]:bg-sidebar-dropdown-blur';
 
 export function AppSidebar({ currentProject }: AppSidebarProps) {
+  const location = useLocation();
   const projectsQuery = useQuery({
     queryKey: ['projects'],
     queryFn: listProjects,
@@ -51,66 +58,91 @@ export function AppSidebar({ currentProject }: AppSidebarProps) {
   const projectCount = projectsQuery.data?.length ?? 0;
 
   return (
-    <aside className="relative hidden w-[286px] shrink-0 overflow-hidden border-r border-white/10 bg-black/20 text-white lg:flex lg:flex-col">
+    <aside className="relative hidden h-screen w-[286px] shrink-0 overflow-hidden border-r border-white/10 bg-black/20 text-white lg:flex lg:flex-col">
       <div className="px-6 pb-6 pt-9">
         <Logo imageClassName="h-11" />
       </div>
 
-      <div className="flex items-center gap-3 px-6">
+      <div className="px-6">
         <WorkspaceSelector
           label={workspaceLabel}
           isLoading={projectsQuery.isLoading}
           isError={projectsQuery.isError}
           projectCount={projectCount}
         />
-        <Link
-          to={currentProject ? `/projects/${currentProject.id}` : '/settings'}
-          aria-label="Workspace settings"
-          className="grid size-11 place-items-center rounded-lg border border-white/10 bg-white/[0.035] text-white/80 transition-colors hover:bg-white/[0.06] hover:text-white"
-        >
-          <RiSettings3Line className="size-5" />
-        </Link>
       </div>
 
       <nav className="mt-9 flex flex-1 flex-col px-6">
         <div className="text-white/46 mb-4 text-xs uppercase tracking-[0.12em]">Main</div>
         <div className="space-y-4">
-          {MAIN_NAV.map(({ label, icon: Icon, getTo }) => (
-            <NavLink
-              key={label}
-              to={getTo(currentProject?.id)}
-              className={({ isActive }) =>
-                cn(
-                  'flex h-12 items-center gap-4 rounded-xl px-3 text-sm transition-colors',
-                  isActive
-                    ? 'bg-sidebar-nav-active shadow-sidebar-nav-active text-white'
-                    : 'text-white/72 hover:bg-white/[0.04] hover:text-white',
-                )
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  <span
+          {currentProject
+            ? PROJECT_DETAIL_NAV.map(({ label, icon: Icon, hash }) => {
+                const to = `/projects/${currentProject.id}${hash}`;
+                const isActive =
+                  location.pathname === `/projects/${currentProject.id}` &&
+                  (hash ? location.hash === hash : location.hash === '');
+
+                return (
+                  <Link
+                    key={label}
+                    to={to}
                     className={cn(
-                      'grid size-8 place-items-center rounded-full',
+                      'flex h-12 items-center gap-4 rounded-xl px-3 text-sm transition-colors',
                       isActive
-                        ? 'bg-sidebar-nav-icon-active shadow-sidebar-nav-icon-active text-white'
-                        : 'text-white/76',
+                        ? 'bg-sidebar-nav-active shadow-sidebar-nav-active text-white'
+                        : 'text-white/72 hover:bg-white/[0.04] hover:text-white',
                     )}
                   >
-                    <Icon className="size-5" />
-                  </span>
-                  {label}
-                </>
-              )}
-            </NavLink>
-          ))}
+                    <span
+                      className={cn(
+                        'grid size-8 place-items-center rounded-full',
+                        isActive
+                          ? 'bg-sidebar-nav-icon-active shadow-sidebar-nav-icon-active text-white'
+                          : 'text-white/76',
+                      )}
+                    >
+                      <Icon className="size-5" />
+                    </span>
+                    {label}
+                  </Link>
+                );
+              })
+            : MAIN_NAV.map(({ label, icon: Icon, getTo }) => (
+                <NavLink
+                  key={label}
+                  to={getTo()}
+                  className={({ isActive }) =>
+                    cn(
+                      'flex h-12 items-center gap-4 rounded-xl px-3 text-sm transition-colors',
+                      isActive
+                        ? 'bg-sidebar-nav-active shadow-sidebar-nav-active text-white'
+                        : 'text-white/72 hover:bg-white/[0.04] hover:text-white',
+                    )
+                  }
+                >
+                  {({ isActive }) => (
+                    <>
+                      <span
+                        className={cn(
+                          'grid size-8 place-items-center rounded-full',
+                          isActive
+                            ? 'bg-sidebar-nav-icon-active shadow-sidebar-nav-icon-active text-white'
+                            : 'text-white/76',
+                        )}
+                      >
+                        <Icon className="size-5" />
+                      </span>
+                      {label}
+                    </>
+                  )}
+                </NavLink>
+              ))}
         </div>
       </nav>
 
       <SidebarBlob />
 
-      <div className="relative z-10 border-t border-white/10 bg-black/10 px-6 py-5">
+      <div className="border-white/12 shadow-sidebar-dropdown supports-[backdrop-filter]:bg-[#090c16]/28 relative z-10 border-t bg-[#090c16]/35 px-6 py-5 backdrop-blur-2xl">
         {isAuthLoading ? (
           <UserSkeleton />
         ) : (
@@ -200,7 +232,10 @@ function UserMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button type="button" className="flex w-full items-center gap-3 text-left">
+        <button
+          type="button"
+          className="flex w-full items-center gap-3 rounded-lg px-1 py-1.5 text-left transition-colors hover:bg-white/[0.04]"
+        >
           <span className="bg-brand-action shadow-sidebar-avatar grid size-11 shrink-0 place-items-center rounded-full text-sm font-semibold text-white">
             {initials}
           </span>
@@ -243,8 +278,11 @@ function UserSkeleton() {
 
 function SidebarBlob() {
   return (
-    <div aria-hidden className="pointer-events-none relative h-[150px] overflow-hidden">
-      <div className="bg-sidebar-blob border-sidebar-blob shadow-sidebar-blob animate-sidebar-blob absolute bottom-[-44px] left-0 h-[150px] w-[172px] border">
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-[260px] overflow-hidden"
+    >
+      <div className="bg-sidebar-blob border-sidebar-blob shadow-sidebar-blob animate-sidebar-blob absolute bottom-[-28px] left-[-4px] h-[172px] w-[190px] border">
         <span className="bg-sidebar-blob-highlight absolute left-8 top-8 h-24 w-16 rounded-[55%_45%_68%_32%/42%_62%_38%_58%] blur-2xl" />
         <span className="bg-sidebar-blob-accent absolute bottom-6 right-4 h-14 w-20 rounded-[35%_65%_48%_52%/63%_36%_64%_37%] blur-xl" />
       </div>

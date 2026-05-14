@@ -51,10 +51,50 @@ export const projectSchemaVersionSchema = z.object({
 });
 export type ProjectSchemaVersion = z.infer<typeof projectSchemaVersionSchema>;
 
+export const projectOverviewTrendPointSchema = z.object({
+  date: z.string().date(),
+  label: z.string(),
+  count: z.number().int().nonnegative(),
+});
+export type ProjectOverviewTrendPoint = z.infer<typeof projectOverviewTrendPointSchema>;
+
+export const projectOverviewBreakdownItemSchema = z.object({
+  label: z.string(),
+  count: z.number().int().nonnegative(),
+});
+export type ProjectOverviewBreakdownItem = z.infer<typeof projectOverviewBreakdownItemSchema>;
+
+export const projectRecentRequestSchema = z.object({
+  id: z.string().uuid(),
+  method: z.string(),
+  path: z.string(),
+  status: z.number().int(),
+  durationMs: z.number().int().nonnegative(),
+  createdAt: z.string().datetime(),
+});
+export type ProjectRecentRequest = z.infer<typeof projectRecentRequestSchema>;
+
+export const projectSampleEndpointSchema = z.object({
+  method: z.string(),
+  path: z.string(),
+});
+export type ProjectSampleEndpoint = z.infer<typeof projectSampleEndpointSchema>;
+
+export const projectOverviewMetricsSchema = z.object({
+  requestTrend: z.array(projectOverviewTrendPointSchema),
+  routeMethodBreakdown: z.array(projectOverviewBreakdownItemSchema),
+  statusBreakdown: z.array(projectOverviewBreakdownItemSchema),
+  averageDurationMs: z.number().int().nonnegative().nullable(),
+  recentRequests: z.array(projectRecentRequestSchema),
+  sampleEndpoint: projectSampleEndpointSchema.nullable(),
+});
+export type ProjectOverviewMetrics = z.infer<typeof projectOverviewMetricsSchema>;
+
 export const projectDetailSchema = projectSummarySchema.extend({
   ownerId: z.string().uuid(),
   environments: z.array(projectEnvironmentSchema),
   schemas: z.array(projectSchemaVersionSchema),
+  overview: projectOverviewMetricsSchema,
 });
 export type ProjectDetail = z.infer<typeof projectDetailSchema>;
 
@@ -89,3 +129,15 @@ export const createProjectBodySchema = z.object({
 });
 export type CreateProjectInput = z.input<typeof createProjectBodySchema>;
 export type CreateProjectParsed = z.infer<typeof createProjectBodySchema>;
+
+export const uploadProjectSchemaBodySchema = z.object({
+  content: z.string().min(1).max(2_000_000),
+});
+export type UploadProjectSchemaInput = z.infer<typeof uploadProjectSchemaBodySchema>;
+
+export const uploadProjectSchemaResponseSchema = z.object({
+  schemaId: z.string().uuid(),
+  version: z.number().int().positive(),
+  endpointCount: z.number().int().nonnegative(),
+});
+export type UploadProjectSchemaResponse = z.infer<typeof uploadProjectSchemaResponseSchema>;
