@@ -47,6 +47,7 @@ export const router = createBrowserRouter([
       { path: 'projects/:projectId', element: <ProjectDetailPage /> },
       { path: 'projects/:projectId/activity', element: <ProjectActivityPage /> },
       { path: 'projects/:projectId/playground', element: <PlaygroundPage /> },
+      { path: 'projects/:projectId/settings', element: <SettingsPage /> },
       {
         element: <AppLayout />,
         children: [

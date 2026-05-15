@@ -49,6 +49,11 @@ const PROJECT_DETAIL_NAV = [
     icon: RiFileList3Line,
     getTo: (projectId: string) => `/projects/${projectId}/activity`,
   },
+  {
+    label: 'Settings',
+    icon: RiSettings3Line,
+    getTo: (projectId: string) => `/projects/${projectId}/settings`,
+  },
 ] as const;
 
 const dropdownSurfaceClass =

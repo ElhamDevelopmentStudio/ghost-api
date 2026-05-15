@@ -5,6 +5,9 @@ import {
   saveEndpointResponseBodySchema,
   updateEndpointConfigBodySchema,
   updateProjectActivitySettingsBodySchema,
+  updateProjectBodySchema,
+  updateProjectMockDefaultsBodySchema,
+  upsertProjectEnvironmentsBodySchema,
 } from '@ghostapi/types';
 import { Hono } from 'hono';
 import { z } from 'zod';
@@ -22,11 +25,15 @@ import {
   createProjectForUser,
   getProjectActivityLogForUser,
   getProjectForUser,
+  getProjectSchemaForUser,
   listProjectActivityLogsForUser,
   listProjectsForUser,
   ProjectImageAttachmentNotFoundError,
   ProjectSlugConflictError,
+  updateProjectForUser,
   updateProjectActivitySettingsForUser,
+  updateProjectMockDefaultsForUser,
+  upsertProjectEnvironmentsForUser,
 } from './projects.service.js';
 
 export const projectsRouter = new Hono<AppEnv>();
@@ -41,6 +48,9 @@ const endpointResponseQuerySchema = z.object({
 });
 const projectActivityLogParamSchema = z.object({
   logId: z.string().uuid(),
+});
+const projectSchemaParamSchema = z.object({
+  schemaId: z.string().uuid(),
 });
 
 projectsRouter.get('/', async (c) => {
@@ -75,6 +85,81 @@ projectsRouter.get('/:id', async (c) => {
 
   return c.json({ project });
 });
+
+projectsRouter.patch(
+  '/:projectId',
+  requireCsrf,
+  zValidator('json', updateProjectBodySchema),
+  async (c) => {
+    const { userId } = authContext(c);
+
+    try {
+      const project = await updateProjectForUser({
+        projectId: c.req.param('projectId'),
+        userId,
+        input: c.req.valid('json'),
+      });
+
+      if (!project) return c.json({ error: 'Project not found' }, 404);
+      return c.json({ project });
+    } catch (error) {
+      if (error instanceof ProjectSlugConflictError) {
+        return c.json({ error: error.message }, 409);
+      }
+      throw error;
+    }
+  },
+);
+
+projectsRouter.get(
+  '/:projectId/schemas/:schemaId',
+  zValidator('param', projectSchemaParamSchema),
+  async (c) => {
+    const { userId } = authContext(c);
+    const schema = await getProjectSchemaForUser({
+      projectId: c.req.param('projectId'),
+      userId,
+      schemaId: c.req.valid('param').schemaId,
+    });
+
+    if (!schema) return c.json({ error: 'Schema not found' }, 404);
+    return c.json({ schema });
+  },
+);
+
+projectsRouter.put(
+  '/:projectId/environments',
+  requireCsrf,
+  zValidator('json', upsertProjectEnvironmentsBodySchema),
+  async (c) => {
+    const { userId } = authContext(c);
+    const result = await upsertProjectEnvironmentsForUser({
+      projectId: c.req.param('projectId'),
+      userId,
+      input: c.req.valid('json'),
+    });
+    if (!result) return c.json({ error: 'Project not found' }, 404);
+
+    return c.json(result);
+  },
+);
+
+projectsRouter.patch(
+  '/:projectId/mock-defaults',
+  requireCsrf,
+  zValidator('json', updateProjectMockDefaultsBodySchema),
+  async (c) => {
+    const { userId } = authContext(c);
+    const result = await updateProjectMockDefaultsForUser({
+      projectId: c.req.param('projectId'),
+      userId,
+      input: c.req.valid('json'),
+    });
+    if (!result) return c.json({ error: 'Project not found' }, 404);
+
+    return c.json(result);
+  },
+);
 
 projectsRouter.get('/:projectId/endpoints', async (c) => {
   const { userId } = authContext(c);

@@ -117,6 +117,7 @@ model Project {
   description String?
   icon        String?
   activityLogRetentionDays Int @default(30) @map("activity_log_retention_days")
+  mockDefaults Json @default("{}") @map("mock_defaults")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 

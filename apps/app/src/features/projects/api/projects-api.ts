@@ -13,12 +13,19 @@ import {
   type ProjectEndpoint,
   type ProjectEndpointResponse,
   type ProjectActivitySettingsResponse,
+  type ProjectEnvironmentsResponse,
   type ProjectResponse,
+  type ProjectSchemaDetail,
+  type ProjectSchemaDetailResponse,
   type ProjectSummary,
   type SaveEndpointResponseInput,
   type UpdateEndpointConfigInput,
+  type UpdateProjectInput,
   type UpdateProjectActivitySettingsInput,
+  type UpdateProjectMockDefaultsInput,
+  type UpsertProjectEnvironmentsInput,
   type UploadProjectSchemaResponse,
+  type ProjectMockDefaultsResponse,
 } from '@ghostapi/types';
 
 import { getCsrfToken } from '@/features/auth/api/auth-api';
@@ -31,6 +38,9 @@ export type {
   ProjectEndpoint,
   ProjectSummary,
   ProjectActivityLogsQuery,
+  UpdateProjectInput,
+  UpdateProjectMockDefaultsInput,
+  UpsertProjectEnvironmentsInput,
 };
 
 export async function listProjects(): Promise<ProjectSummary[]> {
@@ -57,15 +67,76 @@ export async function createProject(input: CreateProjectInput): Promise<ProjectS
   return response.project;
 }
 
+export async function updateProject(
+  projectId: string,
+  input: UpdateProjectInput,
+): Promise<ProjectDetail> {
+  const csrfToken = await getCsrfToken();
+  const response = await apiRequest<ProjectDetailResponse>({
+    path: `/projects/${projectId}`,
+    method: 'PATCH',
+    body: input,
+    headers: {
+      [CSRF_HEADER]: csrfToken,
+    },
+  });
+
+  return response.project;
+}
+
 export async function uploadProjectSchema(input: {
   projectId: string;
   content: string;
+  overrideDuplicateEndpoints?: boolean;
 }): Promise<UploadProjectSchemaResponse> {
   const csrfToken = await getCsrfToken();
   return apiRequest<UploadProjectSchemaResponse>({
     path: `/projects/${input.projectId}/schemas`,
     method: 'POST',
-    body: { content: input.content },
+    body: {
+      content: input.content,
+      overrideDuplicateEndpoints: input.overrideDuplicateEndpoints ?? false,
+    },
+    headers: {
+      [CSRF_HEADER]: csrfToken,
+    },
+  });
+}
+
+export async function getProjectSchema(input: {
+  projectId: string;
+  schemaId: string;
+}): Promise<ProjectSchemaDetail> {
+  const response = await apiRequest<ProjectSchemaDetailResponse>({
+    path: `/projects/${input.projectId}/schemas/${input.schemaId}`,
+  });
+  return response.schema;
+}
+
+export async function upsertProjectEnvironments(
+  projectId: string,
+  input: UpsertProjectEnvironmentsInput,
+): Promise<ProjectEnvironmentsResponse> {
+  const csrfToken = await getCsrfToken();
+  return apiRequest<ProjectEnvironmentsResponse>({
+    path: `/projects/${projectId}/environments`,
+    method: 'PUT',
+    body: input,
+    headers: {
+      [CSRF_HEADER]: csrfToken,
+    },
+  });
+}
+
+export async function updateProjectMockDefaults(
+  projectId: string,
+  input: UpdateProjectMockDefaultsInput,
+): Promise<ProjectMockDefaultsResponse> {
+  const csrfToken = await getCsrfToken();
+  return apiRequest<ProjectMockDefaultsResponse>({
+    path: `/projects/${projectId}/mock-defaults`,
+    method: 'PATCH',
+    body: input,
     headers: {
       [CSRF_HEADER]: csrfToken,
     },

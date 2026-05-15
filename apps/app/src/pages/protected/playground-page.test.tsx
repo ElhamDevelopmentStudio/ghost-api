@@ -155,6 +155,12 @@ function project(): ProjectDetail {
     endpointCount: 1,
     requestCount: 0,
     activityLogRetentionDays: 0,
+    mockDefaults: {
+      latencyMs: 0,
+      statusCode: null,
+      authRequired: false,
+      errorChance: 0,
+    },
     environment: {
       name: 'Development',
       baseUrl: 'https://api.example.com',
@@ -172,6 +178,10 @@ function project(): ProjectDetail {
       {
         id: '00000000-0000-4000-8000-000000000012',
         version: 1,
+        title: 'James API',
+        schemaVersion: '1.0.0',
+        endpointCount: 1,
+        sizeBytes: 1024,
         uploadedAt: '2026-05-15T00:00:00.000Z',
       },
     ],

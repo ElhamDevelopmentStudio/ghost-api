@@ -1,13 +1,22 @@
 import { Prisma } from '@prisma/client';
-import type { CreateProjectParsed } from '@ghostapi/types';
+import {
+  ProjectMockDefaultsSchema,
+  type CreateProjectParsed,
+  type UpdateProjectInput,
+  type UpdateProjectMockDefaultsInput,
+  type UpsertProjectEnvironmentsInput,
+} from '@ghostapi/types';
 
 import { prisma } from '../../db.js';
 import { attachmentThumbnailUrl } from '../uploads/upload.urls.js';
+import { invalidateProjectMockRuntime } from './mock-runtime-cache.js';
 import {
   serializeProjectActivityLog,
   serializeProject,
   serializeProjectDetail,
   serializeProjectOverviewMetrics,
+  parseMockDefaults,
+  schemaMetadata,
 } from './projects.serializers.js';
 import { slugifyProjectName } from './projects.utils.js';
 
@@ -38,6 +47,7 @@ export async function listProjectsForUser(userId: string) {
       description: true,
       icon: true,
       activityLogRetentionDays: true,
+      mockDefaults: true,
       ownerId: true,
       createdAt: true,
       updatedAt: true,
@@ -83,7 +93,17 @@ export async function createProjectForUser(input: CreateProjectParsed, userId: s
           },
         },
       },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        description: true,
+        icon: true,
+        activityLogRetentionDays: true,
+        mockDefaults: true,
+        ownerId: true,
+        createdAt: true,
+        updatedAt: true,
         members: { where: { userId }, select: { role: true } },
         environments: { orderBy: { createdAt: 'asc' }, take: 1 },
         _count: { select: { endpoints: true, requestLogs: true, members: true } },
@@ -110,6 +130,7 @@ export async function getProjectForUser(projectId: string, userId: string) {
       description: true,
       icon: true,
       activityLogRetentionDays: true,
+      mockDefaults: true,
       ownerId: true,
       createdAt: true,
       updatedAt: true,
@@ -121,7 +142,7 @@ export async function getProjectForUser(projectId: string, userId: string) {
       schemas: {
         orderBy: { uploadedAt: 'desc' },
         take: 5,
-        select: { id: true, version: true, uploadedAt: true },
+        select: { id: true, version: true, uploadedAt: true, metadata: true },
       },
       _count: { select: { endpoints: true, requestLogs: true, members: true } },
     },
@@ -183,6 +204,178 @@ export async function getProjectForUser(projectId: string, userId: string) {
   });
 
   return serializeProjectDetail(project, userId, overview);
+}
+
+export async function updateProjectForUser({
+  projectId,
+  userId,
+  input,
+}: {
+  projectId: string;
+  userId: string;
+  input: UpdateProjectInput;
+}) {
+  const canEdit = await userCanEditProject(projectId, userId);
+  if (!canEdit) return null;
+
+  const data: Prisma.ProjectUpdateInput = {};
+  if (input.name !== undefined) data.name = input.name;
+  if (input.description !== undefined) data.description = input.description;
+  if (input.icon !== undefined) data.icon = input.icon;
+  if (input.slug !== undefined) data.slug = input.slug;
+
+  try {
+    await prisma.project.update({
+      where: { id: projectId },
+      data,
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      throw new ProjectSlugConflictError();
+    }
+    throw error;
+  }
+
+  return getProjectForUser(projectId, userId);
+}
+
+export async function getProjectSchemaForUser({
+  projectId,
+  userId,
+  schemaId,
+}: {
+  projectId: string;
+  userId: string;
+  schemaId: string;
+}) {
+  const canRead = await userCanReadProject(projectId, userId);
+  if (!canRead) return null;
+
+  const schema = await prisma.schema.findFirst({
+    where: { id: schemaId, projectId },
+    select: { id: true, version: true, uploadedAt: true, metadata: true, content: true },
+  });
+  if (!schema) return null;
+
+  return {
+    id: schema.id,
+    version: schema.version,
+    ...schemaMetadata(schema.metadata),
+    uploadedAt: schema.uploadedAt.toISOString(),
+    metadata:
+      schema.metadata && typeof schema.metadata === 'object' && !Array.isArray(schema.metadata)
+        ? (schema.metadata as Record<string, unknown>)
+        : {},
+    content: schema.content,
+  };
+}
+
+export async function upsertProjectEnvironmentsForUser({
+  projectId,
+  userId,
+  input,
+}: {
+  projectId: string;
+  userId: string;
+  input: UpsertProjectEnvironmentsInput;
+}) {
+  const canEdit = await userCanEditProject(projectId, userId);
+  if (!canEdit) return null;
+
+  const environments = await prisma.$transaction(async (tx) => {
+    for (const environment of input.environments) {
+      await tx.environment.upsert({
+        where: {
+          projectId_name: {
+            projectId,
+            name: environment.name,
+          },
+        },
+        create: {
+          projectId,
+          name: environment.name,
+          baseUrl: environment.baseUrl,
+        },
+        update: {
+          baseUrl: environment.baseUrl,
+        },
+      });
+    }
+
+    return tx.environment.findMany({
+      where: { projectId },
+      orderBy: { createdAt: 'asc' },
+      select: { id: true, name: true, baseUrl: true, createdAt: true, updatedAt: true },
+    });
+  });
+
+  return {
+    environments: environments.map((env) => ({
+      id: env.id,
+      name: env.name,
+      baseUrl: env.baseUrl,
+      createdAt: env.createdAt.toISOString(),
+      updatedAt: env.updatedAt.toISOString(),
+    })),
+  };
+}
+
+export async function updateProjectMockDefaultsForUser({
+  projectId,
+  userId,
+  input,
+}: {
+  projectId: string;
+  userId: string;
+  input: UpdateProjectMockDefaultsInput;
+}) {
+  const canEdit = await userCanEditProject(projectId, userId);
+  if (!canEdit) return null;
+
+  const currentProject = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: { mockDefaults: true },
+  });
+  if (!currentProject) return null;
+
+  const mockDefaults = ProjectMockDefaultsSchema.parse({
+    ...parseMockDefaults(currentProject.mockDefaults),
+    ...input,
+  });
+
+  await prisma.$transaction(async (tx) => {
+    await tx.project.update({
+      where: { id: projectId },
+      data: { mockDefaults },
+    });
+
+    const endpoints = await tx.endpoint.findMany({
+      where: { projectId },
+      select: { id: true, config: { select: { id: true } } },
+    });
+
+    for (const endpoint of endpoints) {
+      await tx.endpointConfig.upsert({
+        where: { endpointId: endpoint.id },
+        create: {
+          endpointId: endpoint.id,
+          latencyMs: mockDefaults.latencyMs,
+          statusCode: mockDefaults.statusCode,
+          authRequired: mockDefaults.authRequired,
+          errorChance: mockDefaults.errorChance,
+        },
+        update: {
+          latencyMs: mockDefaults.latencyMs,
+          statusCode: mockDefaults.statusCode,
+          authRequired: mockDefaults.authRequired,
+          errorChance: mockDefaults.errorChance,
+        },
+      });
+    }
+  });
+
+  invalidateProjectMockRuntime(projectId);
+  return { mockDefaults };
 }
 
 export async function listProjectActivityLogsForUser({
@@ -297,6 +490,21 @@ async function userCanReadProject(projectId: string, userId: string) {
     where: {
       id: projectId,
       OR: [{ ownerId: userId }, { members: { some: { userId } } }],
+    },
+    select: { id: true },
+  });
+
+  return Boolean(project);
+}
+
+async function userCanEditProject(projectId: string, userId: string) {
+  const project = await prisma.project.findFirst({
+    where: {
+      id: projectId,
+      OR: [
+        { ownerId: userId },
+        { members: { some: { userId, role: { in: ['OWNER', 'ADMIN', 'EDITOR'] } } } },
+      ],
     },
     select: { id: true },
   });

@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import type { Prisma } from '@prisma/client';
-import { uploadProjectSchemaBodySchema } from '@ghostapi/types';
+import { ProjectMockDefaultsSchema, uploadProjectSchemaBodySchema } from '@ghostapi/types';
 import { parseSchema, SchemaParseError, SchemaValidationError } from '@ghostapi/parser';
 import { prisma } from '../db.js';
 import { logger } from '../logger.js';
@@ -19,7 +19,7 @@ schemasRouter.post(
   zValidator('json', uploadProjectSchemaBodySchema),
   async (c) => {
     const projectId = c.req.param('projectId');
-    const { content } = c.req.valid('json');
+    const { content, overrideDuplicateEndpoints } = c.req.valid('json');
     const { userId } = authContext(c);
 
     let normalized;
@@ -47,7 +47,6 @@ schemasRouter.post(
     });
     if (!project) return c.json({ error: 'Project not found' }, 404);
 
-    // Replace endpoints atomically. Phase 1: full replace on each upload.
     const result = await prisma.$transaction(async (tx) => {
       const lastVersion = await tx.schema.findFirst({
         where: { projectId },
@@ -63,33 +62,104 @@ schemasRouter.post(
             title: normalized.title,
             version: normalized.version,
             endpointCount: normalized.endpoints.length,
+            sizeBytes: Buffer.byteLength(content, 'utf8'),
           },
         },
       });
 
-      await tx.endpoint.deleteMany({ where: { projectId } });
+      const mockDefaults = ProjectMockDefaultsSchema.parse(
+        project.mockDefaults && typeof project.mockDefaults === 'object'
+          ? project.mockDefaults
+          : {},
+      );
+      const existingEndpoints = await tx.endpoint.findMany({
+        where: { projectId },
+        select: { id: true, method: true, path: true, config: { select: { id: true } } },
+      });
+      const existingByKey = new Map(
+        existingEndpoints.map((endpoint) => [
+          endpointKey(endpoint.method, endpoint.path),
+          endpoint,
+        ]),
+      );
+      let addedEndpointCount = 0;
+      let updatedEndpointCount = 0;
+      let skippedDuplicateCount = 0;
+
       for (const ep of normalized.endpoints) {
-        await tx.endpoint.create({
+        const existing = existingByKey.get(endpointKey(ep.method, ep.path));
+        const requestSchema = {
+          parameters: ep.parameters,
+          requestBody: ep.requestBody ?? null,
+        } as unknown as Prisma.InputJsonValue;
+        const responseSchema = { responses: ep.responses } as unknown as Prisma.InputJsonValue;
+
+        if (existing) {
+          if (!overrideDuplicateEndpoints) {
+            skippedDuplicateCount += 1;
+            continue;
+          }
+
+          await tx.endpoint.update({
+            where: { id: existing.id },
+            data: {
+              group: ep.group,
+              requestSchema,
+              responseSchema,
+            },
+          });
+          await tx.endpointConfig.upsert({
+            where: { endpointId: existing.id },
+            create: {
+              endpointId: existing.id,
+              latencyMs: mockDefaults.latencyMs,
+              statusCode: mockDefaults.statusCode,
+              authRequired: ep.authRequired || mockDefaults.authRequired,
+              errorChance: mockDefaults.errorChance,
+            },
+            update: {
+              authRequired: ep.authRequired || mockDefaults.authRequired,
+            },
+          });
+          updatedEndpointCount += 1;
+          continue;
+        }
+
+        const createdEndpoint = await tx.endpoint.create({
           data: {
             projectId,
             method: ep.method,
             path: ep.path,
             group: ep.group,
-            requestSchema: {
-              parameters: ep.parameters,
-              requestBody: ep.requestBody ?? null,
-            } as unknown as Prisma.InputJsonValue,
-            responseSchema: { responses: ep.responses } as unknown as Prisma.InputJsonValue,
+            requestSchema,
+            responseSchema,
             config: {
               create: {
-                authRequired: ep.authRequired,
+                latencyMs: mockDefaults.latencyMs,
+                statusCode: mockDefaults.statusCode,
+                authRequired: ep.authRequired || mockDefaults.authRequired,
+                errorChance: mockDefaults.errorChance,
               },
             },
           },
+          select: { id: true },
         });
+        existingByKey.set(endpointKey(ep.method, ep.path), {
+          id: createdEndpoint.id,
+          method: ep.method,
+          path: ep.path,
+          config: { id: '' },
+        });
+        addedEndpointCount += 1;
       }
 
-      return { schema, endpointCount: normalized.endpoints.length };
+      return {
+        schema,
+        endpointCount: normalized.endpoints.length,
+        addedEndpointCount,
+        updatedEndpointCount,
+        skippedDuplicateCount,
+      };
     });
     invalidateProjectMockRuntime(projectId);
 
@@ -98,8 +168,15 @@ schemasRouter.post(
         schemaId: result.schema.id,
         version: result.schema.version,
         endpointCount: result.endpointCount,
+        addedEndpointCount: result.addedEndpointCount,
+        updatedEndpointCount: result.updatedEndpointCount,
+        skippedDuplicateCount: result.skippedDuplicateCount,
       },
       201,
     );
   },
 );
+
+function endpointKey(method: string, path: string) {
+  return `${method.toUpperCase()} ${path}`;
+}

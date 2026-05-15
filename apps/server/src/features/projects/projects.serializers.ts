@@ -1,11 +1,13 @@
 import type {
   ProjectDetail,
   ProjectEnvironment,
+  ProjectMockDefaults,
   ProjectOverviewMetrics,
   ProjectRole,
   ProjectSchemaVersion,
   ProjectSummary,
 } from '@ghostapi/types';
+import { ProjectMockDefaultsSchema } from '@ghostapi/types';
 
 export type ProjectSummaryRow = {
   id: string;
@@ -14,6 +16,7 @@ export type ProjectSummaryRow = {
   description: string | null;
   icon: string | null;
   activityLogRetentionDays: number;
+  mockDefaults: unknown;
   ownerId: string;
   members: { role: ProjectRole }[];
   environments: { name: string; baseUrl: string }[];
@@ -30,7 +33,7 @@ export type ProjectDetailRow = Omit<ProjectSummaryRow, 'environments'> & {
     createdAt: Date;
     updatedAt: Date;
   }>;
-  schemas: Array<{ id: string; version: number; uploadedAt: Date }>;
+  schemas: Array<{ id: string; version: number; uploadedAt: Date; metadata: unknown }>;
 };
 
 export type ProjectRequestLogRow = {
@@ -74,6 +77,7 @@ export function serializeProject(project: ProjectSummaryRow, userId: string): Pr
     endpointCount: project._count.endpoints,
     requestCount: project._count.requestLogs,
     activityLogRetentionDays: toActivityLogRetentionDays(project.activityLogRetentionDays),
+    mockDefaults: parseMockDefaults(project.mockDefaults),
     environment: project.environments[0] ?? null,
     createdAt: project.createdAt.toISOString(),
     updatedAt: project.updatedAt.toISOString(),
@@ -108,6 +112,7 @@ export function serializeProjectDetail(
   const schemas: ProjectSchemaVersion[] = project.schemas.map((schema) => ({
     id: schema.id,
     version: schema.version,
+    ...schemaMetadata(schema.metadata),
     uploadedAt: schema.uploadedAt.toISOString(),
   }));
 
@@ -117,6 +122,32 @@ export function serializeProjectDetail(
     environments,
     schemas,
     overview,
+  };
+}
+
+export function parseMockDefaults(value: unknown): ProjectMockDefaults {
+  return ProjectMockDefaultsSchema.parse(
+    value && typeof value === 'object' && !Array.isArray(value) ? value : {},
+  );
+}
+
+export function schemaMetadata(value: unknown) {
+  const metadata =
+    value && typeof value === 'object' && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : {};
+
+  return {
+    title: typeof metadata.title === 'string' ? metadata.title : null,
+    schemaVersion: typeof metadata.version === 'string' ? metadata.version : null,
+    endpointCount:
+      typeof metadata.endpointCount === 'number' && Number.isFinite(metadata.endpointCount)
+        ? Math.max(0, Math.trunc(metadata.endpointCount))
+        : 0,
+    sizeBytes:
+      typeof metadata.sizeBytes === 'number' && Number.isFinite(metadata.sizeBytes)
+        ? Math.max(0, Math.trunc(metadata.sizeBytes))
+        : null,
   };
 }
 

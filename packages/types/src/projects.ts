@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { EndpointMockConfigSchema } from './mock-config.js';
+import { EndpointMockConfigSchema, ProjectMockDefaultsSchema } from './mock-config.js';
 import {
   HttpMethodSchema,
   ParameterSchema,
@@ -46,6 +46,7 @@ export const projectSummarySchema = z.object({
   endpointCount: z.number().int().nonnegative(),
   requestCount: z.number().int().nonnegative(),
   activityLogRetentionDays: activityLogRetentionDaysSchema,
+  mockDefaults: ProjectMockDefaultsSchema,
   environment: projectEnvironmentSummarySchema.nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
@@ -64,9 +65,19 @@ export type ProjectEnvironment = z.infer<typeof projectEnvironmentSchema>;
 export const projectSchemaVersionSchema = z.object({
   id: z.string().uuid(),
   version: z.number().int().nonnegative(),
+  title: z.string().nullable(),
+  schemaVersion: z.string().nullable(),
+  endpointCount: z.number().int().nonnegative(),
+  sizeBytes: z.number().int().nonnegative().nullable(),
   uploadedAt: z.string().datetime(),
 });
 export type ProjectSchemaVersion = z.infer<typeof projectSchemaVersionSchema>;
+
+export const projectSchemaDetailSchema = projectSchemaVersionSchema.extend({
+  content: z.unknown(),
+  metadata: z.record(z.string(), z.unknown()),
+});
+export type ProjectSchemaDetail = z.infer<typeof projectSchemaDetailSchema>;
 
 export const projectOverviewTrendPointSchema = z.object({
   date: z.string().date(),
@@ -147,8 +158,39 @@ export const createProjectBodySchema = z.object({
 export type CreateProjectInput = z.input<typeof createProjectBodySchema>;
 export type CreateProjectParsed = z.infer<typeof createProjectBodySchema>;
 
+export const updateProjectBodySchema = createProjectBodySchema
+  .pick({
+    name: true,
+    slug: true,
+    description: true,
+    icon: true,
+  })
+  .partial()
+  .extend({
+    description: z.string().max(500).nullable().optional(),
+    icon: z.string().max(64).nullable().optional(),
+  });
+export type UpdateProjectInput = z.infer<typeof updateProjectBodySchema>;
+
+export const updateProjectMockDefaultsBodySchema = ProjectMockDefaultsSchema.partial();
+export type UpdateProjectMockDefaultsInput = z.infer<typeof updateProjectMockDefaultsBodySchema>;
+
+export const upsertProjectEnvironmentsBodySchema = z.object({
+  environments: z
+    .array(
+      z.object({
+        name: projectEnvironmentNameSchema,
+        baseUrl: z.string().max(250),
+      }),
+    )
+    .min(1)
+    .max(3),
+});
+export type UpsertProjectEnvironmentsInput = z.infer<typeof upsertProjectEnvironmentsBodySchema>;
+
 export const uploadProjectSchemaBodySchema = z.object({
   content: z.string().min(1).max(2_000_000),
+  overrideDuplicateEndpoints: z.boolean().default(false),
 });
 export type UploadProjectSchemaInput = z.infer<typeof uploadProjectSchemaBodySchema>;
 
@@ -156,8 +198,26 @@ export const uploadProjectSchemaResponseSchema = z.object({
   schemaId: z.string().uuid(),
   version: z.number().int().positive(),
   endpointCount: z.number().int().nonnegative(),
+  addedEndpointCount: z.number().int().nonnegative(),
+  updatedEndpointCount: z.number().int().nonnegative(),
+  skippedDuplicateCount: z.number().int().nonnegative(),
 });
 export type UploadProjectSchemaResponse = z.infer<typeof uploadProjectSchemaResponseSchema>;
+
+export const projectSchemaDetailResponseSchema = z.object({
+  schema: projectSchemaDetailSchema,
+});
+export type ProjectSchemaDetailResponse = z.infer<typeof projectSchemaDetailResponseSchema>;
+
+export const projectEnvironmentsResponseSchema = z.object({
+  environments: z.array(projectEnvironmentSchema),
+});
+export type ProjectEnvironmentsResponse = z.infer<typeof projectEnvironmentsResponseSchema>;
+
+export const projectMockDefaultsResponseSchema = z.object({
+  mockDefaults: ProjectMockDefaultsSchema,
+});
+export type ProjectMockDefaultsResponse = z.infer<typeof projectMockDefaultsResponseSchema>;
 
 export const projectEndpointSavedResponseSchema = z.object({
   status: z.number().int().min(100).max(599),

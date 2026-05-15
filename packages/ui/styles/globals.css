@@ -19,6 +19,12 @@
  * so they activate regardless of the user's OS color-scheme preference. */
 @custom-variant dark (&:where(.dark, .dark *));
 
+@layer components {
+  .settings-label {
+    @apply text-xs uppercase tracking-[0.18em] text-white/42;
+  }
+}
+
 :root {
   color-scheme: dark;
 
