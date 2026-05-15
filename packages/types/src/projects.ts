@@ -28,6 +28,9 @@ export type ActivityLogRetentionDays = z.infer<typeof activityLogRetentionDaysSc
 export const projectEnvironmentNameSchema = z.enum(['Development', 'Staging', 'Production']);
 export type ProjectEnvironmentName = z.infer<typeof projectEnvironmentNameSchema>;
 
+export const environmentStatusSchema = z.enum(['ACTIVE', 'INACTIVE']);
+export type EnvironmentStatus = z.infer<typeof environmentStatusSchema>;
+
 export const projectEnvironmentSummarySchema = z.object({
   name: z.string(),
   baseUrl: z.string(),
@@ -57,6 +60,14 @@ export const projectEnvironmentSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
   baseUrl: z.string(),
+  description: z.string().nullable(),
+  color: z.string(),
+  icon: z.string(),
+  status: environmentStatusSchema,
+  variables: z.record(z.string(), z.string()),
+  headers: z.record(z.string(), z.string()),
+  authConfig: z.record(z.string(), z.unknown()),
+  corsConfig: z.record(z.string(), z.unknown()),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -179,12 +190,21 @@ export const upsertProjectEnvironmentsBodySchema = z.object({
   environments: z
     .array(
       z.object({
-        name: projectEnvironmentNameSchema,
+        id: z.string().uuid().optional(),
+        name: z.string().min(1).max(80),
         baseUrl: z.string().max(250),
+        description: z.string().max(200).nullable().optional(),
+        color: z.string().max(32).optional(),
+        icon: z.string().max(32).optional(),
+        status: environmentStatusSchema.optional(),
+        variables: z.record(z.string(), z.string()).optional(),
+        headers: z.record(z.string(), z.string()).optional(),
+        authConfig: z.record(z.string(), z.unknown()).optional(),
+        corsConfig: z.record(z.string(), z.unknown()).optional(),
       }),
     )
     .min(1)
-    .max(3),
+    .max(20),
 });
 export type UpsertProjectEnvironmentsInput = z.infer<typeof upsertProjectEnvironmentsBodySchema>;
 

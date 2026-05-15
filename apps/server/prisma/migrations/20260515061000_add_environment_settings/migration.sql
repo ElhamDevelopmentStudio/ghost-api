@@ -1,0 +1,6 @@
+ALTER TABLE "environments"
+  ADD COLUMN "description" TEXT,
+  ADD COLUMN "color" TEXT NOT NULL DEFAULT '#22c55e',
+  ADD COLUMN "icon" TEXT NOT NULL DEFAULT 'globe',
+  ADD COLUMN "status" TEXT NOT NULL DEFAULT 'ACTIVE',
+  ADD COLUMN "cors_config" JSONB NOT NULL DEFAULT '{}';

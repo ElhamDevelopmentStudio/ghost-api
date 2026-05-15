@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   RiArrowRightSLine,
@@ -11,9 +11,13 @@ import {
   RiFileCopyLine,
   RiFileList3Line,
   RiGlobalLine,
+  RiHardDrive3Line,
+  RiKey2Line,
+  RiAddLine,
   RiRefreshLine,
   RiSave3Line,
   RiSettings3Line,
+  RiShieldCheckLine,
   RiUploadCloud2Line,
 } from '@remixicon/react';
 
@@ -38,6 +42,7 @@ import {
 } from '@ghostapi/ui';
 import type {
   ProjectDetail,
+  ProjectEnvironment,
   ProjectEnvironmentName,
   ProjectMockDefaults,
   ProjectSchemaDetail,
@@ -46,6 +51,7 @@ import type {
 
 import {
   getProjectSchema,
+  deleteProjectEnvironment,
   listProjectEndpoints,
   updateProject,
   updateProjectMockDefaults,
@@ -55,12 +61,12 @@ import {
 import { ProjectIcon } from '@/features/projects/components/project-icon';
 
 const SETTINGS_TABS = [
-  'General',
-  'Environments',
-  'Mock Behavior',
-  'Schema',
-  'Members',
-  'Danger Zone',
+  { label: 'General', value: 'general', enabled: true },
+  { label: 'Environments', value: 'environments', enabled: true },
+  { label: 'Mock Behavior', value: 'mock-behavior', enabled: false },
+  { label: 'Schema', value: 'schema', enabled: false },
+  { label: 'Members', value: 'members', enabled: false },
+  { label: 'Danger Zone', value: 'danger-zone', enabled: false },
 ] as const;
 
 const PROJECT_ICONS = [
@@ -75,50 +81,80 @@ const PROJECT_ICONS = [
 ] as const;
 
 const ENVIRONMENT_NAMES: ProjectEnvironmentName[] = ['Development', 'Staging', 'Production'];
+const ENVIRONMENT_ICONS = [
+  { value: 'globe', icon: RiGlobalLine },
+  { value: 'code', icon: RiCodeBoxLine },
+  { value: 'server', icon: RiHardDrive3Line },
+  { value: 'key', icon: RiKey2Line },
+  { value: 'shield', icon: RiShieldCheckLine },
+] as const;
 
 export function ProjectSettingsGeneral({ project }: { project: ProjectDetail }) {
+  const [searchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') === 'environments' ? 'environments' : 'general';
+
   return (
     <div className="pb-12">
-      <div className="mb-8 flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
+      <div className="mb-8">
         <div>
           <p className="text-white/42 text-xs uppercase tracking-[0.18em]">Project Settings</p>
-          <h1 className="mt-3 text-4xl font-semibold tracking-normal text-white">General</h1>
+          <h1 className="mt-3 text-4xl font-semibold tracking-normal text-white">
+            Project Settings
+          </h1>
           <p className="text-white/52 mt-2 text-sm">
             Identity, schema source, environments, and project-wide mock defaults.
           </p>
         </div>
-        <SettingsTabs />
+        <SettingsTabs activeTab={activeTab} />
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.02fr)_minmax(420px,0.98fr)]">
-        <ProjectInformationPanel project={project} />
-        <CurrentSchemaPanel project={project} />
-        <MockDefaultsPanel project={project} />
-        <EnvironmentsPanel project={project} />
-      </div>
+      {activeTab === 'environments' ? (
+        <ProjectSettingsEnvironments project={project} />
+      ) : (
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.02fr)_minmax(420px,0.98fr)]">
+          <ProjectInformationPanel project={project} />
+          <CurrentSchemaPanel project={project} />
+          <MockDefaultsPanel project={project} />
+          <EnvironmentsPanel project={project} />
+        </div>
+      )}
     </div>
   );
 }
 
-function SettingsTabs() {
+function SettingsTabs({ activeTab }: { activeTab: 'general' | 'environments' }) {
   return (
-    <div className="flex max-w-full gap-1 overflow-x-auto rounded-lg border border-white/10 bg-white/[0.025] p-1">
+    <div className="mt-8 flex max-w-full gap-8 overflow-x-auto border-b border-white/10">
       {SETTINGS_TABS.map((tab) => {
-        const isActive = tab === 'General';
+        const isActive = tab.value === activeTab;
+        const className = cn(
+          'relative h-12 shrink-0 text-sm transition-colors',
+          isActive
+            ? 'text-white'
+            : tab.enabled
+              ? 'text-white/70 hover:text-white'
+              : 'text-white/36',
+          !tab.enabled && 'cursor-not-allowed',
+          isActive &&
+            'after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-purple-500',
+        );
+
+        if (!tab.enabled) {
+          return (
+            <button key={tab.value} type="button" disabled className={className}>
+              {tab.label}
+            </button>
+          );
+        }
+
         return (
-          <button
-            key={tab}
-            type="button"
-            disabled={!isActive}
-            className={cn(
-              'h-9 shrink-0 rounded-md px-3 text-sm transition-colors',
-              isActive
-                ? 'bg-white/10 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]'
-                : 'text-white/36 cursor-not-allowed',
-            )}
+          <Link
+            key={tab.value}
+            to={tab.value === 'general' ? '.' : `.?tab=${tab.value}`}
+            className={className}
           >
-            {tab}
-          </button>
+            {tab.label}
+          </Link>
         );
       })}
     </div>
@@ -639,6 +675,512 @@ function EnvironmentsPanel({ project }: { project: ProjectDetail }) {
   );
 }
 
+type EnvironmentDraft = {
+  id?: string;
+  name: string;
+  baseUrl: string;
+  description: string;
+  color: string;
+  icon: string;
+  status: 'ACTIVE' | 'INACTIVE';
+  variables: Record<string, string>;
+  headers: Record<string, string>;
+  authConfig: Record<string, unknown>;
+  corsConfig: Record<string, unknown>;
+};
+
+function ProjectSettingsEnvironments({ project }: { project: ProjectDetail }) {
+  const queryClient = useQueryClient();
+  const [selectedId, setSelectedId] = useState(project.environments[0]?.id ?? 'new');
+  const selectedEnvironment =
+    project.environments.find((environment) => environment.id === selectedId) ??
+    project.environments[0] ??
+    null;
+  const [draft, setDraft] = useState<EnvironmentDraft>(() =>
+    selectedEnvironment ? environmentDraft(selectedEnvironment) : newEnvironmentDraft(),
+  );
+  const [section, setSection] = useState<'general' | 'variables' | 'headers' | 'auth' | 'cors'>(
+    'general',
+  );
+
+  useEffect(() => {
+    const next =
+      project.environments.find((environment) => environment.id === selectedId) ??
+      project.environments[0] ??
+      null;
+    setDraft(next ? environmentDraft(next) : newEnvironmentDraft());
+  }, [project.environments, selectedId]);
+
+  const saveMutation = useMutation({
+    mutationFn: () =>
+      upsertProjectEnvironments(project.id, {
+        environments: [
+          {
+            ...draft,
+            description: draft.description.trim() || null,
+          },
+        ],
+      }),
+    onSuccess: async (result) => {
+      const saved =
+        result.environments.find((environment) => environment.name === draft.name) ??
+        result.environments[0];
+      if (saved) setSelectedId(saved.id);
+      await queryClient.invalidateQueries({ queryKey: ['projects', project.id] });
+      toast.success('Environment saved');
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Could not save environment');
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => {
+      if (!draft.id) throw new Error('Save the environment before deleting it');
+      return deleteProjectEnvironment({ projectId: project.id, environmentId: draft.id });
+    },
+    onSuccess: async () => {
+      const fallback = project.environments.find((environment) => environment.id !== draft.id);
+      setSelectedId(fallback?.id ?? 'new');
+      await queryClient.invalidateQueries({ queryKey: ['projects', project.id] });
+      toast.success('Environment deleted');
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Could not delete environment');
+    },
+  });
+
+  return (
+    <div className="grid gap-5 xl:grid-cols-[470px_1fr]">
+      <section className="rounded-xl border border-white/10 bg-[#0a0f18]/70 p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-semibold text-white">Environments</h2>
+            <p className="text-white/52 mt-2 max-w-[300px] text-sm">
+              Manage isolated API stages and request configuration.
+            </p>
+          </div>
+          <Button
+            type="button"
+            onClick={() => {
+              setSelectedId('new');
+              setDraft(newEnvironmentDraft());
+              setSection('general');
+            }}
+          >
+            <RiAddLine className="size-4" />
+            New Environment
+          </Button>
+        </div>
+
+        <div className="mt-6 space-y-3">
+          {project.environments.map((environment) => (
+            <button
+              key={environment.id}
+              type="button"
+              onClick={() => {
+                setSelectedId(environment.id);
+                setSection('general');
+              }}
+              className={cn(
+                'flex w-full items-center justify-between gap-4 rounded-lg border px-4 py-4 text-left transition-colors',
+                selectedId === environment.id
+                  ? 'border-purple-400/70 bg-purple-500/10'
+                  : 'border-white/10 bg-white/[0.018] hover:bg-white/[0.035]',
+              )}
+            >
+              <span className="flex min-w-0 items-center gap-3">
+                <span
+                  className="size-2.5 shrink-0 rounded-full"
+                  style={{ backgroundColor: environment.color }}
+                />
+                <span className="min-w-0">
+                  <span className="flex items-center gap-2">
+                    <span className="truncate text-sm font-medium text-white">
+                      {environment.name}
+                    </span>
+                    {environment.status === 'ACTIVE' ? (
+                      <span className="rounded-full bg-emerald-400/10 px-2 py-0.5 text-xs text-emerald-300">
+                        Active
+                      </span>
+                    ) : null}
+                  </span>
+                  <span className="text-white/48 mt-1 block truncate text-sm">
+                    {environment.baseUrl || 'No base URL'}
+                  </span>
+                </span>
+              </span>
+              <RiArrowRightSLine className="size-4 shrink-0 text-white/50" />
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-8 rounded-lg border border-white/10 bg-white/[0.018] p-5">
+          <p className="text-sm font-medium text-white">Tip</p>
+          <p className="text-white/52 mt-2 text-sm leading-6">
+            Use environments to keep local, staging, and production headers or variables separate.
+          </p>
+        </div>
+      </section>
+
+      <section className="rounded-xl border border-white/10 bg-[#0a0f18]/70 p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <div className="flex items-center gap-3">
+              <span className="size-2.5 rounded-full" style={{ backgroundColor: draft.color }} />
+              <h2 className="truncate text-lg font-semibold text-white">
+                {draft.name || 'New Environment'}
+              </h2>
+              <span className="rounded-full bg-emerald-400/10 px-2 py-0.5 text-xs text-emerald-300">
+                {draft.status === 'ACTIVE' ? 'Active' : 'Inactive'}
+              </span>
+            </div>
+            <p className="text-white/52 mt-3 text-sm">Environment configuration and settings.</p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              className="border-white/10 bg-white/[0.035] text-white"
+              loading={deleteMutation.isPending}
+              disabled={!draft.id || project.environments.length <= 1}
+              onClick={() => {
+                if (window.confirm(`Delete ${draft.name}? This cannot be undone.`)) {
+                  deleteMutation.mutate();
+                }
+              }}
+            >
+              <RiDeleteBin6Line className="size-4" />
+            </Button>
+            <Button
+              type="button"
+              loading={saveMutation.isPending}
+              disabled={!draft.name.trim()}
+              onClick={() => saveMutation.mutate()}
+            >
+              Save
+            </Button>
+          </div>
+        </div>
+
+        <EnvironmentSubTabs active={section} onChange={setSection} />
+
+        <div className="mt-7">
+          {section === 'general' ? (
+            <EnvironmentGeneralForm draft={draft} onChange={setDraft} />
+          ) : null}
+          {section === 'variables' ? (
+            <KeyValueEditor
+              title="Variables"
+              values={draft.variables}
+              keyPlaceholder="API_HOST"
+              valuePlaceholder="https://example.com"
+              onChange={(variables) => setDraft((current) => ({ ...current, variables }))}
+            />
+          ) : null}
+          {section === 'headers' ? (
+            <KeyValueEditor
+              title="Headers"
+              values={draft.headers}
+              keyPlaceholder="Authorization"
+              valuePlaceholder="Bearer token"
+              onChange={(headers) => setDraft((current) => ({ ...current, headers }))}
+            />
+          ) : null}
+          {section === 'auth' ? <EnvironmentAuthForm draft={draft} onChange={setDraft} /> : null}
+          {section === 'cors' ? <EnvironmentCorsForm draft={draft} onChange={setDraft} /> : null}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function EnvironmentSubTabs({
+  active,
+  onChange,
+}: {
+  active: 'general' | 'variables' | 'headers' | 'auth' | 'cors';
+  onChange: (value: 'general' | 'variables' | 'headers' | 'auth' | 'cors') => void;
+}) {
+  const tabs = ['general', 'variables', 'headers', 'auth', 'cors'] as const;
+  return (
+    <div className="mt-8 flex gap-8 border-b border-white/10">
+      {tabs.map((tab) => (
+        <button
+          key={tab}
+          type="button"
+          onClick={() => onChange(tab)}
+          className={cn(
+            'relative h-11 text-sm capitalize transition-colors',
+            active === tab
+              ? 'text-white after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-purple-500'
+              : 'text-white/62 hover:text-white',
+          )}
+        >
+          {tab}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function EnvironmentGeneralForm({
+  draft,
+  onChange,
+}: {
+  draft: EnvironmentDraft;
+  onChange: (draft: EnvironmentDraft | ((current: EnvironmentDraft) => EnvironmentDraft)) => void;
+}) {
+  return (
+    <div className="space-y-7">
+      <div className="grid gap-4 md:grid-cols-2">
+        <label className="grid gap-2">
+          <span className="settings-label">Name</span>
+          <Input
+            value={draft.name}
+            onChange={(event) => onChange((current) => ({ ...current, name: event.target.value }))}
+            maxLength={80}
+          />
+        </label>
+        <label className="grid gap-2">
+          <span className="settings-label">Status</span>
+          <Select
+            value={draft.status}
+            onValueChange={(value) =>
+              onChange((current) => ({ ...current, status: value as 'ACTIVE' | 'INACTIVE' }))
+            }
+          >
+            <SelectTrigger className="w-full border-white/10 bg-white/[0.04] text-white">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="border-white/12 bg-[#111722] text-white">
+              <SelectItem value="ACTIVE">Active</SelectItem>
+              <SelectItem value="INACTIVE">Inactive</SelectItem>
+            </SelectContent>
+          </Select>
+        </label>
+      </div>
+
+      <label className="grid gap-2">
+        <span className="settings-label">Base URL</span>
+        <Input
+          value={draft.baseUrl}
+          onChange={(event) => onChange((current) => ({ ...current, baseUrl: event.target.value }))}
+          placeholder="https://api.example.com"
+        />
+      </label>
+
+      <label className="grid gap-2">
+        <span className="settings-label">Description</span>
+        <textarea
+          value={draft.description}
+          onChange={(event) =>
+            onChange((current) => ({ ...current, description: event.target.value }))
+          }
+          rows={4}
+          maxLength={200}
+          className="border-input bg-input text-foreground placeholder:text-muted hover:bg-input/90 focus:border-ring focus:ring-ring/25 w-full resize-none rounded-md border px-3 py-3 text-sm outline-none transition focus:ring-2"
+        />
+        <span className="text-white/42 text-right text-xs">{draft.description.length}/200</span>
+      </label>
+
+      <div className="grid gap-4 md:grid-cols-[88px_1fr]">
+        <label className="grid gap-2">
+          <span className="settings-label">Color</span>
+          <input
+            type="color"
+            value={draft.color}
+            onChange={(event) => onChange((current) => ({ ...current, color: event.target.value }))}
+            className="h-11 w-full cursor-pointer rounded-md border border-white/10 bg-white/[0.04] p-1"
+          />
+        </label>
+        <div className="grid gap-2">
+          <span className="settings-label">Icon</span>
+          <div className="grid grid-cols-5 gap-2 sm:grid-cols-8">
+            {ENVIRONMENT_ICONS.map(({ value, icon: Icon }) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => onChange((current) => ({ ...current, icon: value }))}
+                className={cn(
+                  'grid h-11 place-items-center rounded-md border transition-colors',
+                  draft.icon === value
+                    ? 'border-purple-400 bg-purple-500/15 text-white'
+                    : 'text-white/72 border-white/10 bg-white/[0.025] hover:bg-white/[0.045]',
+                )}
+              >
+                <Icon className="size-5" />
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function KeyValueEditor({
+  title,
+  values,
+  keyPlaceholder,
+  valuePlaceholder,
+  onChange,
+}: {
+  title: string;
+  values: Record<string, string>;
+  keyPlaceholder: string;
+  valuePlaceholder: string;
+  onChange: (values: Record<string, string>) => void;
+}) {
+  const rows: Array<[string, string]> = Object.entries(values);
+  const visibleRows: Array<[string, string]> = rows.length ? rows : [['', '']];
+  return (
+    <div>
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="text-sm font-medium text-white">{title}</h3>
+        <Button
+          type="button"
+          variant="secondary"
+          className="border-white/10 bg-white/[0.035] text-white"
+          onClick={() => onChange({ ...values, '': '' })}
+        >
+          <RiAddLine className="size-4" />
+          Add
+        </Button>
+      </div>
+      <div className="space-y-3">
+        {visibleRows.map(([key, value], index) => (
+          <div key={`${key}-${index}`} className="grid gap-3 md:grid-cols-[1fr_1fr_42px]">
+            <Input
+              value={key}
+              placeholder={keyPlaceholder}
+              onChange={(event) => {
+                const next = Object.entries(values);
+                next[index] = [event.target.value, value];
+                onChange(Object.fromEntries(next.filter(([itemKey]) => itemKey.trim())));
+              }}
+            />
+            <Input
+              value={value}
+              placeholder={valuePlaceholder}
+              onChange={(event) => {
+                const next = Object.entries(values);
+                next[index] = [key, event.target.value];
+                onChange(Object.fromEntries(next.filter(([itemKey]) => itemKey.trim())));
+              }}
+            />
+            <Button
+              type="button"
+              variant="secondary"
+              size="icon"
+              className="border-white/10 bg-white/[0.035] text-white"
+              onClick={() => {
+                const next = { ...values };
+                delete next[key];
+                onChange(next);
+              }}
+            >
+              <RiDeleteBin6Line className="size-4" />
+            </Button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function EnvironmentAuthForm({
+  draft,
+  onChange,
+}: {
+  draft: EnvironmentDraft;
+  onChange: (draft: EnvironmentDraft | ((current: EnvironmentDraft) => EnvironmentDraft)) => void;
+}) {
+  const authType = String(draft.authConfig.type ?? 'none');
+  return (
+    <div className="grid gap-5">
+      <label className="grid gap-2">
+        <span className="settings-label">Auth Type</span>
+        <Select
+          value={authType}
+          onValueChange={(value) =>
+            onChange((current) => ({
+              ...current,
+              authConfig: { ...current.authConfig, type: value },
+            }))
+          }
+        >
+          <SelectTrigger className="w-full border-white/10 bg-white/[0.04] text-white">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="border-white/12 bg-[#111722] text-white">
+            <SelectItem value="none">None</SelectItem>
+            <SelectItem value="bearer">Bearer token</SelectItem>
+            <SelectItem value="api-key">API key</SelectItem>
+          </SelectContent>
+        </Select>
+      </label>
+      {authType !== 'none' ? (
+        <label className="grid gap-2">
+          <span className="settings-label">{authType === 'api-key' ? 'API Key' : 'Token'}</span>
+          <Input
+            value={String(draft.authConfig.value ?? '')}
+            onChange={(event) =>
+              onChange((current) => ({
+                ...current,
+                authConfig: { ...current.authConfig, value: event.target.value },
+              }))
+            }
+          />
+        </label>
+      ) : null}
+    </div>
+  );
+}
+
+function EnvironmentCorsForm({
+  draft,
+  onChange,
+}: {
+  draft: EnvironmentDraft;
+  onChange: (draft: EnvironmentDraft | ((current: EnvironmentDraft) => EnvironmentDraft)) => void;
+}) {
+  return (
+    <div className="grid gap-5">
+      <label className="flex items-start gap-3">
+        <Checkbox
+          checked={draft.corsConfig.enabled === true}
+          onChange={(event) =>
+            onChange((current) => ({
+              ...current,
+              corsConfig: { ...current.corsConfig, enabled: event.currentTarget.checked },
+            }))
+          }
+        />
+        <span>
+          <span className="block text-sm font-medium text-white">Enable CORS overrides</span>
+          <span className="text-white/48 mt-1 block text-sm">
+            Applied to requests served from this environment.
+          </span>
+        </span>
+      </label>
+      <label className="grid gap-2">
+        <span className="settings-label">Allowed Origins</span>
+        <Input
+          value={String(draft.corsConfig.origins ?? '')}
+          onChange={(event) =>
+            onChange((current) => ({
+              ...current,
+              corsConfig: { ...current.corsConfig, origins: event.target.value },
+            }))
+          }
+          placeholder="https://app.example.com, http://localhost:3000"
+        />
+      </label>
+    </div>
+  );
+}
+
 function MockDefaultsPanel({ project }: { project: ProjectDetail }) {
   const queryClient = useQueryClient();
   const [defaults, setDefaults] = useState<ProjectMockDefaults>(project.mockDefaults);
@@ -805,6 +1347,37 @@ function environmentState(project: ProjectDetail): Record<ProjectEnvironmentName
       project.environments.find((environment) => environment.name === name)?.baseUrl ?? '',
     ]),
   ) as Record<ProjectEnvironmentName, string>;
+}
+
+function environmentDraft(environment: ProjectEnvironment): EnvironmentDraft {
+  return {
+    id: environment.id,
+    name: environment.name,
+    baseUrl: environment.baseUrl,
+    description: environment.description ?? '',
+    color: environment.color || '#22c55e',
+    icon: environment.icon || 'globe',
+    status: environment.status,
+    variables: environment.variables,
+    headers: environment.headers,
+    authConfig: environment.authConfig,
+    corsConfig: environment.corsConfig,
+  };
+}
+
+function newEnvironmentDraft(): EnvironmentDraft {
+  return {
+    name: 'New Environment',
+    baseUrl: '',
+    description: '',
+    color: '#8b5cf6',
+    icon: 'globe',
+    status: 'ACTIVE',
+    variables: {},
+    headers: {},
+    authConfig: { type: 'none' },
+    corsConfig: { enabled: false },
+  };
 }
 
 function schemaContentText(detail: ProjectSchemaDetail) {

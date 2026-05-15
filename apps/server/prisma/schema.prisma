@@ -173,9 +173,14 @@ model Environment {
   projectId  String   @map("project_id") @db.Uuid
   name       String
   baseUrl    String   @map("base_url")
+  description String?
+  color      String   @default("#22c55e")
+  icon       String   @default("globe")
+  status     String   @default("ACTIVE")
   variables  Json     @default("{}")
   headers    Json     @default("{}")
   authConfig Json     @default("{}") @map("auth_config")
+  corsConfig Json     @default("{}") @map("cors_config")
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 

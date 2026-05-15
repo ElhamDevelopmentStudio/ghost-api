@@ -128,6 +128,20 @@ export async function upsertProjectEnvironments(
   });
 }
 
+export async function deleteProjectEnvironment(input: {
+  projectId: string;
+  environmentId: string;
+}): Promise<{ deleted: true }> {
+  const csrfToken = await getCsrfToken();
+  return apiRequest<{ deleted: true }>({
+    path: `/projects/${input.projectId}/environments/${input.environmentId}`,
+    method: 'DELETE',
+    headers: {
+      [CSRF_HEADER]: csrfToken,
+    },
+  });
+}
+
 export async function updateProjectMockDefaults(
   projectId: string,
   input: UpdateProjectMockDefaultsInput,

@@ -23,6 +23,7 @@ import {
 import {
   clearProjectActivityLogsForUser,
   createProjectForUser,
+  deleteProjectEnvironmentForUser,
   getProjectActivityLogForUser,
   getProjectForUser,
   getProjectSchemaForUser,
@@ -51,6 +52,9 @@ const projectActivityLogParamSchema = z.object({
 });
 const projectSchemaParamSchema = z.object({
   schemaId: z.string().uuid(),
+});
+const projectEnvironmentParamSchema = z.object({
+  environmentId: z.string().uuid(),
 });
 
 projectsRouter.get('/', async (c) => {
@@ -141,6 +145,27 @@ projectsRouter.put(
     if (!result) return c.json({ error: 'Project not found' }, 404);
 
     return c.json(result);
+  },
+);
+
+projectsRouter.delete(
+  '/:projectId/environments/:environmentId',
+  requireCsrf,
+  zValidator('param', projectEnvironmentParamSchema),
+  async (c) => {
+    const { userId } = authContext(c);
+    const result = await deleteProjectEnvironmentForUser({
+      projectId: c.req.param('projectId'),
+      environmentId: c.req.valid('param').environmentId,
+      userId,
+    });
+    if (!result) return c.json({ error: 'Project not found' }, 404);
+    if (!result.deleted && result.reason === 'LAST_ENVIRONMENT') {
+      return c.json({ error: 'A project must keep at least one environment' }, 400);
+    }
+    if (!result.deleted) return c.json({ error: 'Environment not found' }, 404);
+
+    return c.json({ deleted: true });
   },
 );
 

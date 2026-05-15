@@ -30,6 +30,14 @@ export type ProjectDetailRow = Omit<ProjectSummaryRow, 'environments'> & {
     id: string;
     name: string;
     baseUrl: string;
+    description: string | null;
+    color: string;
+    icon: string;
+    status: string;
+    variables: unknown;
+    headers: unknown;
+    authConfig: unknown;
+    corsConfig: unknown;
     createdAt: Date;
     updatedAt: Date;
   }>;
@@ -105,6 +113,14 @@ export function serializeProjectDetail(
     id: env.id,
     name: env.name,
     baseUrl: env.baseUrl,
+    description: env.description,
+    color: env.color,
+    icon: env.icon,
+    status: env.status === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE',
+    variables: stringRecord(env.variables),
+    headers: stringRecord(env.headers),
+    authConfig: record(env.authConfig),
+    corsConfig: record(env.corsConfig),
     createdAt: env.createdAt.toISOString(),
     updatedAt: env.updatedAt.toISOString(),
   }));
@@ -217,6 +233,12 @@ function stringRecord(value: unknown): Record<string, string> {
       typeof item === 'string' ? item : String(item),
     ]),
   );
+}
+
+function record(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
 }
 
 function buildSevenDayTrend(requests: ProjectRequestLogRow[]) {

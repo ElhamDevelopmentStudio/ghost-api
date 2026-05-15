@@ -137,7 +137,7 @@ export async function getProjectForUser(projectId: string, userId: string) {
       members: { where: { userId }, select: { role: true } },
       environments: {
         orderBy: { createdAt: 'asc' },
-        select: { id: true, name: true, baseUrl: true, createdAt: true, updatedAt: true },
+        select: environmentSelect,
       },
       schemas: {
         orderBy: { uploadedAt: 'desc' },
@@ -284,40 +284,69 @@ export async function upsertProjectEnvironmentsForUser({
 
   const environments = await prisma.$transaction(async (tx) => {
     for (const environment of input.environments) {
+      const data = {
+        name: environment.name,
+        baseUrl: environment.baseUrl,
+        description: environment.description ?? null,
+        color: environment.color ?? '#22c55e',
+        icon: environment.icon ?? 'globe',
+        status: environment.status ?? 'ACTIVE',
+        variables: (environment.variables ?? {}) as Prisma.InputJsonValue,
+        headers: (environment.headers ?? {}) as Prisma.InputJsonValue,
+        authConfig: (environment.authConfig ?? {}) as Prisma.InputJsonValue,
+        corsConfig: (environment.corsConfig ?? {}) as Prisma.InputJsonValue,
+      };
+
+      if (environment.id) {
+        await tx.environment.updateMany({
+          where: { id: environment.id, projectId },
+          data,
+        });
+        continue;
+      }
+
       await tx.environment.upsert({
-        where: {
-          projectId_name: {
-            projectId,
-            name: environment.name,
-          },
-        },
+        where: { projectId_name: { projectId, name: environment.name } },
         create: {
           projectId,
-          name: environment.name,
-          baseUrl: environment.baseUrl,
+          ...data,
         },
-        update: {
-          baseUrl: environment.baseUrl,
-        },
+        update: data,
       });
     }
 
     return tx.environment.findMany({
       where: { projectId },
       orderBy: { createdAt: 'asc' },
-      select: { id: true, name: true, baseUrl: true, createdAt: true, updatedAt: true },
+      select: environmentSelect,
     });
   });
 
-  return {
-    environments: environments.map((env) => ({
-      id: env.id,
-      name: env.name,
-      baseUrl: env.baseUrl,
-      createdAt: env.createdAt.toISOString(),
-      updatedAt: env.updatedAt.toISOString(),
-    })),
-  };
+  return { environments: serializeEnvironments(environments) };
+}
+
+export async function deleteProjectEnvironmentForUser({
+  projectId,
+  environmentId,
+  userId,
+}: {
+  projectId: string;
+  environmentId: string;
+  userId: string;
+}) {
+  const canEdit = await userCanEditProject(projectId, userId);
+  if (!canEdit) return null;
+
+  const environmentCount = await prisma.environment.count({ where: { projectId } });
+  if (environmentCount <= 1) {
+    return { deleted: false as const, reason: 'LAST_ENVIRONMENT' as const };
+  }
+
+  const result = await prisma.environment.deleteMany({
+    where: { id: environmentId, projectId },
+  });
+
+  return { deleted: result.count > 0 };
 }
 
 export async function updateProjectMockDefaultsForUser({
@@ -526,6 +555,58 @@ const activityLogSelect = {
   responseBody: true,
   createdAt: true,
 } satisfies Prisma.RequestLogSelect;
+
+const environmentSelect = {
+  id: true,
+  name: true,
+  baseUrl: true,
+  description: true,
+  color: true,
+  icon: true,
+  status: true,
+  variables: true,
+  headers: true,
+  authConfig: true,
+  corsConfig: true,
+  createdAt: true,
+  updatedAt: true,
+} satisfies Prisma.EnvironmentSelect;
+
+function serializeEnvironments(
+  environments: Array<Prisma.EnvironmentGetPayload<{ select: typeof environmentSelect }>>,
+) {
+  return environments.map((env) => ({
+    id: env.id,
+    name: env.name,
+    baseUrl: env.baseUrl,
+    description: env.description,
+    color: env.color,
+    icon: env.icon,
+    status: env.status === 'INACTIVE' ? 'INACTIVE' : ('ACTIVE' as const),
+    variables: toStringRecord(env.variables),
+    headers: toStringRecord(env.headers),
+    authConfig: toRecord(env.authConfig),
+    corsConfig: toRecord(env.corsConfig),
+    createdAt: env.createdAt.toISOString(),
+    updatedAt: env.updatedAt.toISOString(),
+  }));
+}
+
+function toStringRecord(value: unknown): Record<string, string> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  return Object.fromEntries(
+    Object.entries(value).map(([key, item]) => [
+      key,
+      typeof item === 'string' ? item : String(item),
+    ]),
+  );
+}
+
+function toRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
 
 function rangeStart(range: '1h' | '24h' | '7d' | '30d' | undefined) {
   if (!range) return null;
