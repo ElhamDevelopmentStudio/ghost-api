@@ -16,7 +16,10 @@ import {
   useResendVerification,
 } from '@/features/auth';
 
-type LocationState = { from?: { pathname: string } } | null;
+type LocationState = {
+  from?: { pathname: string };
+  invitation?: { token: string; email: string };
+} | null;
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -27,7 +30,14 @@ export function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const from = (location.state as LocationState)?.from?.pathname ?? '/projects';
+  const locationState = location.state as LocationState;
+  const from = locationState?.from?.pathname ?? '/projects';
+  const registerTarget = locationState?.invitation
+    ? `/register?${new URLSearchParams({
+        invitation: locationState.invitation.token,
+        email: locationState.invitation.email,
+      }).toString()}`
+    : '/register';
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -66,7 +76,7 @@ export function LoginPage() {
       footer={
         <>
           Don&apos;t have an account?{' '}
-          <Link to="/register" className="text-primary hover:text-primary-hover transition">
+          <Link to={registerTarget} className="text-primary hover:text-primary-hover transition">
             Sign up
           </Link>
         </>

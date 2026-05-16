@@ -78,6 +78,44 @@ export async function sendPasswordResetEmail(input: {
   });
 }
 
+export async function sendProjectInvitationEmail(input: {
+  to: string;
+  inviterName: string | null;
+  projectName: string;
+  role: string;
+  invitationUrl: string;
+  recipientExists: boolean;
+}): Promise<void> {
+  const inviter = input.inviterName?.trim() || 'A GhostAPI teammate';
+  const role = input.role.toLowerCase();
+  const body = input.recipientExists
+    ? `${inviter} added this email address to the ${input.projectName} project with ${role} access.`
+    : `${inviter} added this email address to the ${input.projectName} project with ${role} access. Create a GhostAPI account with this same email address to accept the project access.`;
+
+  await sendAuthEmail({
+    to: input.to,
+    subject: `${inviter} invited you to ${input.projectName}`,
+    html: actionEmailHtml({
+      name: null,
+      url: input.invitationUrl,
+      title: `Project invitation: ${input.projectName}`,
+      body,
+      actionLabel: input.recipientExists ? 'Review invitation' : 'Create account',
+      expiryText: 'This invitation expires in 7 days.',
+      footer: `Invitation sent by ${inviter}.`,
+    }),
+    text: actionEmailText({
+      name: null,
+      url: input.invitationUrl,
+      action: body,
+      expiryText: 'This invitation expires in 7 days.',
+    }),
+    successLog: 'Sent project invitation',
+    errorLog: 'Failed to send project invitation',
+    errorFallback: 'Unable to send project invitation email.',
+  });
+}
+
 async function sendAuthEmail(input: {
   to: string;
   subject: string;
@@ -98,9 +136,14 @@ async function sendAuthEmail(input: {
   const { data, error } = await resendClient.emails.send({
     from: `GhostAPI <${e.MAIL_FROM}>`,
     to: input.to,
+    replyTo: e.MAIL_FROM,
     subject: input.subject,
     html: input.html,
     text: input.text,
+    headers: {
+      'Auto-Submitted': 'auto-generated',
+      'X-Auto-Response-Suppress': 'All',
+    },
   });
 
   if (error) {
@@ -147,7 +190,7 @@ function actionEmailHtml(input: {
   const greeting = input.name ? `Hi ${escapeHtml(input.name)},` : 'Hi,';
   const url = escapeHtml(input.url);
   const footer = input.footer
-    ? `      <p style="color:#94a3b8;font-size:13px;line-height:1.6;margin:24px 0 0;">${escapeHtml(
+    ? `        <p style="color:#6b7280;font-size:13px;line-height:1.6;margin:24px 0 0;">${escapeHtml(
         input.footer,
       )}</p>
 `
@@ -155,16 +198,19 @@ function actionEmailHtml(input: {
 
   return `<!doctype html>
 <html>
-  <body style="margin:0;background:#030408;color:#f8fafc;font-family:Inter,Arial,sans-serif;">
-    <div style="max-width:560px;margin:0 auto;padding:40px 24px;">
-      <p style="color:#a78bfa;font-family:monospace;font-size:14px;letter-spacing:0.08em;text-transform:uppercase;">GhostAPI</p>
-      <h1 style="font-size:28px;line-height:1.2;margin:0 0 16px;">${escapeHtml(input.title)}</h1>
-      <p style="color:#cbd5e1;font-size:16px;line-height:1.6;margin:0 0 24px;">${greeting}</p>
-      <p style="color:#cbd5e1;font-size:16px;line-height:1.6;margin:0 0 28px;">${escapeHtml(input.body)}</p>
-      <a href="${url}" style="display:inline-block;background:#7c3aed;color:#ffffff;text-decoration:none;border-radius:8px;padding:14px 18px;font-weight:600;">${escapeHtml(input.actionLabel)}</a>
-      <p style="color:#94a3b8;font-size:13px;line-height:1.6;margin:28px 0 0;">${escapeHtml(input.expiryText)} If the button does not work, paste this URL into your browser:</p>
-      <p style="word-break:break-all;color:#c4b5fd;font-size:13px;line-height:1.6;">${url}</p>
+  <body style="margin:0;background:#f6f7fb;color:#111827;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
+    <div style="display:none;max-height:0;overflow:hidden;color:transparent;">${escapeHtml(input.title)}</div>
+    <div style="max-width:560px;margin:0 auto;padding:32px 20px;">
+      <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;padding:32px;">
+        <p style="color:#6b7280;font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin:0 0 20px;">GhostAPI</p>
+        <h1 style="color:#111827;font-size:24px;line-height:1.3;margin:0 0 18px;">${escapeHtml(input.title)}</h1>
+        <p style="color:#374151;font-size:16px;line-height:1.6;margin:0 0 18px;">${greeting}</p>
+        <p style="color:#374151;font-size:16px;line-height:1.6;margin:0 0 24px;">${escapeHtml(input.body)}</p>
+        <a href="${url}" style="display:inline-block;background:#4f46e5;color:#ffffff;text-decoration:none;border-radius:8px;padding:12px 16px;font-size:15px;font-weight:600;">${escapeHtml(input.actionLabel)}</a>
+        <p style="color:#6b7280;font-size:13px;line-height:1.6;margin:24px 0 0;">${escapeHtml(input.expiryText)} If the button does not work, paste this URL into your browser:</p>
+        <p style="word-break:break-all;color:#4f46e5;font-size:13px;line-height:1.6;margin:8px 0 0;">${url}</p>
 ${footer}
+      </div>
     </div>
   </body>
 </html>`;

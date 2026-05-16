@@ -24,6 +24,14 @@ enum ProjectRole {
   @@map("project_role")
 }
 
+enum ProjectInvitationStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+
+  @@map("project_invitation_status")
+}
+
 enum AttachmentPurpose {
   PROJECT_AVATAR
   USER_AVATAR
@@ -48,12 +56,14 @@ model User {
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
-  ownedProjects      Project[]           @relation("ProjectOwner")
-  memberships        ProjectMember[]
-  sessions           Session[]
-  passwordResets     PasswordReset[]
-  emailVerifications EmailVerification[]
-  attachments        Attachment[]
+  ownedProjects              Project[]           @relation("ProjectOwner")
+  memberships                ProjectMember[]
+  sentProjectInvitations     ProjectInvitation[] @relation("ProjectInvitationInviter")
+  acceptedProjectInvitations ProjectInvitation[] @relation("ProjectInvitationAcceptedBy")
+  sessions                   Session[]
+  passwordResets             PasswordReset[]
+  emailVerifications         EmailVerification[]
+  attachments                Attachment[]
 
   @@map("users")
 }
@@ -110,23 +120,24 @@ model PasswordReset {
 }
 
 model Project {
-  id          String   @id @default(uuid()) @db.Uuid
-  ownerId     String   @map("owner_id") @db.Uuid
-  name        String
-  slug        String   @unique
-  description String?
-  icon        String?
-  activityLogRetentionDays Int @default(30) @map("activity_log_retention_days")
-  mockDefaults Json @default("{}") @map("mock_defaults")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id                       String   @id @default(uuid()) @db.Uuid
+  ownerId                  String   @map("owner_id") @db.Uuid
+  name                     String
+  slug                     String   @unique
+  description              String?
+  icon                     String?
+  activityLogRetentionDays Int      @default(30) @map("activity_log_retention_days")
+  mockDefaults             Json     @default("{}") @map("mock_defaults")
+  createdAt                DateTime @default(now()) @map("created_at")
+  updatedAt                DateTime @updatedAt @map("updated_at")
 
-  owner        User            @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  owner        User                @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   members      ProjectMember[]
   environments Environment[]
   schemas      Schema[]
   endpoints    Endpoint[]
   requestLogs  RequestLog[]
+  invitations  ProjectInvitation[]
 
   @@index([ownerId])
   @@map("projects")
@@ -168,21 +179,46 @@ model ProjectMember {
   @@map("project_members")
 }
 
+model ProjectInvitation {
+  id           String                  @id @default(uuid()) @db.Uuid
+  projectId    String                  @map("project_id") @db.Uuid
+  email        String
+  role         ProjectRole
+  tokenHash    String                  @unique @map("token_hash")
+  status       ProjectInvitationStatus @default(PENDING)
+  inviterId    String                  @map("inviter_id") @db.Uuid
+  acceptedById String?                 @map("accepted_by_id") @db.Uuid
+  acceptedAt   DateTime?               @map("accepted_at")
+  expiresAt    DateTime                @map("expires_at")
+  createdAt    DateTime                @default(now()) @map("created_at")
+  updatedAt    DateTime                @updatedAt @map("updated_at")
+
+  project    Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  inviter    User    @relation("ProjectInvitationInviter", fields: [inviterId], references: [id], onDelete: Cascade)
+  acceptedBy User?   @relation("ProjectInvitationAcceptedBy", fields: [acceptedById], references: [id], onDelete: SetNull)
+
+  @@index([projectId, email])
+  @@index([inviterId])
+  @@index([acceptedById])
+  @@index([status, expiresAt])
+  @@map("project_invitations")
+}
+
 model Environment {
-  id         String   @id @default(uuid()) @db.Uuid
-  projectId  String   @map("project_id") @db.Uuid
-  name       String
-  baseUrl    String   @map("base_url")
+  id          String   @id @default(uuid()) @db.Uuid
+  projectId   String   @map("project_id") @db.Uuid
+  name        String
+  baseUrl     String   @map("base_url")
   description String?
-  color      String   @default("#22c55e")
-  icon       String   @default("globe")
-  status     String   @default("ACTIVE")
-  variables  Json     @default("{}")
-  headers    Json     @default("{}")
-  authConfig Json     @default("{}") @map("auth_config")
-  corsConfig Json     @default("{}") @map("cors_config")
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  color       String   @default("#22c55e")
+  icon        String   @default("globe")
+  status      String   @default("ACTIVE")
+  variables   Json     @default("{}")
+  headers     Json     @default("{}")
+  authConfig  Json     @default("{}") @map("auth_config")
+  corsConfig  Json     @default("{}") @map("cors_config")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
@@ -262,19 +298,19 @@ model EndpointResponse {
 }
 
 model RequestLog {
-  id         String   @id @default(uuid()) @db.Uuid
-  projectId  String   @map("project_id") @db.Uuid
-  endpointId String?  @map("endpoint_id") @db.Uuid
-  method     String
-  path       String
-  status     Int
-  durationMs Int      @map("duration_ms")
-  headers    Json     @default("{}")
-  body       Json?
-  responseHeaders     Json    @default("{}") @map("response_headers")
-  responseContentType String? @map("response_content_type")
-  responseBody        Json?   @map("response_body")
-  createdAt  DateTime @default(now()) @map("created_at")
+  id                  String   @id @default(uuid()) @db.Uuid
+  projectId           String   @map("project_id") @db.Uuid
+  endpointId          String?  @map("endpoint_id") @db.Uuid
+  method              String
+  path                String
+  status              Int
+  durationMs          Int      @map("duration_ms")
+  headers             Json     @default("{}")
+  body                Json?
+  responseHeaders     Json     @default("{}") @map("response_headers")
+  responseContentType String?  @map("response_content_type")
+  responseBody        Json?    @map("response_body")
+  createdAt           DateTime @default(now()) @map("created_at")
 
   project  Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
   endpoint Endpoint? @relation(fields: [endpointId], references: [id], onDelete: SetNull)

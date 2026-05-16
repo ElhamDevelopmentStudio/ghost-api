@@ -61,10 +61,15 @@ describe('auth email delivery', () => {
     expect(sendEmail).toHaveBeenCalledWith(
       expect.objectContaining({
         from: 'GhostAPI <noreply@example.com>',
+        replyTo: 'noreply@example.com',
         to: 'dev@example.com',
         subject: 'Verify your GhostAPI email',
         html: expect.stringContaining('Hi Dev &lt;Admin&gt;,'),
         text: expect.stringContaining('Hi Dev <Admin>,'),
+        headers: {
+          'Auto-Submitted': 'auto-generated',
+          'X-Auto-Response-Suppress': 'All',
+        },
       }),
     );
   });
@@ -87,6 +92,31 @@ describe('auth email delivery', () => {
         text: expect.stringContaining('This link expires in 1 hour.'),
       }),
     );
+  });
+
+  it('sends project invitations through Resend', async () => {
+    sendEmail.mockResolvedValue({ data: { id: 'email_789' }, error: null });
+
+    const { sendProjectInvitationEmail } = await import('./auth.email.js');
+
+    await sendProjectInvitationEmail({
+      to: 'teammate@example.com',
+      inviterName: 'Owner',
+      projectName: 'James API',
+      role: 'EDITOR',
+      invitationUrl: 'http://localhost:3002/invite/token',
+      recipientExists: false,
+    });
+
+    const sent = sendEmail.mock.calls[0]?.[0];
+    expect(sent).toEqual(
+      expect.objectContaining({
+        subject: 'Owner invited you to James API',
+        text: expect.stringContaining('added this email address to the James API project'),
+      }),
+    );
+    expect(sent.html).toContain('Create account');
+    expect(sent.html).toContain('background:#ffffff');
   });
 
   it('surfaces provider delivery errors', async () => {

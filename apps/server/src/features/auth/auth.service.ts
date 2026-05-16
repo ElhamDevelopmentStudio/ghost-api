@@ -13,6 +13,11 @@ import {
   signAccessToken,
   verifyPassword,
 } from './auth.crypto.js';
+import {
+  acceptPendingInvitationDuringRegistration,
+  getProjectInvitationContext,
+  ProjectMembersError,
+} from '../projects/project-members.service.js';
 
 export type PublicUser = {
   id: string;
@@ -43,6 +48,7 @@ export async function register(input: {
   email: string;
   name?: string;
   password: string;
+  invitationToken?: string;
   userAgent?: string;
   ipAddress?: string;
 }): Promise<RegisterResult> {
@@ -51,7 +57,44 @@ export async function register(input: {
   const verificationToken = createOpaqueToken();
 
   try {
+    if (input.invitationToken) {
+      const invitation = await getProjectInvitationContext(input.invitationToken);
+      if (invitation.invitedEmail !== email) {
+        throw new AuthError(400, 'Use the invited email address to create this account.');
+      }
+    }
+
     const user = await prisma.$transaction(async (tx) => {
+      const existingUser = await tx.user.findUnique({ where: { email } });
+      if (existingUser) {
+        if (!input.invitationToken || existingUser.emailVerifiedAt) {
+          throw new AuthError(409, 'Email is already registered');
+        }
+
+        const claimedUser = await tx.user.update({
+          where: { id: existingUser.id },
+          data: {
+            name: input.name?.trim() || existingUser.name,
+            passwordHash,
+          },
+        });
+        await tx.emailVerification.updateMany({
+          where: {
+            userId: claimedUser.id,
+            usedAt: null,
+          },
+          data: { usedAt: new Date() },
+        });
+        await tx.emailVerification.create({
+          data: {
+            userId: claimedUser.id,
+            tokenHash: hashToken(verificationToken),
+            expiresAt: new Date(Date.now() + EMAIL_VERIFICATION_TTL_SECONDS * 1000),
+          },
+        });
+        return claimedUser;
+      }
+
       const user = await tx.user.create({
         data: {
           email,
@@ -69,8 +112,19 @@ export async function register(input: {
       return user;
     });
 
+    if (input.invitationToken) {
+      await acceptPendingInvitationDuringRegistration({
+        invitationToken: input.invitationToken,
+        userId: user.id,
+        email,
+      });
+    }
+
     return { user: serializeUser(user), verificationToken };
   } catch (err) {
+    if (err instanceof ProjectMembersError) {
+      throw new AuthError(err.status, err.message);
+    }
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
       throw new AuthError(409, 'Email is already registered');
     }

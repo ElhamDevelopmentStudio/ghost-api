@@ -6,6 +6,8 @@ import {
   type ForgotPasswordResponse,
   type LoginInput,
   type LogoutAllResponse,
+  type AcceptProjectInvitationResponse,
+  type ProjectInvitationContextResponse,
   type RegisterInput,
   type RegisterResponse,
   type ResendVerificationInput,
@@ -78,6 +80,22 @@ export async function resendVerification(
   return mutatingAuthRequest<ResendVerificationResponse>(
     '/auth/resend-verification',
     input,
+    'POST',
+  );
+}
+
+export async function getProjectInvitation(
+  token: string,
+): Promise<ProjectInvitationContextResponse> {
+  return apiRequest<ProjectInvitationContextResponse>({ path: `/auth/invitations/${token}` });
+}
+
+export async function acceptProjectInvitation(
+  token: string,
+): Promise<AcceptProjectInvitationResponse> {
+  return mutatingAuthRequest<AcceptProjectInvitationResponse>(
+    `/auth/invitations/${token}/accept`,
+    undefined,
     'POST',
   );
 }

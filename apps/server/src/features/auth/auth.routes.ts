@@ -19,6 +19,8 @@ import {
   forgotPasswordResponseSchema,
   loginBodySchema,
   logoutAllResponseSchema,
+  projectInvitationContextResponseSchema,
+  acceptProjectInvitationResponseSchema,
   registerBodySchema,
   registerResponseSchema,
   resendVerificationBodySchema,
@@ -46,6 +48,11 @@ import {
   revokeSession,
   verifyEmail,
 } from './auth.service.js';
+import {
+  acceptProjectInvitationForUser,
+  getProjectInvitationContext,
+  ProjectMembersError,
+} from '../projects/project-members.service.js';
 
 export const authRouter = new OpenAPIHono<AppEnv>();
 
@@ -90,6 +97,10 @@ authRouter.openapi(
         description: 'Email already registered.',
         content: { 'application/json': { schema: errorResponseSchema } },
       },
+      400: {
+        description: 'Invalid invitation.',
+        content: { 'application/json': { schema: errorResponseSchema } },
+      },
       503: {
         description: 'Verification email delivery failed.',
         content: { 'application/json': { schema: errorResponseSchema } },
@@ -113,7 +124,10 @@ authRouter.openapi(
       return c.json({ success: true as const, user: result.user }, 201);
     } catch (err) {
       if (err instanceof AuthError) {
-        return c.json({ success: false as const, error: { message: err.message } }, 409);
+        if (err.status === 409) {
+          return c.json({ success: false as const, error: { message: err.message } }, 409);
+        }
+        return c.json({ success: false as const, error: { message: err.message } }, 400);
       }
       if (err instanceof EmailDeliveryError) {
         return c.json({ success: false as const, error: { message: err.message } }, 503);
@@ -289,6 +303,78 @@ authRouter.openapi(
       clearAuthCookies(c);
       if (err instanceof AuthError) {
         return c.json({ success: false as const, error: { message: err.message } }, 401);
+      }
+      throw err;
+    }
+  },
+);
+
+authRouter.openapi(
+  createRoute({
+    method: 'get',
+    path: '/invitations/{token}',
+    tags: ['Authentication'],
+    summary: 'Fetch project invitation context',
+    responses: {
+      200: {
+        description: 'Project invitation details.',
+        content: { 'application/json': { schema: projectInvitationContextResponseSchema } },
+      },
+      404: {
+        description: 'Invitation not found or expired.',
+        content: { 'application/json': { schema: errorResponseSchema } },
+      },
+    },
+  }),
+  async (c) => {
+    try {
+      const invitation = await getProjectInvitationContext(c.req.param('token'));
+      return c.json({ invitation }, 200);
+    } catch (err) {
+      if (err instanceof ProjectMembersError) {
+        return c.json({ success: false as const, error: { message: err.message } }, 404);
+      }
+      throw err;
+    }
+  },
+);
+
+authRouter.openapi(
+  createRoute({
+    method: 'post',
+    path: '/invitations/{token}/accept',
+    tags: ['Authentication'],
+    summary: 'Accept a project invitation for the signed-in user',
+    middleware: [requireAuth, requireCsrf] as const,
+    request: { headers: csrfHeaderSchema },
+    responses: {
+      200: {
+        description: 'Invitation accepted.',
+        content: { 'application/json': { schema: acceptProjectInvitationResponseSchema } },
+      },
+      403: {
+        description: 'Signed-in account does not match the invitation email.',
+        content: { 'application/json': { schema: errorResponseSchema } },
+      },
+      404: {
+        description: 'Invitation not found or expired.',
+        content: { 'application/json': { schema: errorResponseSchema } },
+      },
+    },
+  }),
+  async (c) => {
+    try {
+      const result = await acceptProjectInvitationForUser({
+        token: c.req.param('token'),
+        userId: authContext(c).userId,
+      });
+      return c.json({ success: true as const, projectId: result.projectId }, 200);
+    } catch (err) {
+      if (err instanceof ProjectMembersError) {
+        if (err.status === 403) {
+          return c.json({ success: false as const, error: { message: err.message } }, 403);
+        }
+        return c.json({ success: false as const, error: { message: err.message } }, 404);
       }
       throw err;
     }

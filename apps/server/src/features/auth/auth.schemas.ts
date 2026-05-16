@@ -13,6 +13,8 @@ import {
   forgotPasswordResponseSchema as sharedForgotPasswordResponseSchema,
   loginBodySchema as sharedLoginBodySchema,
   logoutAllResponseSchema as sharedLogoutAllResponseSchema,
+  projectInvitationContextResponseSchema as sharedProjectInvitationContextResponseSchema,
+  acceptProjectInvitationResponseSchema as sharedAcceptProjectInvitationResponseSchema,
   registerBodySchema as sharedRegisterBodySchema,
   registerResponseSchema as sharedRegisterResponseSchema,
   resendVerificationBodySchema as sharedResendVerificationBodySchema,
@@ -54,5 +56,9 @@ export const successSchema = sharedSuccessSchema.openapi('SuccessResponse');
 export const logoutAllResponseSchema = sharedLogoutAllResponseSchema.openapi('LogoutAllResponse');
 export const forgotPasswordResponseSchema =
   sharedForgotPasswordResponseSchema.openapi('ForgotPasswordResponse');
+export const projectInvitationContextResponseSchema =
+  sharedProjectInvitationContextResponseSchema.openapi('ProjectInvitationContextResponse');
+export const acceptProjectInvitationResponseSchema =
+  sharedAcceptProjectInvitationResponseSchema.openapi('AcceptProjectInvitationResponse');
 
 export const csrfHeaderSchema = sharedCsrfHeaderSchema;

@@ -11,6 +11,12 @@ import {
 export const projectRoleSchema = z.enum(['OWNER', 'ADMIN', 'EDITOR', 'VIEWER']);
 export type ProjectRole = z.infer<typeof projectRoleSchema>;
 
+export const assignableProjectRoleSchema = z.enum(['ADMIN', 'EDITOR', 'VIEWER']);
+export type AssignableProjectRole = z.infer<typeof assignableProjectRoleSchema>;
+
+export const projectInvitationStatusSchema = z.enum(['PENDING', 'ACCEPTED', 'REVOKED', 'EXPIRED']);
+export type ProjectInvitationStatus = z.infer<typeof projectInvitationStatusSchema>;
+
 export const projectVisibilitySchema = z.enum(['Private', 'Team']);
 export type ProjectVisibility = z.infer<typeof projectVisibilitySchema>;
 
@@ -151,6 +157,73 @@ export const projectDetailResponseSchema = z.object({
   project: projectDetailSchema,
 });
 export type ProjectDetailResponse = z.infer<typeof projectDetailResponseSchema>;
+
+export const projectMemberSchema = z.object({
+  id: z.string().uuid(),
+  userId: z.string().uuid(),
+  name: z.string().nullable(),
+  email: z.string().email(),
+  role: projectRoleSchema,
+  isCurrentUser: z.boolean(),
+  joinedAt: z.string().datetime(),
+});
+export type ProjectMember = z.infer<typeof projectMemberSchema>;
+
+export const projectInvitationSchema = z.object({
+  id: z.string().uuid(),
+  email: z.string().email(),
+  role: assignableProjectRoleSchema,
+  status: projectInvitationStatusSchema,
+  recipientExists: z.boolean(),
+  recipientName: z.string().nullable(),
+  inviterName: z.string().nullable(),
+  expiresAt: z.string().datetime(),
+  createdAt: z.string().datetime(),
+});
+export type ProjectInvitation = z.infer<typeof projectInvitationSchema>;
+
+export const projectMembersResponseSchema = z.object({
+  members: z.array(projectMemberSchema),
+  invitations: z.array(projectInvitationSchema),
+  canManageMembers: z.boolean(),
+});
+export type ProjectMembersResponse = z.infer<typeof projectMembersResponseSchema>;
+
+export const projectInvitePreviewQuerySchema = z.object({
+  email: z.string().email(),
+});
+export type ProjectInvitePreviewQuery = z.infer<typeof projectInvitePreviewQuerySchema>;
+
+export const projectInvitePreviewResponseSchema = z.object({
+  email: z.string().email(),
+  recipientExists: z.boolean(),
+  recipientName: z.string().nullable(),
+  alreadyMember: z.boolean(),
+  pendingInvitation: projectInvitationSchema.nullable(),
+});
+export type ProjectInvitePreviewResponse = z.infer<typeof projectInvitePreviewResponseSchema>;
+
+export const inviteProjectMemberBodySchema = z.object({
+  email: z.string().email(),
+  role: assignableProjectRoleSchema,
+});
+export type InviteProjectMemberInput = z.infer<typeof inviteProjectMemberBodySchema>;
+
+export const inviteProjectMemberResponseSchema = z.object({
+  invitation: projectInvitationSchema,
+  recipientExists: z.boolean(),
+});
+export type InviteProjectMemberResponse = z.infer<typeof inviteProjectMemberResponseSchema>;
+
+export const updateProjectMemberRoleBodySchema = z.object({
+  role: assignableProjectRoleSchema,
+});
+export type UpdateProjectMemberRoleInput = z.infer<typeof updateProjectMemberRoleBodySchema>;
+
+export const projectMemberResponseSchema = z.object({
+  member: projectMemberSchema,
+});
+export type ProjectMemberResponse = z.infer<typeof projectMemberResponseSchema>;
 
 export const createProjectBodySchema = z.object({
   name: z.string().min(1).max(100),

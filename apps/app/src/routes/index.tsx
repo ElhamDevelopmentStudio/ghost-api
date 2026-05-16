@@ -4,6 +4,7 @@ import { AppLayout } from '@/layouts/app-layout';
 import { AuthLayout } from '@/layouts/auth-layout';
 import { ForgotPasswordPage } from '@/pages/auth/forgot-password-page';
 import { LoginPage } from '@/pages/auth/login-page';
+import { ProjectInvitationPage } from '@/pages/auth/project-invitation-page';
 import { RegisterPage } from '@/pages/auth/register-page';
 import { ResetPasswordPage } from '@/pages/auth/reset-password-page';
 import { VerifyEmailPage } from '@/pages/auth/verify-email-page';
@@ -26,6 +27,10 @@ import { ProtectedRoute } from '@/routes/protected-route';
  * Add new pages here so the surface stays scannable.
  */
 export const router = createBrowserRouter([
+  {
+    path: 'invite/:token',
+    element: <ProjectInvitationPage />,
+  },
   {
     element: <AuthLayout />,
     children: [

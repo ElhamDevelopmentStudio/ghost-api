@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { RiMailLine, RiUserLine } from '@remixicon/react';
 
 import { Checkbox } from '@ghostapi/ui';
@@ -16,14 +16,21 @@ import {
 } from '@/features/auth';
 
 export function RegisterPage() {
+  const [searchParams] = useSearchParams();
+  const invitationToken = searchParams.get('invitation') ?? undefined;
+  const invitedEmail = searchParams.get('email') ?? '';
   const { register, isRegistering } = useAuth();
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(invitedEmail);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [acceptedTerms, setAcceptedTerms] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (invitedEmail) setEmail(invitedEmail);
+  }, [invitedEmail]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -44,6 +51,7 @@ export function RegisterPage() {
         name: name.trim() || undefined,
         email,
         password,
+        invitationToken,
       });
       setSubmittedEmail(response.user.email);
     } catch (err) {
@@ -78,7 +86,11 @@ export function RegisterPage() {
   return (
     <AuthCard
       title="Create your account"
-      subtitle="Start building in seconds."
+      subtitle={
+        invitationToken
+          ? 'Create your account to accept the project invitation.'
+          : 'Start building in seconds.'
+      }
       githubLabel="Sign up with GitHub"
       compact
       className="max-w-[570px]"

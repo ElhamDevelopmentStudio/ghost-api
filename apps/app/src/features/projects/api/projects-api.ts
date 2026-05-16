@@ -12,6 +12,10 @@ import {
   type ProjectDetailResponse,
   type ProjectEndpoint,
   type ProjectEndpointResponse,
+  type ProjectInvitePreviewResponse,
+  type ProjectMember,
+  type ProjectMemberResponse,
+  type ProjectMembersResponse,
   type ProjectActivitySettingsResponse,
   type ProjectEnvironmentsResponse,
   type ProjectResponse,
@@ -21,6 +25,8 @@ import {
   type SaveEndpointResponseInput,
   type UpdateEndpointConfigInput,
   type UpdateProjectInput,
+  type InviteProjectMemberInput,
+  type UpdateProjectMemberRoleInput,
   type UpdateProjectActivitySettingsInput,
   type UpdateProjectMockDefaultsInput,
   type UpsertProjectEnvironmentsInput,
@@ -38,6 +44,9 @@ export type {
   ProjectEndpoint,
   ProjectSummary,
   ProjectActivityLogsQuery,
+  InviteProjectMemberInput,
+  ProjectMember,
+  UpdateProjectMemberRoleInput,
   UpdateProjectInput,
   UpdateProjectMockDefaultsInput,
   UpsertProjectEnvironmentsInput,
@@ -151,6 +160,81 @@ export async function updateProjectMockDefaults(
     path: `/projects/${projectId}/mock-defaults`,
     method: 'PATCH',
     body: input,
+    headers: {
+      [CSRF_HEADER]: csrfToken,
+    },
+  });
+}
+
+export async function listProjectMembers(projectId: string): Promise<ProjectMembersResponse> {
+  return apiRequest<ProjectMembersResponse>({ path: `/projects/${projectId}/members` });
+}
+
+export async function previewProjectInvite(input: {
+  projectId: string;
+  email: string;
+}): Promise<ProjectInvitePreviewResponse> {
+  const params = new URLSearchParams({ email: input.email });
+  return apiRequest<ProjectInvitePreviewResponse>({
+    path: `/projects/${input.projectId}/members/invite-preview?${params.toString()}`,
+  });
+}
+
+export async function inviteProjectMember(
+  projectId: string,
+  input: InviteProjectMemberInput,
+): Promise<ProjectMembersResponse> {
+  const csrfToken = await getCsrfToken();
+  await apiRequest({
+    path: `/projects/${projectId}/members/invitations`,
+    method: 'POST',
+    body: input,
+    headers: {
+      [CSRF_HEADER]: csrfToken,
+    },
+  });
+  return listProjectMembers(projectId);
+}
+
+export async function updateProjectMemberRole(input: {
+  projectId: string;
+  memberId: string;
+  role: UpdateProjectMemberRoleInput['role'];
+}): Promise<ProjectMember> {
+  const csrfToken = await getCsrfToken();
+  const response = await apiRequest<ProjectMemberResponse>({
+    path: `/projects/${input.projectId}/members/${input.memberId}`,
+    method: 'PATCH',
+    body: { role: input.role },
+    headers: {
+      [CSRF_HEADER]: csrfToken,
+    },
+  });
+  return response.member;
+}
+
+export async function removeProjectMember(input: {
+  projectId: string;
+  memberId: string;
+}): Promise<{ deleted: true }> {
+  const csrfToken = await getCsrfToken();
+  return apiRequest<{ deleted: true }>({
+    path: `/projects/${input.projectId}/members/${input.memberId}`,
+    method: 'DELETE',
+    headers: {
+      [CSRF_HEADER]: csrfToken,
+    },
+  });
+}
+
+export async function revokeProjectInvitation(input: {
+  projectId: string;
+  invitationId: string;
+}): Promise<{ revoked: boolean }> {
+  const csrfToken = await getCsrfToken();
+  return apiRequest<{ revoked: boolean }>({
+    path: `/projects/${input.projectId}/members/invitations/${input.invitationId}`,
+    method: 'DELETE',
     headers: {
       [CSRF_HEADER]: csrfToken,
     },

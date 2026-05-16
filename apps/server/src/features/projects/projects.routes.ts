@@ -2,8 +2,11 @@ import { zValidator } from '@hono/zod-validator';
 import {
   createProjectBodySchema,
   projectActivityLogsQuerySchema,
+  inviteProjectMemberBodySchema,
+  projectInvitePreviewQuerySchema,
   saveEndpointResponseBodySchema,
   updateEndpointConfigBodySchema,
+  updateProjectMemberRoleBodySchema,
   updateProjectActivitySettingsBodySchema,
   updateProjectBodySchema,
   updateProjectMockDefaultsBodySchema,
@@ -36,6 +39,16 @@ import {
   updateProjectMockDefaultsForUser,
   upsertProjectEnvironmentsForUser,
 } from './projects.service.js';
+import {
+  inviteProjectMemberForUser,
+  listProjectMembersForUser,
+  previewProjectInviteForUser,
+  ProjectMembersError,
+  removeProjectMemberForUser,
+  revokeProjectInvitationForUser,
+  updateProjectMemberRoleForUser,
+} from './project-members.service.js';
+import { EmailDeliveryError } from '../auth/auth.email.js';
 
 export const projectsRouter = new Hono<AppEnv>();
 
@@ -55,6 +68,12 @@ const projectSchemaParamSchema = z.object({
 });
 const projectEnvironmentParamSchema = z.object({
   environmentId: z.string().uuid(),
+});
+const projectMemberParamSchema = z.object({
+  memberId: z.string().uuid(),
+});
+const projectInvitationParamSchema = z.object({
+  invitationId: z.string().uuid(),
 });
 
 projectsRouter.get('/', async (c) => {
@@ -182,6 +201,118 @@ projectsRouter.patch(
     });
     if (!result) return c.json({ error: 'Project not found' }, 404);
 
+    return c.json(result);
+  },
+);
+
+projectsRouter.get('/:projectId/members', async (c) => {
+  const { userId } = authContext(c);
+  const result = await listProjectMembersForUser(c.req.param('projectId'), userId);
+  if (!result) return c.json({ error: 'Project not found' }, 404);
+  return c.json(result);
+});
+
+projectsRouter.get(
+  '/:projectId/members/invite-preview',
+  zValidator('query', projectInvitePreviewQuerySchema),
+  async (c) => {
+    const { userId } = authContext(c);
+    const result = await previewProjectInviteForUser({
+      projectId: c.req.param('projectId'),
+      userId,
+      email: c.req.valid('query').email,
+    });
+    if (!result) return c.json({ error: 'Project not found' }, 404);
+    return c.json(result);
+  },
+);
+
+projectsRouter.post(
+  '/:projectId/members/invitations',
+  requireCsrf,
+  zValidator('json', inviteProjectMemberBodySchema),
+  async (c) => {
+    const { userId } = authContext(c);
+    try {
+      const result = await inviteProjectMemberForUser({
+        projectId: c.req.param('projectId'),
+        userId,
+        ...c.req.valid('json'),
+      });
+      if (!result) return c.json({ error: 'Project not found' }, 404);
+      return c.json(result, 201);
+    } catch (error) {
+      if (error instanceof ProjectMembersError) {
+        return c.json({ error: error.message }, error.status === 409 ? 409 : 400);
+      }
+      if (error instanceof EmailDeliveryError) {
+        return c.json({ error: error.message }, 503);
+      }
+      throw error;
+    }
+  },
+);
+
+projectsRouter.patch(
+  '/:projectId/members/:memberId',
+  requireCsrf,
+  zValidator('param', projectMemberParamSchema),
+  zValidator('json', updateProjectMemberRoleBodySchema),
+  async (c) => {
+    const { userId } = authContext(c);
+    try {
+      const member = await updateProjectMemberRoleForUser({
+        projectId: c.req.param('projectId'),
+        memberId: c.req.valid('param').memberId,
+        userId,
+        role: c.req.valid('json').role,
+      });
+      if (!member) return c.json({ error: 'Project member not found' }, 404);
+      return c.json({ member });
+    } catch (error) {
+      if (error instanceof ProjectMembersError) {
+        return c.json({ error: error.message }, 400);
+      }
+      throw error;
+    }
+  },
+);
+
+projectsRouter.delete(
+  '/:projectId/members/:memberId',
+  requireCsrf,
+  zValidator('param', projectMemberParamSchema),
+  async (c) => {
+    const { userId } = authContext(c);
+    try {
+      const result = await removeProjectMemberForUser({
+        projectId: c.req.param('projectId'),
+        memberId: c.req.valid('param').memberId,
+        userId,
+      });
+      if (!result) return c.json({ error: 'Project member not found' }, 404);
+      return c.json(result);
+    } catch (error) {
+      if (error instanceof ProjectMembersError) {
+        return c.json({ error: error.message }, 400);
+      }
+      throw error;
+    }
+  },
+);
+
+projectsRouter.delete(
+  '/:projectId/members/invitations/:invitationId',
+  requireCsrf,
+  zValidator('param', projectInvitationParamSchema),
+  async (c) => {
+    const { userId } = authContext(c);
+    const result = await revokeProjectInvitationForUser({
+      projectId: c.req.param('projectId'),
+      invitationId: c.req.valid('param').invitationId,
+      userId,
+    });
+    if (!result) return c.json({ error: 'Project invitation not found' }, 404);
     return c.json(result);
   },
 );

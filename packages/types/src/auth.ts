@@ -38,6 +38,7 @@ export const registerBodySchema = z.object({
   name: z.string().min(1).max(120).optional(),
   email: z.string().email(),
   password: z.string().min(8).max(200),
+  invitationToken: z.string().min(32).optional(),
 });
 export type RegisterInput = z.infer<typeof registerBodySchema>;
 
@@ -78,6 +79,29 @@ export const logoutAllResponseSchema = successSchema.extend({
   revokedSessions: z.number().int().min(0),
 });
 export type LogoutAllResponse = z.infer<typeof logoutAllResponseSchema>;
+
+export const projectInvitationContextSchema = z.object({
+  projectId: z.string().uuid(),
+  projectName: z.string(),
+  invitedEmail: z.string().email(),
+  role: z.enum(['ADMIN', 'EDITOR', 'VIEWER']),
+  inviterName: z.string().nullable(),
+  recipientExists: z.boolean(),
+  expiresAt: z.string().datetime(),
+});
+export type ProjectInvitationContext = z.infer<typeof projectInvitationContextSchema>;
+
+export const projectInvitationContextResponseSchema = z.object({
+  invitation: projectInvitationContextSchema,
+});
+export type ProjectInvitationContextResponse = z.infer<
+  typeof projectInvitationContextResponseSchema
+>;
+
+export const acceptProjectInvitationResponseSchema = successSchema.extend({
+  projectId: z.string().uuid(),
+});
+export type AcceptProjectInvitationResponse = z.infer<typeof acceptProjectInvitationResponseSchema>;
 
 export const csrfHeaderSchema = z.object({
   [CSRF_HEADER]: z.string().min(32),

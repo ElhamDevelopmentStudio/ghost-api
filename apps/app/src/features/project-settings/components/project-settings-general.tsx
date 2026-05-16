@@ -60,13 +60,15 @@ import {
 } from '@/features/projects/api/projects-api';
 import { ProjectIcon } from '@/features/projects/components/project-icon';
 import { ProjectSettingsMockBehavior } from './project-settings-mock-behavior';
+import { ProjectSettingsSchema } from './project-settings-schema';
+import { ProjectSettingsMembers } from './project-settings-members';
 
 const SETTINGS_TABS = [
   { label: 'General', value: 'general', enabled: true },
   { label: 'Environments', value: 'environments', enabled: true },
   { label: 'Mock Behavior', value: 'mock-behavior', enabled: true },
-  { label: 'Schema', value: 'schema', enabled: false },
-  { label: 'Members', value: 'members', enabled: false },
+  { label: 'Schema', value: 'schema', enabled: true },
+  { label: 'Members', value: 'members', enabled: true },
   { label: 'Danger Zone', value: 'danger-zone', enabled: false },
 ] as const;
 
@@ -93,7 +95,13 @@ const ENVIRONMENT_ICONS = [
 export function ProjectSettingsGeneral({ project }: { project: ProjectDetail }) {
   const [searchParams] = useSearchParams();
   const rawTab = searchParams.get('tab');
-  const activeTab = rawTab === 'environments' || rawTab === 'mock-behavior' ? rawTab : 'general';
+  const activeTab =
+    rawTab === 'environments' ||
+    rawTab === 'mock-behavior' ||
+    rawTab === 'schema' ||
+    rawTab === 'members'
+      ? rawTab
+      : 'general';
 
   return (
     <div className="pb-12">
@@ -114,6 +122,10 @@ export function ProjectSettingsGeneral({ project }: { project: ProjectDetail }) 
         <ProjectSettingsEnvironments project={project} />
       ) : activeTab === 'mock-behavior' ? (
         <ProjectSettingsMockBehavior project={project} />
+      ) : activeTab === 'schema' ? (
+        <ProjectSettingsSchema project={project} />
+      ) : activeTab === 'members' ? (
+        <ProjectSettingsMembers project={project} />
       ) : (
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1.02fr)_minmax(420px,0.98fr)]">
           <ProjectInformationPanel project={project} />
@@ -126,7 +138,11 @@ export function ProjectSettingsGeneral({ project }: { project: ProjectDetail }) 
   );
 }
 
-function SettingsTabs({ activeTab }: { activeTab: 'general' | 'environments' | 'mock-behavior' }) {
+function SettingsTabs({
+  activeTab,
+}: {
+  activeTab: 'general' | 'environments' | 'mock-behavior' | 'schema' | 'members';
+}) {
   return (
     <div className="mt-8 flex max-w-full gap-8 overflow-x-auto border-b border-white/10">
       {SETTINGS_TABS.map((tab) => {
