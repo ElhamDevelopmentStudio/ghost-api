@@ -1,3 +1,4 @@
+import { ProjectMockDefaultsSchema } from '@ghostapi/types';
 import type { MountInput } from '@ghostapi/runtime';
 
 import { prisma } from '../../db.js';
@@ -26,11 +27,18 @@ export function loadProjectMockRuntimeInputs(projectId: string): Promise<MountIn
 }
 
 async function loadMountInputs(projectId: string): Promise<MountInput[]> {
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: { mockDefaults: true },
+  });
+  const projectDefaults = ProjectMockDefaultsSchema.parse(
+    project?.mockDefaults && typeof project.mockDefaults === 'object' ? project.mockDefaults : {},
+  );
   const rows = (await prisma.endpoint.findMany({
     where: { projectId },
     include: { config: true, responses: { orderBy: [{ status: 'asc' }, { contentType: 'asc' }] } },
     orderBy: [{ group: 'asc' }, { path: 'asc' }, { method: 'asc' }],
   })) as unknown as DbEndpoint[];
 
-  return rows.map(toMountInput);
+  return rows.map((row) => toMountInput(row, projectDefaults));
 }

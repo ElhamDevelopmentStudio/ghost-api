@@ -12,5 +12,22 @@ export const EndpointMockConfigSchema = z.object({
 });
 export type EndpointMockConfig = z.infer<typeof EndpointMockConfigSchema>;
 
-export const ProjectMockDefaultsSchema = EndpointMockConfigSchema;
-export type ProjectMockDefaults = EndpointMockConfig;
+export const ProjectMockBehaviorSchema = z.object({
+  responseMode: z.enum(['smart', 'success', 'client-error', 'server-error']).default('smart'),
+  paginationMode: z.enum(['auto', 'cursor', 'page', 'none']).default('auto'),
+  dataFreshness: z.enum(['dynamic', 'stable']).default('dynamic'),
+  dataSource: z.enum(['smart', 'schema', 'faker']).default('smart'),
+  fakerMode: z.boolean().default(true),
+  preserveExamples: z.boolean().default(true),
+  maxArrayItems: z.number().int().min(1).max(100).default(10),
+  stringLength: z.number().int().min(1).max(500).default(20),
+  cacheResponses: z.boolean().default(true),
+  cacheTtlSeconds: z.number().int().min(1).max(86_400).default(30),
+  randomization: z.boolean().default(false),
+  errorStatusWeights: z.record(z.string(), z.number().min(0)).default({}),
+  customErrorResponses: z.record(z.string(), z.unknown()).default({}),
+});
+export type ProjectMockBehavior = z.infer<typeof ProjectMockBehaviorSchema>;
+
+export const ProjectMockDefaultsSchema = EndpointMockConfigSchema.merge(ProjectMockBehaviorSchema);
+export type ProjectMockDefaults = z.infer<typeof ProjectMockDefaultsSchema>;

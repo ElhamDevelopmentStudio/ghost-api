@@ -3,7 +3,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ProjectDetail, ProjectEndpoint } from '@ghostapi/types';
+import {
+  ProjectMockDefaultsSchema,
+  type ProjectDetail,
+  type ProjectEndpoint,
+} from '@ghostapi/types';
 
 import { PlaygroundPage } from './playground-page';
 
@@ -155,12 +159,12 @@ function project(): ProjectDetail {
     endpointCount: 1,
     requestCount: 0,
     activityLogRetentionDays: 0,
-    mockDefaults: {
+    mockDefaults: ProjectMockDefaultsSchema.parse({
       latencyMs: 0,
       statusCode: null,
       authRequired: false,
       errorChance: 0,
-    },
+    }),
     environment: {
       name: 'Development',
       baseUrl: 'https://api.example.com',

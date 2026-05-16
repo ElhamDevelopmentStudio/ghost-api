@@ -9,6 +9,12 @@ export interface GenerateOptions {
   defaultArrayLength?: number;
   /** Hard cap on recursion depth to prevent runaway nested schemas. */
   maxDepth?: number;
+  /** Whether explicit schema examples should be returned before generated values. */
+  preserveExamples?: boolean;
+  /** Whether field-name and format heuristics should use faker-backed values. */
+  useFaker?: boolean;
+  /** Target length for fallback string values. */
+  stringLength?: number;
 }
 
 /**
@@ -22,6 +28,9 @@ export function generateMockValue(schema: FieldSchema, options: GenerateOptions 
     faker,
     defaultArrayLength: options.defaultArrayLength ?? 3,
     maxDepth: options.maxDepth ?? 8,
+    preserveExamples: options.preserveExamples ?? true,
+    useFaker: options.useFaker ?? true,
+    stringLength: options.stringLength ?? 12,
   };
   return generate(schema, undefined, 0, ctx);
 }
@@ -30,6 +39,9 @@ interface Ctx {
   faker: Faker;
   defaultArrayLength: number;
   maxDepth: number;
+  preserveExamples: boolean;
+  useFaker: boolean;
+  stringLength: number;
 }
 
 function generate(
@@ -40,22 +52,27 @@ function generate(
 ): unknown {
   if (depth > ctx.maxDepth) return null;
 
-  if (schema.example !== undefined) return schema.example;
+  if (ctx.preserveExamples && schema.example !== undefined) return schema.example;
   if (schema.enum && schema.enum.length > 0) {
+    if (!ctx.useFaker) return schema.enum[0];
     return schema.enum[ctx.faker.number.int({ min: 0, max: schema.enum.length - 1 })];
   }
 
-  if (fieldName) {
+  if (ctx.useFaker && fieldName) {
     const byName = chooseByFieldName(fieldName, ctx.faker);
     if (byName !== undefined) return coerceToType(byName, schema.type);
   }
 
-  const byFormat = chooseByFormat(schema, ctx.faker);
-  if (byFormat !== undefined) return byFormat;
+  if (ctx.useFaker) {
+    const byFormat = chooseByFormat(schema, ctx.faker);
+    if (byFormat !== undefined) return byFormat;
+  }
 
   switch (schema.type) {
     case 'string':
-      return ctx.faker.lorem.word();
+      return ctx.useFaker
+        ? ctx.faker.string.alpha({ length: ctx.stringLength })
+        : 'x'.repeat(ctx.stringLength);
     case 'number':
       return ctx.faker.number.float({ min: 0, max: 1000, fractionDigits: 2 });
     case 'integer':

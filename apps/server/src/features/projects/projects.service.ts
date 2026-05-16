@@ -375,7 +375,7 @@ export async function updateProjectMockDefaultsForUser({
   await prisma.$transaction(async (tx) => {
     await tx.project.update({
       where: { id: projectId },
-      data: { mockDefaults },
+      data: { mockDefaults: mockDefaults as unknown as Prisma.InputJsonValue },
     });
 
     const endpoints = await tx.endpoint.findMany({

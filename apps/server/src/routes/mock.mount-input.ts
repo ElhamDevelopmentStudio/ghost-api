@@ -2,6 +2,7 @@ import type {
   EndpointMockConfig,
   NormalizedEndpoint,
   Parameter,
+  ProjectMockDefaults,
   RequestBody,
   ResponseDefinition,
 } from '@ghostapi/types';
@@ -32,7 +33,10 @@ interface StoredResponseSchema {
   responses?: ResponseDefinition[];
 }
 
-export function toMountInput(row: DbEndpoint): MountInput {
+export function toMountInput(
+  row: DbEndpoint,
+  projectDefaults: ProjectMockDefaults | null = null,
+): MountInput {
   const requestSchema = toObject<StoredRequestSchema>(row.requestSchema);
   const responseSchema = toObject<StoredResponseSchema>(row.responseSchema);
 
@@ -47,11 +51,12 @@ export function toMountInput(row: DbEndpoint): MountInput {
     authRequired: row.config?.authRequired ?? false,
   };
 
-  const config: EndpointMockConfig = {
-    latencyMs: row.config?.latencyMs ?? 0,
-    statusCode: row.config?.statusCode ?? null,
-    authRequired: row.config?.authRequired ?? false,
-    errorChance: row.config?.errorChance ?? 0,
+  const config: EndpointMockConfig & Partial<ProjectMockDefaults> = {
+    ...(projectDefaults ?? {}),
+    latencyMs: row.config?.latencyMs ?? projectDefaults?.latencyMs ?? 0,
+    statusCode: row.config?.statusCode ?? projectDefaults?.statusCode ?? null,
+    authRequired: row.config?.authRequired ?? projectDefaults?.authRequired ?? false,
+    errorChance: row.config?.errorChance ?? projectDefaults?.errorChance ?? 0,
   };
 
   const configuredSaved = row.config?.statusCode

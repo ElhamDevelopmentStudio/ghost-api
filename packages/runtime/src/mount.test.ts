@@ -307,4 +307,73 @@ describe('buildMockRouter', () => {
 
     expect(res.headers.get('x-ghostapi-request-log-id')).toBeNull();
   });
+
+  it('applies configured error status weights and custom error bodies', async () => {
+    const app = buildMockRouter(
+      [
+        {
+          endpoint,
+          config: {
+            latencyMs: 0,
+            statusCode: null,
+            authRequired: false,
+            errorChance: 1,
+            errorStatusWeights: { '418': 1 },
+            customErrorResponses: { '418': { code: 'teapot' } },
+          },
+        },
+      ],
+      { random: () => 0 },
+    );
+
+    const res = await app.request('/users');
+
+    expect(res.status).toBe(418);
+    await expect(res.json()).resolves.toEqual({ code: 'teapot' });
+  });
+
+  it('uses project generation controls for examples, faker, arrays, and pagination', async () => {
+    const app = buildMockRouter([
+      {
+        endpoint: {
+          ...endpoint,
+          responses: [
+            {
+              status: 200,
+              contentType: 'application/json',
+              schema: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    label: { type: 'string', example: 'schema-example' },
+                  },
+                },
+              },
+            },
+          ],
+        },
+        config: {
+          latencyMs: 0,
+          statusCode: null,
+          authRequired: false,
+          errorChance: 0,
+          preserveExamples: false,
+          fakerMode: false,
+          maxArrayItems: 2,
+          stringLength: 4,
+          paginationMode: 'page',
+        },
+      },
+    ]);
+
+    const res = await app.request('/users?page=2&limit=1');
+    const body = (await res.json()) as {
+      data: Array<{ label: string }>;
+      pagination: { page: number; pageSize: number; total: number };
+    };
+
+    expect(body.data).toEqual([{ label: 'xxxx' }]);
+    expect(body.pagination).toEqual(expect.objectContaining({ page: 2, pageSize: 1, total: 2 }));
+  });
 });

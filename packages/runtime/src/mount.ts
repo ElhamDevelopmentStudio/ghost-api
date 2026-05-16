@@ -1,6 +1,11 @@
 import { Hono } from 'hono';
 import type { Context } from 'hono';
-import type { EndpointMockConfig, NormalizedEndpoint, ResponseDefinition } from '@ghostapi/types';
+import type {
+  EndpointMockConfig,
+  NormalizedEndpoint,
+  ProjectMockDefaults,
+  ResponseDefinition,
+} from '@ghostapi/types';
 import { generateMockValue } from '@ghostapi/mock-engine';
 
 import { toHonoPath } from './path.js';
@@ -8,7 +13,7 @@ import { errorBody, pickErrorStatus } from './error-pool.js';
 
 export interface MountInput {
   endpoint: NormalizedEndpoint;
-  config: EndpointMockConfig;
+  config: EndpointMockConfig & Partial<ProjectMockDefaults>;
   /** Optional pre-saved response body to return verbatim. */
   savedBody?: unknown;
   /** Saved response bodies keyed by status and media type. */
@@ -41,6 +46,13 @@ export interface BuildOptions {
   random?: () => number;
 }
 
+interface CachedMockResponse {
+  expiresAt: number;
+  status: number;
+  body: unknown;
+  contentType?: string;
+}
+
 /**
  * Build a Hono router that serves all the supplied mock endpoints.
  *
@@ -53,11 +65,12 @@ export function buildMockRouter(inputs: MountInput[], opts: BuildOptions = {}): 
   const headInputs: MountInput[] = [];
   const isAuthorized = opts.isAuthorized ?? defaultAuthCheck;
   const random = opts.random ?? Math.random;
+  const responseCache = new Map<string, CachedMockResponse>();
 
   for (const input of inputs) {
     const honoPath = toHonoPath(input.endpoint.path);
     const handler = async (c: Context) =>
-      handle(c, input, { isAuthorized, random, onLog: opts.onLog });
+      handle(c, input, { isAuthorized, random, onLog: opts.onLog, responseCache });
 
     if (input.endpoint.method === 'HEAD') {
       headInputs.push(input);
@@ -84,10 +97,11 @@ export function buildMockRouter(inputs: MountInput[], opts: BuildOptions = {}): 
 async function handle(
   c: Context,
   input: MountInput,
-  opts: Required<Pick<BuildOptions, 'isAuthorized' | 'random'>> & Pick<BuildOptions, 'onLog'>,
+  opts: Required<Pick<BuildOptions, 'isAuthorized' | 'random'>> &
+    Pick<BuildOptions, 'onLog'> & { responseCache: Map<string, CachedMockResponse> },
 ): Promise<Response> {
   const start = Date.now();
-  const { endpoint, config, savedBody, seed } = input;
+  const { endpoint, config, savedBody } = input;
 
   if (config.authRequired && !opts.isAuthorized(c)) {
     return finish(
@@ -102,11 +116,11 @@ async function handle(
   }
 
   if (config.errorChance > 0 && opts.random() < config.errorChance) {
-    const status = pickErrorStatus(opts.random);
+    const status = pickConfiguredErrorStatus(config, opts.random);
     return finish(
       c,
       status,
-      responseBody(endpoint, errorBody(status)),
+      responseBody(endpoint, configuredErrorBody(config, status)),
       'application/json',
       opts.onLog,
       input,
@@ -121,6 +135,16 @@ async function handle(
   const response = pickResponse(endpoint, config.statusCode);
   const mediaType = pickMediaType(response, c.req.header('accept'));
   const status = response?.status ?? config.statusCode ?? 200;
+  const contentType = mediaType?.contentType;
+  const cacheKey = config.cacheResponses
+    ? cacheResponseKey(c, endpoint, status, contentType)
+    : undefined;
+  const cached = cacheKey ? opts.responseCache.get(cacheKey) : undefined;
+  if (cached && cached.expiresAt > Date.now()) {
+    return finish(c, cached.status, cached.body, cached.contentType, opts.onLog, input, start);
+  }
+  if (cached) opts.responseCache.delete(cacheKey as string);
+
   const savedResponse = pickSavedResponse(
     input.savedResponses,
     status,
@@ -128,19 +152,29 @@ async function handle(
     c.req.header('accept'),
   );
   const hasKeyedSavedResponses = Boolean(input.savedResponses?.length);
-  const contentType = savedResponse?.contentType ?? mediaType?.contentType;
-  const body = responseBody(
+  const responseContentType = savedResponse?.contentType ?? contentType;
+  const generatedBody = responseBody(
     endpoint,
     savedResponse
       ? savedResponse.body
       : savedBody !== undefined && !hasKeyedSavedResponses
         ? savedBody
         : mediaType?.schema
-          ? generateMockValue(mediaType.schema, { seed: seed ?? endpoint.id })
+          ? generateMockValue(mediaType.schema, generationOptions(input, config, opts.random))
           : null,
   );
+  const body = applyPaginationBehavior(c, generatedBody, config);
 
-  return finish(c, status, body, contentType, opts.onLog, input, start);
+  if (cacheKey) {
+    opts.responseCache.set(cacheKey, {
+      expiresAt: Date.now() + (config.cacheTtlSeconds ?? 30) * 1000,
+      status,
+      body,
+      contentType: responseContentType,
+    });
+  }
+
+  return finish(c, status, body, responseContentType, opts.onLog, input, start);
 }
 
 function responseBody(endpoint: NormalizedEndpoint, body: unknown): unknown {
@@ -175,6 +209,126 @@ function pickResponse(
     return endpoint.responses.find((r) => r.status === override);
   }
   return endpoint.responses.find((r) => r.status >= 200 && r.status < 300) ?? endpoint.responses[0];
+}
+
+function generationOptions(input: MountInput, config: MountInput['config'], random: () => number) {
+  const shouldVary = config.randomization || config.dataFreshness === 'dynamic';
+  const seed = shouldVary
+    ? `${input.seed ?? input.endpoint.id}:${Date.now()}:${random()}`
+    : input.seed;
+  const dataSource = config.dataSource ?? 'smart';
+
+  return {
+    seed: seed ?? input.endpoint.id,
+    defaultArrayLength: config.maxArrayItems ?? 3,
+    preserveExamples: config.preserveExamples !== false && dataSource !== 'faker',
+    useFaker: config.fakerMode !== false && dataSource !== 'schema',
+    stringLength: config.stringLength ?? 12,
+  };
+}
+
+function pickConfiguredErrorStatus(config: MountInput['config'], random: () => number): number {
+  const entries = Object.entries(config.errorStatusWeights ?? {})
+    .map(([status, weight]) => [Number(status), weight] as const)
+    .filter(([status, weight]) => Number.isInteger(status) && status >= 400 && weight > 0);
+
+  const total = entries.reduce((sum, [, weight]) => sum + weight, 0);
+  if (total <= 0) return pickErrorStatus(random);
+
+  let cursor = random() * total;
+  for (const [status, weight] of entries) {
+    cursor -= weight;
+    if (cursor <= 0) return status;
+  }
+  return entries[entries.length - 1]?.[0] ?? pickErrorStatus(random);
+}
+
+function configuredErrorBody(config: MountInput['config'], status: number): unknown {
+  return config.customErrorResponses?.[String(status)] ?? errorBody(status);
+}
+
+function applyPaginationBehavior(c: Context, body: unknown, config: MountInput['config']): unknown {
+  const mode = resolvePaginationMode(c, config.paginationMode ?? 'none');
+  if (mode === 'none') return body;
+
+  const source = Array.isArray(body)
+    ? {
+        items: body,
+        wrap: (items: unknown[], meta: Record<string, unknown>) => ({ data: items, ...meta }),
+      }
+    : isRecord(body) && Array.isArray(body.data)
+      ? {
+          items: body.data,
+          wrap: (items: unknown[], meta: Record<string, unknown>) => ({
+            ...body,
+            data: items,
+            ...meta,
+          }),
+        }
+      : null;
+  if (!source) return body;
+
+  const url = new URL(c.req.url);
+  const pageSize = clampNumber(
+    Number(
+      url.searchParams.get('limit') ?? url.searchParams.get('pageSize') ?? source.items.length,
+    ),
+    1,
+    source.items.length || 1,
+  );
+  const items = source.items.slice(0, pageSize);
+
+  if (mode === 'cursor') {
+    return source.wrap(items, {
+      pageInfo: {
+        nextCursor: source.items.length > pageSize ? String(pageSize) : null,
+        previousCursor: null,
+        hasNextPage: source.items.length > pageSize,
+        hasPreviousPage: false,
+      },
+    });
+  }
+
+  const page = clampNumber(Number(url.searchParams.get('page') ?? '1'), 1, 10_000);
+  return source.wrap(items, {
+    pagination: {
+      page,
+      pageSize,
+      total: source.items.length,
+      totalPages: Math.max(1, Math.ceil(source.items.length / pageSize)),
+    },
+  });
+}
+
+function resolvePaginationMode(
+  c: Context,
+  mode: NonNullable<ProjectMockDefaults['paginationMode']>,
+): 'cursor' | 'page' | 'none' {
+  if (mode === 'cursor' || mode === 'page') return mode;
+  if (mode === 'none') return 'none';
+
+  const params = new URL(c.req.url).searchParams;
+  if (params.has('cursor') || params.has('after') || params.has('before')) return 'cursor';
+  if (params.has('page') || params.has('limit') || params.has('pageSize')) return 'page';
+  return 'none';
+}
+
+function cacheResponseKey(
+  c: Context,
+  endpoint: NormalizedEndpoint,
+  status: number,
+  contentType: string | undefined,
+): string {
+  const url = new URL(c.req.url);
+  return [
+    endpoint.id,
+    c.req.method,
+    url.pathname,
+    url.search,
+    status,
+    contentType ?? '',
+    c.req.header('accept') ?? '',
+  ].join('|');
 }
 
 function pickSavedResponse(
@@ -329,6 +483,11 @@ function isFormUrlEncodedMediaType(contentType: string): boolean {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function clampNumber(value: number, min: number, max: number): number {
+  if (!Number.isFinite(value)) return min;
+  return Math.min(max, Math.max(min, Math.trunc(value)));
 }
 
 function defaultAuthCheck(c: Context): boolean {
