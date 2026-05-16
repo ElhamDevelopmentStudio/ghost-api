@@ -1,19 +1,9 @@
 import axios, { type AxiosError, type AxiosRequestConfig, type AxiosResponseHeaders } from 'axios';
 
+import { ApiError } from './api-error';
 import { env } from './env';
 
-/** Thrown for any non-2xx response. Carries the parsed body when available. */
-export class ApiError extends Error {
-  readonly status: number;
-  readonly body: unknown;
-
-  constructor(status: number, message: string, body: unknown) {
-    super(message);
-    this.name = 'ApiError';
-    this.status = status;
-    this.body = body;
-  }
-}
+export { ApiError } from './api-error';
 
 type RequestOptions = Omit<AxiosRequestConfig, 'baseURL' | 'data' | 'url'> & {
   body?: unknown;

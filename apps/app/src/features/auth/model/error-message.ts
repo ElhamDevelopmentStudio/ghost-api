@@ -1,4 +1,4 @@
-import { ApiError } from '@/lib/api-client';
+import { ApiError } from '@/lib/api-error';
 
 export function getAuthErrorMessage(error: unknown, fallback: string): string {
   if (error instanceof ApiError) return error.message;
