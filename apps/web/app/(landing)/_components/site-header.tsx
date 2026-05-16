@@ -10,11 +10,11 @@ import { Button } from '@ghostapi/ui';
 import type { AppLinks } from '@/app/(landing)/_lib/app-links';
 
 const NAV_ITEMS = [
-  { label: 'FEATURES', href: '#features' },
-  { label: 'HOW IT WORKS', href: '#how-it-works' },
-  { label: 'PRICING', href: '#pricing' },
+  { label: 'FEATURES', href: '/features' },
+  { label: 'HOW IT WORKS', href: '/how-it-works' },
+  { label: 'PRICING', href: '/pricing' },
   { label: 'DOCS', href: '/docs' },
-  { label: 'CHANGELOG', href: '#changelog' },
+  { label: 'CHANGELOG', href: '/changelog' },
 ] as const;
 
 type SiteHeaderProps = {
@@ -61,7 +61,11 @@ export function SiteHeader({ appLinks, isAuthenticated }: SiteHeaderProps): Reac
 
       <div className="flex items-center gap-3">
         <Button asChild variant="secondary" size="sm" className="hidden sm:inline-flex">
-          <a href="https://github.com" target="_blank" rel="noreferrer">
+          <a
+            href="https://github.com/ElhamDevelopmentStudio/ghost-api"
+            target="_blank"
+            rel="noreferrer"
+          >
             <RiGithubFill />
             <span>Star on GitHub</span>
             <span className="text-warning ml-1 flex items-center gap-1">

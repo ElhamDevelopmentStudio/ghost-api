@@ -28,7 +28,7 @@ export default async function HomePage(): Promise<React.JSX.Element> {
       <FeaturesSection />
       <HowItWorksSection />
       <TestimonialsSection />
-      <PricingSection />
+      <PricingSection appLinks={appLinks} />
       <FinalCtaSection appLinks={appLinks} isAuthenticated={isAuthenticated} />
       <FooterSection />
     </main>

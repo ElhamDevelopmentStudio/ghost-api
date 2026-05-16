@@ -41,9 +41,9 @@ export function FooterSection(): React.JSX.Element {
               </h3>
               <ul className="text-muted-foreground space-y-3 text-sm">
                 {group.links.map((item) => (
-                  <li key={item}>
-                    <Link href="#" className="hover:text-foreground transition-colors">
-                      {item}
+                  <li key={item.href}>
+                    <Link href={item.href} className="hover:text-foreground transition-colors">
+                      {item.label}
                     </Link>
                   </li>
                 ))}

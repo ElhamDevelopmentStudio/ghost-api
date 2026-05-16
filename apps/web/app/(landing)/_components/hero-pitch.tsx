@@ -72,14 +72,17 @@ export function HeroPitch({ appLinks, isAuthenticated }: HeroPitchProps): React.
           </a>
         </Button>
         <Button
+          asChild
           variant="tertiary"
           size="lg"
           className="text-muted-foreground gap-3 tracking-normal"
         >
-          <span className="border-border-strong flex size-8 items-center justify-center rounded-full border">
-            <RiPlayLine className="ml-[1px] size-3 fill-current" />
-          </span>
-          WATCH DEMO
+          <a href="/how-it-works">
+            <span className="border-border-strong flex size-8 items-center justify-center rounded-full border">
+              <RiPlayLine className="ml-[1px] size-3 fill-current" />
+            </span>
+            SEE HOW IT WORKS
+          </a>
         </Button>
       </motion.div>
     </div>

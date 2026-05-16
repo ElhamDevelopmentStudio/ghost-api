@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 
+import { FooterSection } from '@/app/(landing)/_components/footer-section';
 import { SiteHeader } from '@/app/(landing)/_components/site-header';
 import { AUTH_COOKIE_NAMES, getAppLinks } from '@/app/(landing)/_lib/app-links';
 import { publicEnv } from '@/app/env';
@@ -28,6 +29,7 @@ export default async function DocsPage(): Promise<React.JSX.Element> {
         openApiUrl={openApiUrl}
         isAuthenticated={isAuthenticated}
       />
+      <FooterSection />
     </main>
   );
 }

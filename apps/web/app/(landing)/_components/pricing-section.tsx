@@ -5,10 +5,16 @@ import { RiCheckLine } from '@remixicon/react';
 
 import { Button, Card, CardContent } from '@ghostapi/ui';
 
+import type { AppLinks } from '@/app/(landing)/_lib/app-links';
+
 import { type BillingCycle, PRICING_PLANS } from './constants';
 import { SectionEyebrow } from './section-eyebrow';
 
-export function PricingSection(): React.JSX.Element {
+type PricingSectionProps = {
+  appLinks: AppLinks;
+};
+
+export function PricingSection({ appLinks }: PricingSectionProps): React.JSX.Element {
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('yearly');
 
   return (
@@ -90,8 +96,20 @@ export function PricingSection(): React.JSX.Element {
                       </li>
                     ))}
                   </ul>
-                  <Button className="mt-8 w-full font-mono text-xs tracking-[0.08em]" size="sm">
-                    {plan.cta}
+                  <Button
+                    asChild
+                    className="mt-8 w-full font-mono text-xs tracking-[0.08em]"
+                    size="sm"
+                  >
+                    <a
+                      href={
+                        plan.name === 'Enterprise'
+                          ? 'mailto:sales@ghostapi.dev?subject=GhostAPI%20Enterprise'
+                          : appLinks.register
+                      }
+                    >
+                      {plan.cta}
+                    </a>
                   </Button>
                 </CardContent>
               </Card>

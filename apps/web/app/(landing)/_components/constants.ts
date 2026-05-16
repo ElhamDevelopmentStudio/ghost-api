@@ -282,8 +282,37 @@ export const TRUSTED_COMPANIES: TrustedCompany[] = [
 ];
 
 export const FOOTER_GROUPS = [
-  { title: 'PRODUCT', links: ['Features', 'How It Works', 'Pricing', 'Changelog'] },
-  { title: 'RESOURCES', links: ['Docs', 'Guides', 'API Reference', 'Blog'] },
-  { title: 'COMPANY', links: ['About', 'Careers', 'Contact'] },
-  { title: 'LEGAL', links: ['Privacy Policy', 'Terms of Service', 'License'] },
+  {
+    title: 'PRODUCT',
+    links: [
+      { label: 'Features', href: '/features' },
+      { label: 'How It Works', href: '/how-it-works' },
+      { label: 'Pricing', href: '/pricing' },
+      { label: 'Changelog', href: '/changelog' },
+    ],
+  },
+  {
+    title: 'RESOURCES',
+    links: [
+      { label: 'Docs', href: '/docs' },
+      { label: 'API Reference', href: '/api-reference' },
+      { label: 'Local Development', href: '/local-development' },
+      { label: 'Troubleshooting', href: '/troubleshooting' },
+    ],
+  },
+  {
+    title: 'COMPANY',
+    links: [
+      { label: 'GitHub', href: 'https://github.com/ElhamDevelopmentStudio/ghost-api' },
+      { label: 'Contact', href: '/contact' },
+    ],
+  },
+  {
+    title: 'LEGAL',
+    links: [
+      { label: 'Privacy Policy', href: '/privacy-policy' },
+      { label: 'Terms of Service', href: '/terms-of-service' },
+      { label: 'License', href: '/license' },
+    ],
+  },
 ] as const;
