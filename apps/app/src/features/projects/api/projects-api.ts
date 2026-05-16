@@ -17,6 +17,7 @@ import {
   type ProjectMemberResponse,
   type ProjectMembersResponse,
   type ProjectActivitySettingsResponse,
+  type DeleteProjectResponse,
   type ProjectEnvironmentsResponse,
   type ProjectResponse,
   type ProjectSchemaDetail,
@@ -32,6 +33,7 @@ import {
   type UpsertProjectEnvironmentsInput,
   type UploadProjectSchemaResponse,
   type ProjectMockDefaultsResponse,
+  type ResetProjectMockDataResponse,
 } from '@ghostapi/types';
 
 import { getCsrfToken } from '@/features/auth/api/auth-api';
@@ -91,6 +93,35 @@ export async function updateProject(
   });
 
   return response.project;
+}
+
+export async function archiveProject(projectId: string, archived: boolean): Promise<ProjectDetail> {
+  const csrfToken = await getCsrfToken();
+  const response = await apiRequest<ProjectDetailResponse>({
+    path: `/projects/${projectId}/archive`,
+    method: 'PATCH',
+    body: { archived },
+    headers: {
+      [CSRF_HEADER]: csrfToken,
+    },
+  });
+
+  return response.project;
+}
+
+export async function deleteProject(
+  projectId: string,
+  confirmation: string,
+): Promise<DeleteProjectResponse> {
+  const csrfToken = await getCsrfToken();
+  return apiRequest<DeleteProjectResponse>({
+    path: `/projects/${projectId}`,
+    method: 'DELETE',
+    body: { confirmation },
+    headers: {
+      [CSRF_HEADER]: csrfToken,
+    },
+  });
 }
 
 export async function uploadProjectSchema(input: {
@@ -160,6 +191,19 @@ export async function updateProjectMockDefaults(
     path: `/projects/${projectId}/mock-defaults`,
     method: 'PATCH',
     body: input,
+    headers: {
+      [CSRF_HEADER]: csrfToken,
+    },
+  });
+}
+
+export async function resetProjectMockData(
+  projectId: string,
+): Promise<ResetProjectMockDataResponse> {
+  const csrfToken = await getCsrfToken();
+  return apiRequest<ResetProjectMockDataResponse>({
+    path: `/projects/${projectId}/mock-data/reset`,
+    method: 'POST',
     headers: {
       [CSRF_HEADER]: csrfToken,
     },

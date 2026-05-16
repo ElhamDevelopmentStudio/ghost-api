@@ -19,6 +19,8 @@ const prisma = {
 
 vi.mock('../db.js', () => ({ prisma }));
 
+setValidEnv();
+
 const { mockRouter } = await import('./mock.js');
 const { clearProjectMockRuntimeCache } = await import('../features/projects/mock-runtime-cache.js');
 const { saveProjectEndpointResponseForUser, updateProjectEndpointConfigForUser } =
@@ -109,6 +111,23 @@ function setRuntimeRow(row: ReturnType<typeof endpointRow>) {
   prisma.endpoint.findMany.mockImplementation(async () => [row]);
   prisma.endpoint.findFirst.mockImplementation(async () => row);
   prisma.endpoint.findUnique.mockImplementation(async () => row);
+}
+
+function setValidEnv() {
+  process.env.NODE_ENV = 'test';
+  process.env.DATABASE_URL = 'postgresql://ghostapi:ghostapi@localhost:5432/ghostapi';
+  process.env.REDIS_URL = 'redis://localhost:6379';
+  process.env.JWT_SECRET = 'test-secret-test-secret-test-secret-32';
+  process.env.CORS_ORIGINS = 'http://localhost:3002';
+  process.env.MAIL_USERNAME = 'resend';
+  process.env.MAIL_PASSWORD = '';
+  process.env.MAIL_FROM = 'noreply@example.com';
+  process.env.R2_ACCOUNT_ID = 'test-account';
+  process.env.R2_ACCESS_KEY_ID = 'test-access-key';
+  process.env.R2_SECRET_ACCESS_KEY = 'test-secret-key';
+  process.env.R2_BUCKET = 'ghostapi-test';
+  process.env.R2_REGION = 'auto';
+  process.env.R2_ENDPOINT_URL = 'https://test.r2.cloudflarestorage.com';
 }
 
 function endpointRow({

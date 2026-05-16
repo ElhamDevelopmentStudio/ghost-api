@@ -10,7 +10,7 @@ export type ProjectCardViewModel = {
   name: string;
   description: string | null;
   icon: string | null;
-  status: 'Live' | 'Paused';
+  status: 'Live' | 'Paused' | 'Archived';
   updatedAt: string;
   visibility: 'Private' | 'Team';
 };
@@ -23,6 +23,7 @@ export function ProjectCard({
   index?: number;
 }) {
   const live = project.status === 'Live';
+  const archived = project.status === 'Archived';
   const content = (
     <>
       <div className="flex items-center gap-4">
@@ -43,10 +44,15 @@ export function ProjectCard({
         <div
           className={cn(
             'flex items-center gap-2 text-sm',
-            live ? 'text-emerald-400' : 'text-yellow-400',
+            live ? 'text-emerald-400' : archived ? 'text-zinc-400' : 'text-yellow-400',
           )}
         >
-          <span className={cn('size-2 rounded-full', live ? 'bg-emerald-400' : 'bg-yellow-400')} />
+          <span
+            className={cn(
+              'size-2 rounded-full',
+              live ? 'bg-emerald-400' : archived ? 'bg-zinc-400' : 'bg-yellow-400',
+            )}
+          />
           {project.status}
         </div>
         <span

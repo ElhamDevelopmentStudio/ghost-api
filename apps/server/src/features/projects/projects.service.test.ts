@@ -123,7 +123,7 @@ describe('listProjectActivityLogsForUser', () => {
     });
   });
 
-  it('clears all activity logs inside the readable project', async () => {
+  it('clears all activity logs inside an editable project', async () => {
     const result = await clearProjectActivityLogsForUser({
       projectId: '00000000-0000-4000-8000-000000000010',
       userId: '00000000-0000-4000-8000-000000000011',
@@ -135,7 +135,7 @@ describe('listProjectActivityLogsForUser', () => {
     expect(result).toEqual({ deletedCount: 3 });
   });
 
-  it('does not clear logs when the user cannot read the project', async () => {
+  it('does not clear logs when the user cannot edit the project', async () => {
     prisma.project.findFirst.mockResolvedValue(null);
 
     const result = await clearProjectActivityLogsForUser({
@@ -147,7 +147,7 @@ describe('listProjectActivityLogsForUser', () => {
     expect(prisma.requestLog.deleteMany).not.toHaveBeenCalled();
   });
 
-  it('updates activity log retention inside the readable project', async () => {
+  it('updates activity log retention inside an editable project', async () => {
     const result = await updateProjectActivitySettingsForUser({
       projectId: '00000000-0000-4000-8000-000000000010',
       userId: '00000000-0000-4000-8000-000000000011',
@@ -162,7 +162,7 @@ describe('listProjectActivityLogsForUser', () => {
     expect(result).toEqual({ activityLogRetentionDays: 7 });
   });
 
-  it('does not update activity log retention when the user cannot read the project', async () => {
+  it('does not update activity log retention when the user cannot edit the project', async () => {
     prisma.project.findFirst.mockResolvedValue(null);
 
     const result = await updateProjectActivitySettingsForUser({

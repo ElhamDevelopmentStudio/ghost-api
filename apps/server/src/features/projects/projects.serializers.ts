@@ -15,6 +15,7 @@ export type ProjectSummaryRow = {
   slug: string;
   description: string | null;
   icon: string | null;
+  archivedAt: Date | null;
   activityLogRetentionDays: number;
   mockDefaults: unknown;
   ownerId: string;
@@ -81,7 +82,7 @@ export function serializeProject(project: ProjectSummaryRow, userId: string): Pr
     icon: project.icon,
     role: project.ownerId === userId ? 'OWNER' : (project.members[0]?.role ?? 'VIEWER'),
     visibility: project._count.members > 1 ? 'Team' : 'Private',
-    status: 'Live',
+    status: project.archivedAt ? 'Archived' : 'Live',
     endpointCount: project._count.endpoints,
     requestCount: project._count.requestLogs,
     activityLogRetentionDays: toActivityLogRetentionDays(project.activityLogRetentionDays),

@@ -62,6 +62,7 @@ import { ProjectIcon } from '@/features/projects/components/project-icon';
 import { ProjectSettingsMockBehavior } from './project-settings-mock-behavior';
 import { ProjectSettingsSchema } from './project-settings-schema';
 import { ProjectSettingsMembers } from './project-settings-members';
+import { ProjectSettingsDangerZone } from './project-settings-danger-zone';
 
 const SETTINGS_TABS = [
   { label: 'General', value: 'general', enabled: true },
@@ -69,7 +70,7 @@ const SETTINGS_TABS = [
   { label: 'Mock Behavior', value: 'mock-behavior', enabled: true },
   { label: 'Schema', value: 'schema', enabled: true },
   { label: 'Members', value: 'members', enabled: true },
-  { label: 'Danger Zone', value: 'danger-zone', enabled: false },
+  { label: 'Danger Zone', value: 'danger-zone', enabled: true },
 ] as const;
 
 const PROJECT_ICONS = [
@@ -99,7 +100,8 @@ export function ProjectSettingsGeneral({ project }: { project: ProjectDetail }) 
     rawTab === 'environments' ||
     rawTab === 'mock-behavior' ||
     rawTab === 'schema' ||
-    rawTab === 'members'
+    rawTab === 'members' ||
+    rawTab === 'danger-zone'
       ? rawTab
       : 'general';
 
@@ -126,6 +128,8 @@ export function ProjectSettingsGeneral({ project }: { project: ProjectDetail }) 
         <ProjectSettingsSchema project={project} />
       ) : activeTab === 'members' ? (
         <ProjectSettingsMembers project={project} />
+      ) : activeTab === 'danger-zone' ? (
+        <ProjectSettingsDangerZone project={project} />
       ) : (
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1.02fr)_minmax(420px,0.98fr)]">
           <ProjectInformationPanel project={project} />
@@ -141,7 +145,7 @@ export function ProjectSettingsGeneral({ project }: { project: ProjectDetail }) 
 function SettingsTabs({
   activeTab,
 }: {
-  activeTab: 'general' | 'environments' | 'mock-behavior' | 'schema' | 'members';
+  activeTab: 'general' | 'environments' | 'mock-behavior' | 'schema' | 'members' | 'danger-zone';
 }) {
   return (
     <div className="mt-8 flex max-w-full gap-8 overflow-x-auto border-b border-white/10">

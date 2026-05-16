@@ -1,6 +1,8 @@
 import { zValidator } from '@hono/zod-validator';
 import {
+  archiveProjectBodySchema,
   createProjectBodySchema,
+  deleteProjectBodySchema,
   projectActivityLogsQuerySchema,
   inviteProjectMemberBodySchema,
   projectInvitePreviewQuerySchema,
@@ -25,7 +27,9 @@ import {
 } from './project-endpoints.service.js';
 import {
   clearProjectActivityLogsForUser,
+  archiveProjectForUser,
   createProjectForUser,
+  deleteProjectForUser,
   deleteProjectEnvironmentForUser,
   getProjectActivityLogForUser,
   getProjectForUser,
@@ -37,6 +41,7 @@ import {
   updateProjectForUser,
   updateProjectActivitySettingsForUser,
   updateProjectMockDefaultsForUser,
+  resetProjectMockDataForUser,
   upsertProjectEnvironmentsForUser,
 } from './projects.service.js';
 import {
@@ -382,6 +387,54 @@ projectsRouter.patch(
     if (!result) return c.json({ error: 'Project not found' }, 404);
 
     return c.json(result);
+  },
+);
+
+projectsRouter.post('/:projectId/mock-data/reset', requireCsrf, async (c) => {
+  const { userId } = authContext(c);
+  const result = await resetProjectMockDataForUser({
+    projectId: c.req.param('projectId'),
+    userId,
+  });
+  if (!result) return c.json({ error: 'Project not found' }, 404);
+
+  return c.json(result);
+});
+
+projectsRouter.patch(
+  '/:projectId/archive',
+  requireCsrf,
+  zValidator('json', archiveProjectBodySchema),
+  async (c) => {
+    const { userId } = authContext(c);
+    const project = await archiveProjectForUser({
+      projectId: c.req.param('projectId'),
+      userId,
+      archived: c.req.valid('json').archived,
+    });
+    if (!project) return c.json({ error: 'Project not found' }, 404);
+
+    return c.json({ project });
+  },
+);
+
+projectsRouter.delete(
+  '/:projectId',
+  requireCsrf,
+  zValidator('json', deleteProjectBodySchema),
+  async (c) => {
+    const { userId } = authContext(c);
+    const result = await deleteProjectForUser({
+      projectId: c.req.param('projectId'),
+      userId,
+      confirmation: c.req.valid('json').confirmation,
+    });
+    if (!result) return c.json({ error: 'Project not found' }, 404);
+    if (!result.deleted && result.reason === 'CONFIRMATION_MISMATCH') {
+      return c.json({ error: 'Type the project name exactly to delete this project.' }, 400);
+    }
+
+    return c.json({ deleted: true });
   },
 );
 

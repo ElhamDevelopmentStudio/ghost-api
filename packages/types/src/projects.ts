@@ -20,7 +20,7 @@ export type ProjectInvitationStatus = z.infer<typeof projectInvitationStatusSche
 export const projectVisibilitySchema = z.enum(['Private', 'Team']);
 export type ProjectVisibility = z.infer<typeof projectVisibilitySchema>;
 
-export const projectStatusSchema = z.enum(['Live', 'Paused']);
+export const projectStatusSchema = z.enum(['Live', 'Paused', 'Archived']);
 export type ProjectStatus = z.infer<typeof projectStatusSchema>;
 
 export const activityLogRetentionDaysSchema = z.union([
@@ -399,6 +399,27 @@ export const projectActivitySettingsResponseSchema = z.object({
   activityLogRetentionDays: activityLogRetentionDaysSchema,
 });
 export type ProjectActivitySettingsResponse = z.infer<typeof projectActivitySettingsResponseSchema>;
+
+export const archiveProjectBodySchema = z.object({
+  archived: z.boolean(),
+});
+export type ArchiveProjectInput = z.infer<typeof archiveProjectBodySchema>;
+
+export const resetProjectMockDataResponseSchema = z.object({
+  deletedResponseCount: z.number().int().nonnegative(),
+  resetEndpointCount: z.number().int().nonnegative(),
+});
+export type ResetProjectMockDataResponse = z.infer<typeof resetProjectMockDataResponseSchema>;
+
+export const deleteProjectBodySchema = z.object({
+  confirmation: z.string().min(1),
+});
+export type DeleteProjectInput = z.infer<typeof deleteProjectBodySchema>;
+
+export const deleteProjectResponseSchema = z.object({
+  deleted: z.literal(true),
+});
+export type DeleteProjectResponse = z.infer<typeof deleteProjectResponseSchema>;
 
 export const updateEndpointConfigBodySchema = EndpointMockConfigSchema.partial();
 export type UpdateEndpointConfigInput = z.infer<typeof updateEndpointConfigBodySchema>;

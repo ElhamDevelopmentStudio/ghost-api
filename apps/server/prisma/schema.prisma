@@ -120,16 +120,17 @@ model PasswordReset {
 }
 
 model Project {
-  id                       String   @id @default(uuid()) @db.Uuid
-  ownerId                  String   @map("owner_id") @db.Uuid
+  id                       String    @id @default(uuid()) @db.Uuid
+  ownerId                  String    @map("owner_id") @db.Uuid
   name                     String
-  slug                     String   @unique
+  slug                     String    @unique
   description              String?
   icon                     String?
-  activityLogRetentionDays Int      @default(30) @map("activity_log_retention_days")
-  mockDefaults             Json     @default("{}") @map("mock_defaults")
-  createdAt                DateTime @default(now()) @map("created_at")
-  updatedAt                DateTime @updatedAt @map("updated_at")
+  archivedAt               DateTime? @map("archived_at")
+  activityLogRetentionDays Int       @default(30) @map("activity_log_retention_days")
+  mockDefaults             Json      @default("{}") @map("mock_defaults")
+  createdAt                DateTime  @default(now()) @map("created_at")
+  updatedAt                DateTime  @updatedAt @map("updated_at")
 
   owner        User                @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   members      ProjectMember[]
