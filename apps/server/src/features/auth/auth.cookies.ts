@@ -61,9 +61,11 @@ export function ensureCsrfCookie(c: Context<AppEnv>): string {
 }
 
 function baseCookieOptions() {
+  const isProduction = env().NODE_ENV === 'production';
+
   return {
     path: COOKIE_PATH,
-    sameSite: 'Lax' as const,
-    secure: env().NODE_ENV === 'production',
+    sameSite: isProduction ? ('None' as const) : ('Lax' as const),
+    secure: isProduction,
   };
 }

@@ -26,7 +26,14 @@ export function createApp() {
         return allowedOrigins.includes(origin) ? origin : null;
       },
       credentials: true,
-      allowHeaders: ['Content-Type', 'Accept', 'Authorization', 'X-CSRF-Token'],
+      allowHeaders: [
+        'Content-Type',
+        'Accept',
+        'Authorization',
+        'X-CSRF-Token',
+        'X-Device-Id',
+        'X-API-Version',
+      ],
       exposeHeaders: ['X-GhostAPI-Request-Log-Id'],
       allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     }),

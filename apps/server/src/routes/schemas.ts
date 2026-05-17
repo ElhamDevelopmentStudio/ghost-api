@@ -86,13 +86,16 @@ schemasRouter.post(
       let updatedEndpointCount = 0;
       let skippedDuplicateCount = 0;
 
+      const endpointCreateData: Prisma.EndpointCreateManyInput[] = [];
+      const endpointConfigCreateData: Prisma.EndpointConfigCreateManyInput[] = [];
+
       for (const ep of normalized.endpoints) {
         const existing = existingByKey.get(endpointKey(ep.method, ep.path));
         const requestSchema = {
           parameters: ep.parameters,
           requestBody: ep.requestBody ?? null,
-        } as unknown as Prisma.InputJsonValue;
-        const responseSchema = { responses: ep.responses } as unknown as Prisma.InputJsonValue;
+        };
+        const responseSchema = { responses: ep.responses };
 
         if (existing) {
           if (!overrideDuplicateEndpoints) {
@@ -104,8 +107,8 @@ schemasRouter.post(
             where: { id: existing.id },
             data: {
               group: ep.group,
-              requestSchema,
-              responseSchema,
+              requestSchema: toJsonInput(requestSchema),
+              responseSchema: toJsonInput(responseSchema),
             },
           });
           await tx.endpointConfig.upsert({
@@ -125,32 +128,35 @@ schemasRouter.post(
           continue;
         }
 
-        const createdEndpoint = await tx.endpoint.create({
-          data: {
-            projectId,
-            method: ep.method,
-            path: ep.path,
-            group: ep.group,
-            requestSchema,
-            responseSchema,
-            config: {
-              create: {
-                latencyMs: mockDefaults.latencyMs,
-                statusCode: mockDefaults.statusCode,
-                authRequired: ep.authRequired || mockDefaults.authRequired,
-                errorChance: mockDefaults.errorChance,
-              },
-            },
-          },
-          select: { id: true },
+        const endpointId = crypto.randomUUID();
+        endpointCreateData.push({
+          id: endpointId,
+          projectId,
+          method: ep.method,
+          path: ep.path,
+          group: ep.group,
+          requestSchema: toJsonInput(requestSchema),
+          responseSchema: toJsonInput(responseSchema),
+        });
+        endpointConfigCreateData.push({
+          endpointId,
+          latencyMs: mockDefaults.latencyMs,
+          statusCode: mockDefaults.statusCode,
+          authRequired: ep.authRequired || mockDefaults.authRequired,
+          errorChance: mockDefaults.errorChance,
         });
         existingByKey.set(endpointKey(ep.method, ep.path), {
-          id: createdEndpoint.id,
+          id: endpointId,
           method: ep.method,
           path: ep.path,
           config: { id: '' },
         });
         addedEndpointCount += 1;
+      }
+
+      if (endpointCreateData.length > 0) {
+        await tx.endpoint.createMany({ data: endpointCreateData });
+        await tx.endpointConfig.createMany({ data: endpointConfigCreateData });
       }
 
       return {
@@ -179,4 +185,8 @@ schemasRouter.post(
 
 function endpointKey(method: string, path: string) {
   return `${method.toUpperCase()} ${path}`;
+}
+
+function toJsonInput(value: unknown): Prisma.InputJsonValue {
+  return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
 }
