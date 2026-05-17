@@ -47,10 +47,10 @@ export function AmbientParticles({
       left: region.left + random() * (region.right - region.left),
       top: region.top + random() * (region.bottom - region.top),
       alpha: 0.3 + random() * 0.5,
-      drift: random() * 20 + 20,
-      jitter: random() * 12 - 6,
-      duration: 3 + random() * 3,
-      delay: random() * 4,
+      drift: random() * 24 + 18,
+      jitter: random() * 14 - 7,
+      duration: 5 + random() * 5,
+      delay: random() * 5,
     }));
   }, [count, region.top, region.bottom, region.left, region.right, seed]);
 
@@ -68,16 +68,17 @@ export function AmbientParticles({
             backgroundColor: `rgba(var(--primary-rgb), ${p.alpha})`,
           }}
           animate={{
-            y: [0, -p.drift, 0],
-            x: [0, p.jitter, 0],
-            opacity: [0.1, 0.7, 0.1],
-            scale: [0.5, 1.3, 0.5],
+            y: [0, -p.drift],
+            x: [0, p.jitter],
+            opacity: [0.12, 0.65],
+            scale: [0.6, 1.25],
           }}
           transition={{
             duration: p.duration,
             delay: p.delay,
             repeat: Infinity,
-            ease: 'easeInOut',
+            repeatType: 'mirror',
+            ease: [0.45, 0.05, 0.55, 0.95],
           }}
         />
       ))}

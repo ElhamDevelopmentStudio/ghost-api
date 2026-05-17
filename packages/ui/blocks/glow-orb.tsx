@@ -22,25 +22,39 @@ export function GlowOrb({
       style={{ width: size, height: size }}
       {...props}
     >
-      {/* Far halo */}
+      {/* All halos share a 6s breathing cycle on a sine-style curve so they
+          read as one organism inhaling/exhaling. Slight delay offsets create
+          depth without competing rhythms. */}
       <motion.span
         aria-hidden
-        animate={{ scale: [1, 1.32, 1], opacity: [0.42, 0.18, 0.42] }}
-        transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut' }}
+        animate={{ scale: [1, 1.28, 1], opacity: [0.42, 0.18, 0.42] }}
+        transition={{
+          duration: 6,
+          repeat: Infinity,
+          ease: [0.45, 0.05, 0.55, 0.95],
+        }}
         className="bg-primary/70 absolute -inset-20 rounded-full blur-3xl"
       />
-      {/* Mid halo */}
       <motion.span
         aria-hidden
-        animate={{ scale: [1, 1.18, 1], opacity: [0.58, 0.28, 0.58] }}
-        transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut', delay: 0.3 }}
+        animate={{ scale: [1, 1.16, 1], opacity: [0.55, 0.26, 0.55] }}
+        transition={{
+          duration: 6,
+          repeat: Infinity,
+          ease: [0.45, 0.05, 0.55, 0.95],
+          delay: 0.45,
+        }}
         className="bg-primary/80 absolute -inset-12 rounded-full blur-2xl"
       />
-      {/* Near halo */}
       <motion.span
         aria-hidden
-        animate={{ scale: [1, 1.1, 1], opacity: [0.85, 0.48, 0.85] }}
-        transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut', delay: 0.15 }}
+        animate={{ scale: [1, 1.08, 1], opacity: [0.82, 0.5, 0.82] }}
+        transition={{
+          duration: 6,
+          repeat: Infinity,
+          ease: [0.45, 0.05, 0.55, 0.95],
+          delay: 0.9,
+        }}
         className="bg-primary absolute -inset-6 rounded-full blur-xl"
       />
 
@@ -52,7 +66,12 @@ export function GlowOrb({
             'var(--filter-glow-orb)',
           ],
         }}
-        transition={{ duration: 2.8, repeat: Infinity, ease: 'easeInOut' }}
+        transition={{
+          duration: 6,
+          repeat: Infinity,
+          ease: [0.45, 0.05, 0.55, 0.95],
+          delay: 0.45,
+        }}
         style={{ width: size, height: size }}
         className="relative z-10 flex items-center justify-center"
       >

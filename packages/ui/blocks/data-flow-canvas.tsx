@@ -91,32 +91,33 @@ export function DataFlowCanvas({
     });
   }, []);
 
-  // Continuously spawn glowing particles on random paths.
+  // Continuously spawn glowing particles on random paths. Smaller bursts on a
+  // shorter cadence read as a continuous shimmer rather than batched pulses.
   useEffect(() => {
     const id = setInterval(() => {
       const fresh: Particle[] = [];
       for (let i = 0; i < sources.length; i++) {
-        if (Math.random() > 0.7) {
+        if (Math.random() > 0.82) {
           fresh.push({
             id: particleId.current++,
             pathIndex: i,
-            delay: Math.random() * 0.3,
+            delay: Math.random() * 0.6,
             direction: 'in',
           });
         }
       }
       for (let i = 0; i < sinks.length; i++) {
-        if (Math.random() > 0.7) {
+        if (Math.random() > 0.82) {
           fresh.push({
             id: particleId.current++,
             pathIndex: i,
-            delay: Math.random() * 0.3,
+            delay: Math.random() * 0.6,
             direction: 'out',
           });
         }
       }
-      setParticles((current) => [...current.slice(-40), ...fresh]);
-    }, 800);
+      setParticles((current) => [...current.slice(-48), ...fresh]);
+    }, 320);
     return () => clearInterval(id);
   }, [sources.length, sinks.length]);
 
@@ -171,21 +172,28 @@ export function DataFlowCanvas({
             strokeLinecap="round"
             filter={beam.emphasis ? 'url(#dfc-line-glow)' : undefined}
           />
+          {/* Traveling dash: a single bright segment slides from before the
+              path start to past its end. Using `pathLength={1}` normalizes the
+              units so the dasharray + offset values are independent of the
+              actual path length. The dash is invisible before/after the visible
+              range, so the loop never visibly snaps. */}
           <motion.path
             d={beam.d}
+            pathLength={1}
             fill="none"
             stroke={`url(#dfc-grad-${beam.method})`}
             strokeWidth={beam.emphasis ? '2.6' : '1'}
             strokeLinecap="round"
+            strokeDasharray={beam.emphasis ? '0.22 4' : '0.18 4'}
             filter="url(#dfc-line-glow)"
-            initial={{ pathLength: 0, opacity: 0 }}
-            animate={{ pathLength: [0, 1, 1, 0], opacity: [0, 0.9, 0.9, 0] }}
+            initial={{ strokeDashoffset: beam.emphasis ? 0.22 : 0.18 }}
+            animate={{ strokeDashoffset: -1 }}
             transition={{
-              duration: 3.5,
-              delay: index * 0.3,
+              duration: 3.6,
+              delay: index * 0.14,
               repeat: Infinity,
-              repeatDelay: 0.8,
-              ease: 'easeInOut',
+              repeatDelay: 0.5,
+              ease: [0.4, 0, 0.2, 1],
             }}
           />
         </g>
@@ -203,19 +211,21 @@ export function DataFlowCanvas({
           />
           <motion.path
             d={beam.d}
+            pathLength={1}
             fill="none"
             stroke="url(#dfc-grad-out)"
             strokeWidth={beam.emphasis ? '1.8' : '0.9'}
             strokeLinecap="round"
+            strokeDasharray={beam.emphasis ? '0.22 4' : '0.18 4'}
             filter="url(#dfc-line-glow)"
-            initial={{ pathLength: 0, opacity: 0 }}
-            animate={{ pathLength: [0, 1, 1, 0], opacity: [0, 0.9, 0.9, 0] }}
+            initial={{ strokeDashoffset: beam.emphasis ? 0.22 : 0.18 }}
+            animate={{ strokeDashoffset: -1 }}
             transition={{
-              duration: 3.5,
-              delay: 1.5 + index * 0.3,
+              duration: 3.6,
+              delay: 1.4 + index * 0.14,
               repeat: Infinity,
-              repeatDelay: 0.8,
-              ease: 'easeInOut',
+              repeatDelay: 0.5,
+              ease: [0.4, 0, 0.2, 1],
             }}
           />
         </g>
@@ -233,8 +243,16 @@ export function DataFlowCanvas({
             fill={fill}
             filter="url(#dfc-particle-glow)"
             initial={{ opacity: 0 }}
-            animate={{ opacity: [0, 1, 1, 0], offsetDistance: ['0%', '100%'] }}
-            transition={{ duration: 2.5, delay: p.delay, ease: 'easeInOut' }}
+            animate={{
+              opacity: [0, 1, 1, 0],
+              offsetDistance: ['0%', '100%'],
+            }}
+            transition={{
+              duration: 3.2,
+              delay: p.delay,
+              ease: [0.4, 0, 0.2, 1],
+              times: [0, 0.18, 0.82, 1],
+            }}
             style={{ offsetPath: `path("${beam.d}")` }}
           />
         );

@@ -23,8 +23,8 @@ export function LiveApiActivity(): React.JSX.Element {
       if (!next) return;
       setHighlighted(next.id);
       if (clearTimer) clearTimeout(clearTimer);
-      clearTimer = setTimeout(() => setHighlighted(null), 600);
-    }, 1500);
+      clearTimer = setTimeout(() => setHighlighted(null), 900);
+    }, 1800);
     return () => {
       clearInterval(interval);
       if (clearTimer) clearTimeout(clearTimer);
@@ -40,8 +40,12 @@ export function LiveApiActivity(): React.JSX.Element {
     >
       <div className="mb-4 flex items-center gap-2">
         <motion.span
-          animate={{ opacity: [1, 0.4, 1], scale: [1, 1.2, 1] }}
-          transition={{ duration: 1.5, repeat: Infinity }}
+          animate={{ opacity: [1, 0.45, 1], scale: [1, 1.18, 1] }}
+          transition={{
+            duration: 2.4,
+            repeat: Infinity,
+            ease: [0.45, 0.05, 0.55, 0.95],
+          }}
           className="bg-success shadow-success/50 size-2 rounded-full shadow-lg"
         />
         <span className="text-muted-foreground font-mono text-xs tracking-[0.2em]">

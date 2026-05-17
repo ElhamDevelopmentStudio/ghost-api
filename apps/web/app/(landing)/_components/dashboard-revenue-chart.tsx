@@ -53,7 +53,7 @@ export function DashboardRevenueChart(): React.JSX.Element {
           <motion.path
             initial={{ pathLength: 0 }}
             animate={{ pathLength: 1 }}
-            transition={{ duration: 1.5, delay: 1 }}
+            transition={{ duration: 1.8, delay: 1, ease: [0.4, 0, 0.2, 1] }}
             d="M 0 60 Q 15 55, 30 50 T 60 45 T 90 40 T 120 35 T 150 18 T 180 15 T 200 28"
             fill="none"
             stroke="var(--primary)"
@@ -63,7 +63,7 @@ export function DashboardRevenueChart(): React.JSX.Element {
           <motion.circle
             initial={{ opacity: 0, scale: 0 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 1.5 }}
+            transition={{ delay: 1.5, duration: 0.6, ease: [0.34, 1.56, 0.64, 1] }}
             cx="150"
             cy="18"
             r="4"
@@ -71,15 +71,21 @@ export function DashboardRevenueChart(): React.JSX.Element {
             className="drop-shadow-lg"
           />
           <motion.circle
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0.3, 0.6, 0.3] }}
-            transition={{ delay: 1.5, duration: 2, repeat: Infinity }}
+            initial={{ opacity: 0, scale: 0.85 }}
+            animate={{ opacity: [0.25, 0.55, 0.25], scale: [0.85, 1.15, 0.85] }}
+            transition={{
+              delay: 1.5,
+              duration: 3.2,
+              repeat: Infinity,
+              ease: [0.45, 0.05, 0.55, 0.95],
+            }}
             cx="150"
             cy="18"
             r="8"
             fill="none"
             stroke="var(--primary)"
             strokeWidth="2"
+            style={{ transformOrigin: '150px 18px' }}
           />
         </svg>
       </div>
