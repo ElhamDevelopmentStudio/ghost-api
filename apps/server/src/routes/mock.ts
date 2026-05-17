@@ -3,6 +3,7 @@ import { buildMockRouter } from '@ghostapi/runtime';
 import { prisma } from '../db.js';
 import { logger } from '../logger.js';
 import { loadProjectMockRuntimeInputs } from '../features/projects/mock-runtime-cache.js';
+import { handleDemoMock } from './mock-demo.js';
 import {
   normalizeActivityLogRetentionDays,
   requestLogRetentionCutoff,
@@ -15,8 +16,15 @@ import {
  */
 export const mockRouter = new Hono();
 
+const DEMO_PROJECT_ID = 'demo';
+
 mockRouter.all('/:projectId/*', async (c) => {
   const projectId = c.req.param('projectId');
+
+  if (projectId === DEMO_PROJECT_ID) {
+    return handleDemoMock(c, extractMockSuffix(c.req.url, projectId));
+  }
+
   const project = await prisma.project.findUnique({
     where: { id: projectId },
     select: { id: true, activityLogRetentionDays: true },
@@ -69,12 +77,17 @@ mockRouter.all('/:projectId/*', async (c) => {
 
   // Strip `/:projectId` from the URL before delegating to the per-project router.
   const url = new URL(c.req.url);
-  const mountedPrefix = `/mock/${projectId}`;
-  const directPrefix = `/${projectId}`;
-  const stripped =
-    (url.pathname.startsWith(mountedPrefix)
-      ? url.pathname.slice(mountedPrefix.length)
-      : url.pathname.slice(directPrefix.length)) || '/';
+  const stripped = extractMockSuffix(c.req.url, projectId);
   const subRequest = new Request(`${url.origin}${stripped}${url.search}`, c.req.raw);
   return router.fetch(subRequest);
 });
+
+function extractMockSuffix(requestUrl: string, projectId: string): string {
+  const url = new URL(requestUrl);
+  const mountedPrefix = `/mock/${projectId}`;
+  const directPrefix = `/${projectId}`;
+  const suffix = url.pathname.startsWith(mountedPrefix)
+    ? url.pathname.slice(mountedPrefix.length)
+    : url.pathname.slice(directPrefix.length);
+  return suffix || '/';
+}

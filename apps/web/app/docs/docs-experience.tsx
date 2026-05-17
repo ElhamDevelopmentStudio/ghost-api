@@ -18,9 +18,14 @@ import {
 import { Button } from '@ghostapi/ui';
 
 import type { AppLinks } from '@/app/(landing)/_lib/app-links';
+import { HealthPing } from './health-ping';
+import { LivePlaygroundDemo } from './live-playground-demo';
+import { MockRuntimeFeed } from './mock-runtime-feed';
+import { QuickstartTerminal } from './quickstart-terminal';
 
 type DocsExperienceProps = {
   appLinks: AppLinks;
+  apiBaseUrl: string;
   apiDocsUrl: string;
   openApiUrl: string;
   isAuthenticated: boolean;
@@ -184,6 +189,7 @@ const READ_FIRST = [
 
 export function DocsExperience({
   appLinks,
+  apiBaseUrl,
   apiDocsUrl,
   openApiUrl,
   isAuthenticated,
@@ -362,8 +368,9 @@ export function DocsExperience({
             id="quickstart"
             eyebrow="Start"
             title="Quickstart"
-            intro="Run GhostAPI locally, prepare the database, and open the three app surfaces."
+            intro="Watch the full setup run end to end below — then run the same five commands on your machine."
           >
+            <QuickstartTerminal />
             <OrderedGuide
               steps={[
                 ['Install dependencies', 'Run pnpm install from the repository root.'],
@@ -491,15 +498,17 @@ export function DocsExperience({
             id="playground"
             eyebrow="Build"
             title="Playground"
-            intro="Playground is the full-screen request workspace for a project. It should feel closer to an API client than a dashboard widget."
+            intro="Playground is the full-screen request workspace for a project. The widget below is the real thing in miniature — every request fires against the GhostAPI server you'd run in production."
           >
+            <LivePlaygroundDemo apiUrl={apiBaseUrl} />
             <KeyPoint>
-              Shared headers are project-level request policy. Endpoint headers are local request
-              details and are hidden when a shared header with the same key exists.
+              What you just did mirrors a real project: pick an endpoint, dial in mock behavior,
+              send a request, read the response. The only difference is that real projects come from
+              your uploaded OpenAPI schema instead of this seeded fixture.
             </KeyPoint>
             <Paragraphs
               lines={[
-                'The endpoint list selects a generated route and hydrates method, URL, params, headers, body, auth, and mock controls.',
+                'In a real project, the endpoint list comes from your uploaded schema. Selecting an endpoint hydrates method, URL, params, headers, body, auth, and mock controls.',
                 'Shared project headers are inherited by every request. If a local endpoint header has the same key, the shared header wins and the local duplicate is hidden from the request view.',
                 'The body editor follows the selected media type, including JSON, text, no-body requests, and multiple schema-declared content types.',
                 'After sending, Playground shows status, latency, response headers, response body, saved response body, and copyable cURL.',
@@ -511,8 +520,9 @@ export function DocsExperience({
             id="mock-runtime"
             eyebrow="Operate"
             title="Mock runtime"
-            intro="Runtime requests hit /mock/{projectId}/{path}. The server matches method and path, applies mock behavior, returns a response, and records activity."
+            intro="Runtime requests hit /mock/{projectId}/{path}. The widget below is a synthetic feed — drag the sliders and watch real status codes, latencies, and 5xx/401 counts respond live."
           >
+            <MockRuntimeFeed />
             <KeyPoint>
               The runtime should behave like a backend, but remain configurable enough to force
               loading, error, auth, and empty-state paths in the frontend.
@@ -604,6 +614,7 @@ export function DocsExperience({
             title="Backend API"
             intro="Use this page for product behavior. Use the live Scalar reference for exact schemas."
           >
+            <HealthPing apiUrl={apiBaseUrl} />
             <div className="mb-6 flex flex-wrap gap-3">
               <Button asChild>
                 <a href={apiDocsUrl} target="_blank" rel="noreferrer">

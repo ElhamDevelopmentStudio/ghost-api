@@ -17,14 +17,16 @@ export default async function DocsPage(): Promise<React.JSX.Element> {
   const cookieStore = await cookies();
   const isAuthenticated = AUTH_COOKIE_NAMES.some((name) => cookieStore.has(name));
   const appLinks = getAppLinks();
-  const apiDocsUrl = new URL('/docs', publicEnv.NEXT_PUBLIC_API_URL).toString();
-  const openApiUrl = new URL('/openapi.json', publicEnv.NEXT_PUBLIC_API_URL).toString();
+  const apiBaseUrl = publicEnv.NEXT_PUBLIC_API_URL;
+  const apiDocsUrl = new URL('/docs', apiBaseUrl).toString();
+  const openApiUrl = new URL('/openapi.json', apiBaseUrl).toString();
 
   return (
     <main className="bg-background text-foreground min-h-screen">
       <SiteHeader appLinks={appLinks} isAuthenticated={isAuthenticated} />
       <DocsExperience
         appLinks={appLinks}
+        apiBaseUrl={apiBaseUrl}
         apiDocsUrl={apiDocsUrl}
         openApiUrl={openApiUrl}
         isAuthenticated={isAuthenticated}
