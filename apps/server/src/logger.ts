@@ -1,11 +1,10 @@
 import pino from 'pino';
-import { env } from './env.js';
 
-const e = env();
+const nodeEnv = process.env.NODE_ENV ?? 'development';
 
 export const logger = pino({
-  level: e.LOG_LEVEL,
-  ...(e.NODE_ENV === 'development'
+  level: process.env.LOG_LEVEL ?? 'info',
+  ...(nodeEnv === 'development'
     ? {
         transport: {
           target: 'pino-pretty',

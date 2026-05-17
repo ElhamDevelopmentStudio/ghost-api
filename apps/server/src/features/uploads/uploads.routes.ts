@@ -3,7 +3,6 @@ import { extname } from 'node:path';
 
 import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono';
-import sharp from 'sharp';
 import {
   type Attachment,
   type AttachmentPurpose,
@@ -21,7 +20,7 @@ import {
   uploadFolderByPurpose,
 } from './upload.constants.js';
 import { attachmentOriginalUrl, attachmentThumbnailUrl } from './upload.urls.js';
-import { getObjectBuffer, headObject, putObject, signedGetUrl, signedPutUrl } from './r2.client.js';
+import { headObject, signedGetUrl, signedPutUrl } from './r2.client.js';
 
 export const uploadsRouter = new Hono<AppEnv>();
 
@@ -39,9 +38,6 @@ uploadsRouter.post('/', requireCsrf, zValidator('json', createUploadBodySchema),
   const id = randomUUID();
   const extension = extensionFor(input.fileName, input.mimeType);
   const objectKey = `${uploadFolderByPurpose[input.purpose]}/${userId}/${id}/original${extension}`;
-  const thumbnailKey = isImage
-    ? `${uploadFolderByPurpose[input.purpose]}/${userId}/${id}/thumbnail.webp`
-    : null;
 
   const attachment = await prisma.attachment.create({
     data: {
@@ -52,7 +48,7 @@ uploadsRouter.post('/', requireCsrf, zValidator('json', createUploadBodySchema),
       mimeType: input.mimeType,
       sizeBytes: input.sizeBytes,
       objectKey,
-      thumbnailKey,
+      thumbnailKey: null,
     },
   });
 
@@ -84,21 +80,6 @@ uploadsRouter.post('/:id/complete', requireCsrf, async (c) => {
 
   try {
     await headObject(attachment.objectKey);
-
-    if (attachment.thumbnailKey && IMAGE_MIME_TYPES.has(attachment.mimeType)) {
-      const original = await getObjectBuffer(attachment.objectKey);
-      const thumbnail = await sharp(original)
-        .rotate()
-        .resize(256, 256, { fit: 'cover', withoutEnlargement: true })
-        .webp({ quality: 82 })
-        .toBuffer();
-
-      await putObject({
-        key: attachment.thumbnailKey,
-        body: thumbnail,
-        contentType: 'image/webp',
-      });
-    }
 
     const completed = await prisma.attachment.update({
       where: { id: attachment.id },
