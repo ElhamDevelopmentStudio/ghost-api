@@ -17,26 +17,32 @@ export function createApp() {
   const e = env();
   const app = new OpenAPIHono<AppEnv>();
   const allowedOrigins = parseOrigins(e.CORS_ORIGINS);
+  const backendCors = cors({
+    origin: (origin) => {
+      if (!origin) return null;
+      return allowedOrigins.includes(origin) ? origin : null;
+    },
+    credentials: true,
+    allowHeaders: [
+      'Content-Type',
+      'Accept',
+      'Authorization',
+      'X-CSRF-Token',
+      'X-Device-Id',
+      'X-API-Version',
+    ],
+    exposeHeaders: ['X-GhostAPI-Request-Log-Id'],
+    allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  });
+  const mockCors = cors({
+    origin: '*',
+    allowHeaders: ['*'],
+    exposeHeaders: ['X-GhostAPI-Request-Log-Id'],
+    allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'],
+  });
 
-  app.use(
-    '*',
-    cors({
-      origin: (origin) => {
-        if (!origin) return null;
-        return allowedOrigins.includes(origin) ? origin : null;
-      },
-      credentials: true,
-      allowHeaders: [
-        'Content-Type',
-        'Accept',
-        'Authorization',
-        'X-CSRF-Token',
-        'X-Device-Id',
-        'X-API-Version',
-      ],
-      exposeHeaders: ['X-GhostAPI-Request-Log-Id'],
-      allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    }),
+  app.use('*', (c, next) =>
+    c.req.path.startsWith('/mock/') ? mockCors(c, next) : backendCors(c, next),
   );
 
   app.use('*', async (c, next) => {

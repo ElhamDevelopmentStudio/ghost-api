@@ -37,6 +37,49 @@ describe('auth backend surface', () => {
     expect(response.headers.get('set-cookie')).toContain(`ghostapi_csrf=${body.csrfToken}`);
   });
 
+  it('keeps auth CORS restricted to configured frontend origins', async () => {
+    const { createApp } = await import('./server/app.js');
+    const app = createApp();
+    const response = await app.request('/auth/csrf', {
+      headers: { Origin: 'https://untrusted.example' },
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('access-control-allow-origin')).toBeNull();
+    expect(response.headers.get('access-control-allow-credentials')).toBe('true');
+  });
+
+  it('serves mock APIs with wildcard CORS for any frontend origin', async () => {
+    const { createApp } = await import('./server/app.js');
+    const app = createApp();
+    const response = await app.request('/mock/demo/users', {
+      headers: { Origin: 'https://any-frontend.example' },
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('access-control-allow-origin')).toBe('*');
+    expect(response.headers.get('access-control-allow-credentials')).toBeNull();
+  });
+
+  it('accepts mock API preflight requests from any frontend origin', async () => {
+    const { createApp } = await import('./server/app.js');
+    const app = createApp();
+    const response = await app.request('/mock/demo/users', {
+      method: 'OPTIONS',
+      headers: {
+        Origin: 'https://any-frontend.example',
+        'Access-Control-Request-Method': 'POST',
+        'Access-Control-Request-Headers': 'authorization,content-type,x-custom-header',
+      },
+    });
+
+    expect(response.status).toBe(204);
+    expect(response.headers.get('access-control-allow-origin')).toBe('*');
+    expect(response.headers.get('access-control-allow-methods')).toContain('POST');
+    expect(response.headers.get('access-control-allow-headers')).toBe('*');
+    expect(response.headers.get('access-control-allow-credentials')).toBeNull();
+  });
+
   it('rejects mutating auth requests without a CSRF header before touching credentials', async () => {
     const { createApp } = await import('./server/app.js');
     const app = createApp();
