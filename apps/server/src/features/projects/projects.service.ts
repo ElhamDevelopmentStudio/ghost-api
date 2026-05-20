@@ -9,6 +9,7 @@ import {
 
 import { prisma } from '../../db.js';
 import { attachmentThumbnailUrl } from '../uploads/upload.urls.js';
+import { resolveSchemaContent } from '../../routes/schema-storage.js';
 import { invalidateProjectMockRuntime } from './mock-runtime-cache.js';
 import {
   serializeProjectActivityLog,
@@ -271,7 +272,7 @@ export async function getProjectSchemaForUser({
       schema.metadata && typeof schema.metadata === 'object' && !Array.isArray(schema.metadata)
         ? (schema.metadata as Record<string, unknown>)
         : {},
-    content: schema.content,
+    content: await resolveSchemaContent(schema.content),
   };
 }
 

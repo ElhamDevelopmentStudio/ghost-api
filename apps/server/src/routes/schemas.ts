@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import type { Prisma } from '@prisma/client';
@@ -8,6 +10,7 @@ import { logger } from '../logger.js';
 import { authContext, requireAuth, requireCsrf } from '../features/auth/index.js';
 import { invalidateProjectMockRuntime } from '../features/projects/mock-runtime-cache.js';
 import type { AppEnv } from '../server/types.js';
+import { storeSchemaContent } from './schema-storage.js';
 
 export const schemasRouter = new Hono<AppEnv>();
 
@@ -21,6 +24,26 @@ schemasRouter.post(
     const projectId = c.req.param('projectId');
     const { content, overrideDuplicateEndpoints } = c.req.valid('json');
     const { userId } = authContext(c);
+
+    const project = await prisma.project.findFirst({
+      where: {
+        id: projectId,
+        OR: [
+          { ownerId: userId },
+          { members: { some: { userId, role: { in: ['OWNER', 'ADMIN', 'EDITOR'] } } } },
+        ],
+      },
+    });
+    if (!project) return c.json({ error: 'Project not found' }, 404);
+
+    const schemaId = randomUUID();
+    let storedContent;
+    try {
+      storedContent = await storeSchemaContent({ projectId, schemaId, content });
+    } catch (err) {
+      logger.error({ err, projectId, schemaId }, 'Failed to persist schema upload to R2');
+      return c.json({ error: 'Schema upload could not be persisted' }, 502);
+    }
 
     let normalized;
     try {
@@ -36,17 +59,6 @@ schemasRouter.post(
       return c.json({ error: 'Unexpected error parsing schema' }, 500);
     }
 
-    const project = await prisma.project.findFirst({
-      where: {
-        id: projectId,
-        OR: [
-          { ownerId: userId },
-          { members: { some: { userId, role: { in: ['OWNER', 'ADMIN', 'EDITOR'] } } } },
-        ],
-      },
-    });
-    if (!project) return c.json({ error: 'Project not found' }, 404);
-
     const result = await prisma.$transaction(async (tx) => {
       const lastVersion = await tx.schema.findFirst({
         where: { projectId },
@@ -55,14 +67,17 @@ schemasRouter.post(
       });
       const schema = await tx.schema.create({
         data: {
+          id: schemaId,
           projectId,
           version: (lastVersion?.version ?? 0) + 1,
-          content: { raw: content },
+          content: toJsonInput(storedContent),
           metadata: {
             title: normalized.title,
             version: normalized.version,
             endpointCount: normalized.endpoints.length,
             sizeBytes: Buffer.byteLength(content, 'utf8'),
+            storage: 'r2',
+            objectKey: storedContent.objectKey,
           },
         },
       });
